@@ -47,7 +47,7 @@ public class Movement : MonoBehaviour
         //Debug.Log(look);
     }
 
-    public void OnJump(InputAction.CallbackContext context)
+   public void OnJump(InputAction.CallbackContext context)
     {
         if (isPaused) return;
 
@@ -56,15 +56,7 @@ public class Movement : MonoBehaviour
             // Don't allow jump in air
             if (!grounded) return;
 
-            // W + Run + Enough Stamina → Sprint Jump
-            bool sprintJump = isRunning && move.y > 0.5f && currentStamina >= BoostDrain;
-
-            if (sprintJump)
-            {
-                currentStamina -= BoostDrain;
-            }
-
-            Jump(sprintJump);
+            Jump();
         }
     }
 
@@ -168,25 +160,16 @@ public class Movement : MonoBehaviour
             rb.AddForce(velocityChange, ForceMode.VelocityChange);
     }
 
-    void Jump(bool sprintJump)
+    void Jump()
     {
         // Reset vertical velocity for consistency
         Vector3 vel = rb.linearVelocity;
         vel.y = 0;
         rb.linearVelocity = vel;
 
-        if (sprintJump)
-        {
-            // Sprint jump (boosted)
-            rb.AddForce(Vector3.up * (jumpForce * 1.3f), ForceMode.VelocityChange);
-            rb.AddForce(transform.forward * 2.5f, ForceMode.VelocityChange);
-        }
-        else
-        {
-            // Normal jump
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
-        }
-}
+        // Normal jump only
+        rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
+    }
 
 
     void Look()
