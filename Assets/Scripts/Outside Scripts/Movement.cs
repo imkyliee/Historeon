@@ -5,7 +5,7 @@ public class Movement : MonoBehaviour
 {
     [Header("Movement Settings")]
     public Rigidbody rb;
-    public GameObject CamHolder;
+    public Transform head;
     public float speed = 5f;
     public float runSpeed = 9f;
     public float maxForce = 10f;
@@ -14,7 +14,7 @@ public class Movement : MonoBehaviour
 
     [Header("Look Settings")]
     public float sensitivity = 100f;
-    private Vector2 move, look;
+    public Vector2 move, look;
     private float lookRotation;
 
     [Header("Grounded")]
@@ -24,27 +24,48 @@ public class Movement : MonoBehaviour
     public StaminaBar staminaBar;
     public float maxStamina = 100f;
     public float staminaDrainRate = 15f;
+     public float BoostDrain = 30f;
     public float staminaRegenRate = 10f;
     private float currentStamina;
     private bool isRunning;
+
+    public bool isPaused;
     
 
     // Input Callbacks
     public void OnMove(InputAction.CallbackContext context)
     {
+        if (isPaused) return; // Ignore input when paused
         move = context.ReadValue<Vector2>();
         //Debug.Log(move);
     }
 
     public void OnLook(InputAction.CallbackContext context)
     {
+        if (isPaused) return; // Ignore input when paused
         look = context.ReadValue<Vector2>();
+        //Debug.Log(look);
     }
 
     public void OnJump(InputAction.CallbackContext context)
     {
+        if (isPaused) return;
+
         if (context.performed)
-            Jump();
+        {
+            // Don't allow jump in air
+            if (!grounded) return;
+
+            // W + Run + Enough Stamina → Sprint Jump
+            bool sprintJump = isRunning && move.y > 0.5f && currentStamina >= BoostDrain;
+
+            if (sprintJump)
+            {
+                currentStamina -= BoostDrain;
+            }
+
+            Jump(sprintJump);
+        }
     }
 
     public void OnRun(InputAction.CallbackContext context)
@@ -66,8 +87,11 @@ public class Movement : MonoBehaviour
 
     void Update()
     {
-        Look();
         HandleStamina();
+    }
+    void LateUpdate()
+    {
+       Look();
     }
 
     void FixedUpdate()
@@ -75,85 +99,137 @@ public class Movement : MonoBehaviour
         Move();
     }
 
-    // Movement Methods
     void Move()
     {
+                if (isPaused)
+                {
+                    rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+                    return;
+                }
+
         Vector3 currentVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
 
-            // Determine speed (running if possible)
+            // Determine speed
             float currentSpeed;
 
-            if (isRunning && grounded && currentStamina > 0 && move.y > 0)
-        {
-            // If the player is holding run, is on the ground, has stamina, and pressing forward
-            currentSpeed = runSpeed;
-        }
-            else
-        {
-            // Otherwise, normal walking speed
-            currentSpeed = speed;
-        }
-        Vector3 targetVelocity = new Vector3(move.x, 0, move.y) * currentSpeed;
-        targetVelocity = transform.TransformDirection(targetVelocity);
+                if (isRunning && grounded && currentStamina > 0 && move.y > 0)
+                {
+                    // If the player is holding run
+                    currentSpeed = runSpeed;
+                }
+                else
+                {
+                    // normal walking speed
+                    currentSpeed = speed;
+                }
+                
+            Vector3 forward = transform.forward;
+            Vector3 right = transform.right;
 
-        Vector3 velocityChange = targetVelocity - currentVelocity;
-        velocityChange = Vector3.ClampMagnitude(velocityChange, maxForce);
+            // Flatten so you don't go upward/downward
+            forward.y = 0f;
+            right.y = 0f;
 
-       // Air Control Restriction
-        if (!grounded)
-    {
-        // Only allow forward movement in air
-        if (move.y > 0) // W pressed
-    {
-            // Apply air control normally
-            velocityChange.x *= 0f; // block sideways
-            velocityChange.z *= airControl; // allow forward
+            forward.Normalize();
+            right.Normalize();
+
+            Vector3 targetVelocity = (forward * move.y + right * move.x) * currentSpeed;
+            
+            Vector3 moveDir = targetVelocity;
+            moveDir.y = 0f;
+
+            Vector3 velocityChange = targetVelocity - currentVelocity;
+            velocityChange = Vector3.ClampMagnitude(velocityChange, maxForce);
+
+            // Air Control Restriction
+            if (!grounded)
+            {
+
+                velocityChange.x *= airControl;
+                velocityChange.z *= airControl;
+
+            }
+                // Only allow forward movement in air
+               /* if (move.y > 0) // W pressed
+                {
+                    // Apply air control normally
+                    velocityChange.x *= 0f; // block sideways
+                    velocityChange.z *= airControl; // allow forward
+                }
+                else
+                {
+                    // Not moving forward → block all air movement
+                    velocityChange.x = 0f;
+                    velocityChange.z = 0f;
+                }
+            }*/
+
+            velocityChange = Vector3.ClampMagnitude(velocityChange, maxForce);
+            rb.AddForce(velocityChange, ForceMode.VelocityChange);
     }
+
+    void Jump(bool sprintJump)
+    {
+        // Reset vertical velocity for consistency
+        Vector3 vel = rb.linearVelocity;
+        vel.y = 0;
+        rb.linearVelocity = vel;
+
+        if (sprintJump)
+        {
+            // Sprint jump (boosted)
+            rb.AddForce(Vector3.up * (jumpForce * 1.3f), ForceMode.VelocityChange);
+            rb.AddForce(transform.forward * 2.5f, ForceMode.VelocityChange);
+        }
         else
-    {
-            // Not moving forward → block all air movement
-            velocityChange.x = 0f;
-            velocityChange.z = 0f;
-    }
+        {
+            // Normal jump
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
+        }
 }
 
-        velocityChange = Vector3.ClampMagnitude(velocityChange, maxForce);
-        rb.AddForce(velocityChange, ForceMode.VelocityChange);
-    }
-
-    void Jump()
-    {
-        if (grounded)
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
-    }
 
     void Look()
     {
-        // Turn
-        transform.Rotate(Vector3.up * look.x * sensitivity * Time.deltaTime);
+        if (isPaused) return;
+        
+        float mouseX = look.x * sensitivity * Time.deltaTime;
+        float mouseY = look.y * sensitivity * Time.deltaTime;
 
         // Pitch
-        lookRotation += (-look.y * sensitivity * Time.deltaTime);
-        lookRotation = Mathf.Clamp(lookRotation, -90f, 90f);
-        CamHolder.transform.localRotation = Quaternion.Euler(lookRotation, 0f, 0f);
+        lookRotation -= mouseY;
+        lookRotation = Mathf.Clamp(lookRotation, -80f, 80f);
+
+        // Rotate BODY left/right (yaw)
+        transform.Rotate(Vector3.up * mouseX);
+
+        head.localRotation = Quaternion.Euler(lookRotation, 0f, 0f);
+
     }
 
-    // Stamina Handling
-    void HandleStamina()
+        void HandleStamina()
     {
+        // Sprinting on ground → drain
         if (isRunning && grounded && move.y > 0)
         {
             currentStamina -= staminaDrainRate * Time.deltaTime;
+
             if (currentStamina <= 0)
             {
                 currentStamina = 0;
-                isRunning = false; // stop sprinting when out of stamina
+                isRunning = false;
             }
         }
+        // Sprinting in air → small drain (THIS is where your line goes)
+        else if (isRunning && !grounded)
+        {
+            currentStamina -= (staminaDrainRate * 0.3f) * Time.deltaTime;
+        }
+        // Not sprinting → regen
         else
         {
-            // Regenerate stamina when not running
             currentStamina += staminaRegenRate * Time.deltaTime;
+
             if (currentStamina > maxStamina)
                 currentStamina = maxStamina;
         }
@@ -166,5 +242,13 @@ public class Movement : MonoBehaviour
     public void SetGrounded(bool state)
     {
         grounded = state;
+    }
+    public void FreezeLookState()
+    {
+        Vector3 angles = head.localEulerAngles;
+
+        if (angles.x > 180f) angles.x -= 360f;
+
+        lookRotation = angles.x;
     }
 }
