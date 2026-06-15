@@ -7,6 +7,8 @@ public class MainMenu : MonoBehaviour
     public GameObject mainMenuUI;
     public Animator cameraAnimator;
     public Animator doorAnimator;
+    public Slider volumeSlider;
+    
     private Button[] menuButtons;
 
  void Awake()
@@ -22,6 +24,21 @@ public class MainMenu : MonoBehaviour
             btn.interactable = state;
         }
     }
+
+    // Volume Disable
+    public void DisableVolume()
+    {
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
+
+    // Volume Enable
+    public void EnableVolume()
+    {
+        if (volumeSlider != null)
+            volumeSlider.interactable = true;
+    }
+
      public void EnableButtons()
     {
         SetButtonsInteractable(true);
@@ -38,18 +55,21 @@ public class MainMenu : MonoBehaviour
         {
             doorAnimator.SetTrigger("Open");
         }
+        DisableVolume();
 
 }
     public void Option()
     {
         SetButtonsInteractable(false);
         cameraAnimator.SetTrigger("Option");
+        EnableVolume();
     }
 
     public void YesOrNo()
     {
         SetButtonsInteractable(false);
         cameraAnimator.SetTrigger("Quit");
+        DisableVolume();
     }
 
     public void Back()
@@ -57,6 +77,7 @@ public class MainMenu : MonoBehaviour
         SetButtonsInteractable(false);
         cameraAnimator.SetTrigger("Back");
         cameraAnimator.SetTrigger("Idle");
+        DisableVolume();
     }
 
     public void QuitGame()

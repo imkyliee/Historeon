@@ -8,4 +8,12 @@ public class MainMenuProxy : MonoBehaviour
     {
         mainMenu.EnableButtons();
     }
+    public void EnableVolumeEvent()
+    {
+        mainMenu.EnableVolume();
+    }
+    public void DisableVolumeEvent()
+    {
+        mainMenu.DisableVolume();
+    }
 }

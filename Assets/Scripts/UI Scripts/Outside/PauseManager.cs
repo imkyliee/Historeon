@@ -40,7 +40,13 @@ public void Pause()
     Time.timeScale = 0f;
 
     foreach (var script in disableOnPause)
-        script.enabled = false;
+    {
+        if (script is Movement m)
+        {
+            m.FreezeLookState();
+            m.isPaused = true;
+        }
+    }
 
     Cursor.visible = true;
     Cursor.lockState = CursorLockMode.None;
@@ -60,7 +66,10 @@ public void Resume()
     Time.timeScale = 1f;
 
     foreach (var script in disableOnPause)
-        script.enabled = true;
+    {
+        if (script is Movement m)
+            m.isPaused = false;
+    }
 
     Cursor.visible = false;
     Cursor.lockState = CursorLockMode.Locked;
