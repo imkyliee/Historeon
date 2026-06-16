@@ -33,6 +33,7 @@ public class Movement : MonoBehaviour
 
     [Header("Pause")]
     public bool isPaused;
+    public bool lookPaused;
 
     public bool IsRunning
         {
@@ -229,16 +230,6 @@ public class Movement : MonoBehaviour
     {
         isPaused = paused;
 
-        if (paused)
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-        else
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
     }
 
     public float GetCurrentStamina()
