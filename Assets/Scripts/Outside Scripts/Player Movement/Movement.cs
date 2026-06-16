@@ -19,7 +19,12 @@ public class Movement : MonoBehaviour
 
     [Header("Grounded")]
     public bool grounded;
+    private bool wasGrounded;
     public PlayerAnimation playerAnimation;
+
+    [Header("Particles")]
+    public ParticleSystem walkrunParticles;
+    public ParticleSystem JumpParticles;
 
     [Header("Stamina Settings")]
     public StaminaBar staminaBar;
@@ -47,6 +52,7 @@ public class Movement : MonoBehaviour
     {
         if (isPaused) return;
         move = context.ReadValue<Vector2>();
+       // Debug.Log(move.y);
     }
 
     public void OnLook(InputAction.CallbackContext context)
@@ -89,6 +95,8 @@ public class Movement : MonoBehaviour
     void Update()
     {
         HandleStamina();
+        JumpParticlesPlay();
+        WalkRunParticles();  
     }
 
     void FixedUpdate()
@@ -210,6 +218,36 @@ public class Movement : MonoBehaviour
         if (staminaBar != null)
             staminaBar.SetStamina(currentStamina);
     }
+
+    void JumpParticlesPlay()
+    {
+        if (!wasGrounded && grounded)
+        {
+            if (JumpParticles != null)
+            {
+                JumpParticles.Play();
+            }
+            
+        }
+
+        wasGrounded = grounded;
+    }
+   void WalkRunParticles()
+{
+    bool shouldPlay = grounded && move.y > 0.1f && Mathf.Abs(move.x) < 0.1f;
+
+    if (shouldPlay)
+    {
+        if (!walkrunParticles.isPlaying)
+            walkrunParticles.Play();
+    }
+    else
+    {
+        if (walkrunParticles.isPlaying)
+            walkrunParticles.Stop();
+    }
+    //Debug.Log($"Grounded: {grounded}, MoveY: {move.y}");
+}
 
     public void SetGrounded(bool state)
     {
