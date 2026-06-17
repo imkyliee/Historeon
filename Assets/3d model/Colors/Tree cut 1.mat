@@ -44,6 +44,8 @@ Material:
     - _Step2: 0.018
     - _Step3: 0.97
     - _Step4: 0.025
+    - _WindSpeed: 2
+    - _WindStrength: 0.05
     m_Colors:
     - _BaseColor: {r: 0.64705884, g: 0.41960785, b: 0.2, a: 1}
     - _HighColor: {r: 1, g: 1, b: 1, a: 1}

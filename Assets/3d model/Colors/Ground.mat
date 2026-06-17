@@ -20,14 +20,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Grass
-  m_Shader: {fileID: 4800000, guid: 7d4db7c15a07195489f85ee141695729, type: 3}
+  m_Name: Ground
+  m_Shader: {fileID: 4800000, guid: 313fcf3aebc04cf4ab4f8c5f2850be7f, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 1
+  m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -118,7 +118,7 @@ Material:
     - _Highlight_Size: 0.45
     - _Metallic: 0
     - _OcclusionStrength: 1
-    - _OutlineWidth: 0.093
+    - _OutlineWidth: 0.36
     - _Outline_Size: 0.3
     - _Parallax: 0.005
     - _QueueControl: 0
@@ -138,12 +138,10 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _WindSpeed: 0.5
-    - _WindStrength: 0.3
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0, g: 0.922, b: 0.13482074, a: 1}
+    - _BaseColor: {r: 0.204, g: 1, b: 0.32031044, a: 1}
     - _Base_Color: {r: 0.709, g: 0.45906472, b: 0.21933089, a: 0}
     - _Color: {r: 0.43801603, g: 0.944, b: 0.51353604, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
