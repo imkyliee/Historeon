@@ -46,6 +46,8 @@ Shader "Lpk/LightModel/ToonLightBase"
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
 			#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             // -------------------------------------
             // Unity defined keywords
             #pragma multi_compile_fog
@@ -86,7 +88,7 @@ Shader "Lpk/LightModel/ToonLightBase"
                 float4 bitangentWS   : TEXCOORD3;    // xyz: bitangent, w: viewDir.z
                 float3 viewDirWS     : TEXCOORD4;
 				float4 shadowCoord	 : TEXCOORD5;	// shadow receive 
-				float4 fogCoord	     : TEXCOORD6;	
+				float fogCoord	     : TEXCOORD6;	
 				float3 positionWS	 : TEXCOORD7;	
                 float4 positionCS    : SV_POSITION;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -125,45 +127,131 @@ Shader "Lpk/LightModel/ToonLightBase"
                 UNITY_SETUP_INSTANCE_ID(input);
 
                 float2 uv = input.uv;
+
                 float3 N = normalize(input.normalWS.xyz);
-                float3 T = normalize(input.tangentWS.xyz);
-                float3 B = normalize(input.bitangentWS.xyz);
-                float3 V = normalize(input.viewDirWS.xyz);
-                float3 L = normalize(_MainLightPosition.xyz);
-                float3 H = normalize(V+L);
-                
-                float NV = dot(N,V);
-                float NH = dot(N,H);
-                float NL = dot(N,L);
-                
-                NL = NL * 0.5 + 0.5;
+                float3 V = normalize(input.viewDirWS);
 
                 float4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
 
-                // return NH;
-               float specularNH = smoothstep((1-_SpecularStep * 0.05)  - _SpecularStepSmooth * 0.05, (1-_SpecularStep* 0.05)  + _SpecularStepSmooth * 0.05, NH) ;
-               float shadowNL = smoothstep(_ShadowStep - _ShadowStepSmooth, _ShadowStep + _ShadowStepSmooth, NL);
+                //----------------------------------------
+                // Main Light
+                //----------------------------------------
 
-				input.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                
-                //shadow
-                float shadow = MainLightRealtimeShadow(input.shadowCoord);
-                
-                //rim
-                float rim = smoothstep((1-_RimStep) - _RimStepSmooth * 0.5, (1-_RimStep) + _RimStepSmooth * 0.5, 0.5 - NV);
-                
-                //diffuse
-                float3 diffuse = _MainLightColor.rgb * baseMap * _BaseColor * shadowNL * shadow;
-                
-                //specular
-                float3 specular = _SpecularColor * shadow * shadowNL *  specularNH;
-                
-                //ambient
-                float3 ambient =  rim * _RimColor + SampleSH(N) * _BaseColor * baseMap;
-            
-                float3 finalColor = diffuse + ambient + specular;
+                input.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+
+                Light mainLight = GetMainLight(input.shadowCoord);
+
+                float3 L = normalize(mainLight.direction);
+                float3 H = normalize(V + L);
+
+                float NV = dot(N, V);
+                float NH = saturate(dot(N, H));
+                float NL = dot(N, L);
+
+                NL = NL * 0.5 + 0.5;
+
+                float shadowNL = smoothstep(
+                    _ShadowStep - _ShadowStepSmooth,
+                    _ShadowStep + _ShadowStepSmooth,
+                    NL);
+
+                float specularNH = smoothstep(
+                    (1 - _SpecularStep * 0.05) - _SpecularStepSmooth * 0.05,
+                    (1 - _SpecularStep * 0.05) + _SpecularStepSmooth * 0.05,
+                    NH);
+
+                float3 diffuse =
+                    mainLight.color *
+                    baseMap.rgb *
+                    _BaseColor.rgb *
+                    shadowNL *
+                    mainLight.shadowAttenuation;
+
+                float3 specular =
+                    _SpecularColor.rgb *
+                    shadowNL *
+                    specularNH *
+                    mainLight.shadowAttenuation;
+
+                //----------------------------------------
+                // Additional Lights
+                //----------------------------------------
+
+                #ifdef _ADDITIONAL_LIGHTS
+
+                uint lightCount = GetAdditionalLightsCount();
+
+                for (uint i = 0; i < lightCount; i++)
+                {
+                    Light light = GetAdditionalLight(i, input.positionWS);
+
+                    float3 L2 = normalize(light.direction);
+                    float3 H2 = normalize(V + L2);
+
+                    float NL2 = dot(N, L2);
+                    NL2 = NL2 * 0.5 + 0.5;
+
+                    float NH2 = saturate(dot(N, H2));
+
+                    float shadowNL2 = smoothstep(
+                        _ShadowStep - _ShadowStepSmooth,
+                        _ShadowStep + _ShadowStepSmooth,
+                        NL2);
+
+                    float specularNH2 = smoothstep(
+                        (1 - _SpecularStep * 0.05) - _SpecularStepSmooth * 0.05,
+                        (1 - _SpecularStep * 0.05) + _SpecularStepSmooth * 0.05,
+                        NH2);
+
+                    float attenuation =
+                        light.distanceAttenuation *
+                        light.shadowAttenuation;
+
+                    diffuse +=
+                        light.color *
+                        baseMap.rgb *
+                        _BaseColor.rgb *
+                        shadowNL2 *
+                        attenuation;
+
+                    specular +=
+                        _SpecularColor.rgb *
+                        shadowNL2 *
+                        specularNH2 *
+                        attenuation;
+                }
+
+                #endif
+
+                //----------------------------------------
+                // Rim Light
+                //----------------------------------------
+
+                float rim = smoothstep(
+                    (1 - _RimStep) - _RimStepSmooth * 0.5,
+                    (1 - _RimStep) + _RimStepSmooth * 0.5,
+                    0.5 - NV);
+
+                //----------------------------------------
+                // Ambient
+                //----------------------------------------
+
+                float3 ambient =
+                    rim * _RimColor.rgb +
+                    SampleSH(N) * _BaseColor.rgb * baseMap.rgb;
+
+                //----------------------------------------
+                // Final
+                //----------------------------------------
+
+                float3 finalColor =
+                    diffuse +
+                    specular +
+                    ambient;
+
                 finalColor = MixFog(finalColor, input.fogCoord);
-                return float4(finalColor , 1.0);
+
+                return float4(finalColor, 1.0);
             }
             ENDHLSL
         }

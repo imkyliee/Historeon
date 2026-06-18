@@ -49,6 +49,8 @@ Shader "Lpk/LightModel/GrassSway"
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
 			#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             // -------------------------------------
             // Unity defined keywords
             #pragma multi_compile_fog
@@ -166,11 +168,58 @@ Shader "Lpk/LightModel/GrassSway"
                 //rim
                 float rim = smoothstep((1-_RimStep) - _RimStepSmooth * 0.5, (1-_RimStep) + _RimStepSmooth * 0.5, 0.5 - NV);
                 
-                //diffuse
-                float3 diffuse = _MainLightColor.rgb * baseMap * _BaseColor * shadowNL * shadow;
-                
-                //specular
-                float3 specular = _SpecularColor * shadow * shadowNL *  specularNH;
+                // Main light
+                float3 diffuse = _MainLightColor.rgb * baseMap.rgb * _BaseColor.rgb * shadowNL * shadow;
+                float3 specular = _SpecularColor.rgb * shadow * shadowNL * specularNH;
+
+                // Additional lights (Spot + Point)
+                #ifdef _ADDITIONAL_LIGHTS
+
+                uint lightCount = GetAdditionalLightsCount();
+
+                for (uint i = 0; i < lightCount; i++)
+                {
+                    Light light = GetAdditionalLight(i, input.positionWS);
+
+                    float3 addL = normalize(light.direction);
+                    float3 addH = normalize(V + addL);
+
+                    float addNL = dot(N, addL);
+                    addNL = addNL * 0.5 + 0.5;
+
+                    float addShadowNL =
+                        smoothstep(
+                            _ShadowStep - _ShadowStepSmooth,
+                            _ShadowStep + _ShadowStepSmooth,
+                            addNL
+                        );
+
+                    float addSpecularNH =
+                        smoothstep(
+                            (1 - _SpecularStep * 0.05) - _SpecularStepSmooth * 0.05,
+                            (1 - _SpecularStep * 0.05) + _SpecularStepSmooth * 0.05,
+                            dot(N, addH)
+                        );
+
+                    float attenuation =
+                        light.distanceAttenuation *
+                        light.shadowAttenuation;
+
+                    diffuse +=
+                        light.color *
+                        baseMap.rgb *
+                        _BaseColor.rgb *
+                        addShadowNL *
+                        attenuation;
+
+                    specular +=
+                        _SpecularColor.rgb *
+                        addSpecularNH *
+                        addShadowNL *
+                        attenuation;
+                }
+
+                #endif
                 
                 //ambient
                 float3 ambient =  rim * _RimColor + SampleSH(N) * _BaseColor * baseMap;

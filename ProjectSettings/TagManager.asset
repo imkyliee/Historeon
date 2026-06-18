@@ -8,13 +8,9 @@ TagManager:
   - Ground
   - BarGate
   - ChestGate
-  - Window1
-  - Window2
-  - Window3
-  - Window4
-  - Window5
   - Door1
   - DungeonDoor
+  - SleepingBag
   layers:
   - Default
   - TransparentFX
@@ -37,7 +33,7 @@ TagManager:
   - Book
   - IgnoreFlashlight
   - void
-  - 
+  - Item
   - 
   - 
   - 

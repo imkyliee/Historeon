@@ -34,12 +34,15 @@ public class Movement : MonoBehaviour
     public float staminaRegenRate = 15f;
 
     private float currentStamina;
+
+    // For input state
     private bool isRunning;
 
     [Header("Pause")]
     public bool isPaused;
     public bool lookPaused;
-
+    
+    // Checks if the player is currently sprinting.
     public bool IsRunning
         {
             get
@@ -123,11 +126,7 @@ public class Movement : MonoBehaviour
         Vector3 currentVelocity =
             new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
-        bool sprinting =
-            isRunning &&
-            grounded &&
-            currentStamina > 0f &&
-            move.y > 0f;
+        bool sprinting = isRunning && grounded && currentStamina > 0f && move.y > 0f;
 
         if (sprinting)
         {
