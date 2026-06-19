@@ -45,7 +45,7 @@ public class PlayerAnimation : MonoBehaviour
 
         isPlayingAction = false;
 
-        // When pickup completes
+        // Pickup completes
         isHoldingItem = true;
     }
 

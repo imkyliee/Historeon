@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class GroundCheckerr : MonoBehaviour
+public class GroundChecker : MonoBehaviour
 {
     public Movement movement;
     public LayerMask groundLayer;

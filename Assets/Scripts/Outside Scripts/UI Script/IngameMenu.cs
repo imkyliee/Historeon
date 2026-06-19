@@ -32,18 +32,19 @@ public class IngameMenu : MonoBehaviour
             else
                 OpenMenu();
         }
-
     }
 
     void OpenMenu()
     {
         menuOpen = true;
 
-        Background.SetActive(true);
+        if (Background != null)
+            Background.SetActive(true);
 
         foreach (GameObject ui in HUD)
         {
-            ui.SetActive(false);
+            if (ui != null)
+                ui.SetActive(false);
         }
 
         if (movement != null)
@@ -61,11 +62,13 @@ public class IngameMenu : MonoBehaviour
     {
         menuOpen = false;
 
-        Background.SetActive(false);
+        if (Background != null)
+            Background.SetActive(false);
 
         foreach (GameObject ui in HUD)
         {
-            ui.SetActive(true);
+            if (ui != null)
+                ui.SetActive(true);
         }
 
         SetActiveTab(null);
@@ -81,26 +84,34 @@ public class IngameMenu : MonoBehaviour
 
     void SetActiveTab(GameObject activeTab)
     {
-        InventoryUI.SetActive(activeTab == InventoryUI);
-        LogbookUI.SetActive(activeTab == LogbookUI);
-        ObjectivesUI.SetActive(activeTab == ObjectivesUI);
+        if (InventoryUI != null)
+            InventoryUI.SetActive(activeTab == InventoryUI);
+
+        if (LogbookUI != null)
+            LogbookUI.SetActive(activeTab == LogbookUI);
+
+        if (ObjectivesUI != null)
+            ObjectivesUI.SetActive(activeTab == ObjectivesUI);
     }
 
     public void OpenInventory()
     {
         if (!menuOpen) return;
+
         SetActiveTab(InventoryUI);
     }
 
     public void OpenLogbook()
     {
         if (!menuOpen) return;
+
         SetActiveTab(LogbookUI);
     }
 
     public void OpenObjectives()
     {
         if (!menuOpen) return;
+
         SetActiveTab(ObjectivesUI);
     }
 }

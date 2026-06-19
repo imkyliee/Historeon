@@ -35,7 +35,7 @@ public class Movement : MonoBehaviour
 
     private float currentStamina;
 
-    // For input state
+    // Input state
     private bool isRunning;
 
     [Header("Pause")]

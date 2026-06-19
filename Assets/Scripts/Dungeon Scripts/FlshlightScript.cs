@@ -1,19 +1,20 @@
 using UnityEngine;
 
-public class FlshlightScript : MonoBehaviour
+public class FlshlightScript : MonoBehaviour, IUsableItem
 {
     [SerializeField] private GameObject flashlightObject;
 
-    void Update()
-    {
-        if (Input.GetMouseButtonDown(1))
-        {
-            flashlightObject?.SetActive(true);
-        }
+    private bool isOn = false;
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            flashlightObject?.SetActive(false);
-        }
+    public void OnUsePrimary()
+    {
+        isOn = true;
+        flashlightObject.SetActive(true);
+    }
+
+    public void OnUseSecondary()
+    {
+        isOn = false;
+        flashlightObject.SetActive(false);
     }
 }

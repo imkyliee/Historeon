@@ -2,47 +2,91 @@ using UnityEngine;
 
 public class RagdollController : MonoBehaviour
 {
-    public Rigidbody mainRb;
-    public Movement movementScript;
+    public CapsuleCollider playerCollider;
+    public GameObject MainRig;
     public Animator animator;
+    public Rigidbody mainRb;
+    public BoxCollider boxCollider;
+    public Rigidbody BagRigid;
+    public BoxCollider groundChecker;
+    public Movement movement;
 
-    private Rigidbody[] ragdollBodies;
+    Collider[] RagdollCollider;
+    Rigidbody[] RagdollRigid;
 
     void Start()
     {
-        ragdollBodies = GetComponentsInChildren<Rigidbody>();
-
-        SetRagdoll(false); // disable at start
+        GetRagdollState();
+        RagdollOff();
     }
 
-    public void SetRagdoll(bool state)
+    private void OnCollisionEnter(Collision collision)
     {
-        foreach (Rigidbody rb in ragdollBodies)
+        if (collision.gameObject.CompareTag("Enemy"))
         {
-            if (rb != mainRb)
-            {
-                rb.isKinematic = !state;
-            }
+            RagdollOn();
+        }
+    }
+
+    void GetRagdollState()
+    {
+        RagdollCollider = MainRig.GetComponentsInChildren<Collider>();
+        RagdollRigid = MainRig.GetComponentsInChildren<Rigidbody>();
+    }
+
+    void RagdollOn()
+    {
+        animator.enabled = false;
+
+        foreach (Collider col in RagdollCollider)
+        {
+            if (col != playerCollider && col != groundChecker)
+                col.enabled = true;
+        }
+        foreach (Rigidbody rb in RagdollRigid)
+        {
+            rb.isKinematic = false;
         }
 
-        // Disable main movement physics when ragdoll is active
-        mainRb.isKinematic = state;
+        playerCollider.enabled = false;
+        mainRb.isKinematic = true;
 
-        // Disable movement script
-        movementScript.enabled = !state;
+        boxCollider.enabled = true;
 
-        // Disable animations
-        if (animator != null)
-            animator.enabled = !state;
+        BagRigid.isKinematic = false;
+        BagRigid.transform.parent = null;
+
+        if (movement != null)
+        {
+            movement.enabled = false;
+        }
     }
 
-    public void Die(Vector3 forceDir)
+    void RagdollOff()
     {
-        SetRagdoll(true);
-
-        foreach (Rigidbody rb in ragdollBodies)
+        foreach (Collider col in RagdollCollider)
         {
-            rb.AddForce((forceDir + Vector3.up) * 5f, ForceMode.Impulse);
+            if (col != playerCollider && col != groundChecker)
+                col.enabled = false;
+        }
+
+        foreach (Rigidbody rb in RagdollRigid)
+        {
+            rb.isKinematic = true;
+        }
+
+        animator.enabled = true;
+        playerCollider.enabled = true;
+        mainRb.isKinematic = false;
+
+        boxCollider.enabled = false;
+
+        BagRigid.isKinematic = true;
+
+        // (optional) re-enable movement if you ever revive
+        if (movement != null)
+        {
+            movement.enabled = true;
         }
     }
 }
