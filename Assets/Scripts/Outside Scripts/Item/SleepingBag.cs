@@ -17,6 +17,9 @@ public class SleepingBag : MonoBehaviour
 
     private void Update()
     {
+        if (Camera.main == null)
+        return;
+
         Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
         RaycastHit hit;
 

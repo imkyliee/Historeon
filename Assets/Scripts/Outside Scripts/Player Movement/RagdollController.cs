@@ -10,6 +10,9 @@ public class RagdollController : MonoBehaviour
     public Rigidbody BagRigid;
     public BoxCollider groundChecker;
     public Movement movement;
+    public Camera playerCamera;
+    public Camera deathCamera;
+    public Transform chestBone;
 
     Collider[] RagdollCollider;
     Rigidbody[] RagdollRigid;
@@ -18,6 +21,9 @@ public class RagdollController : MonoBehaviour
     {
         GetRagdollState();
         RagdollOff();
+
+        playerCamera.gameObject.SetActive(true);
+        deathCamera.gameObject.SetActive(false);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -55,6 +61,9 @@ public class RagdollController : MonoBehaviour
 
         BagRigid.isKinematic = false;
         BagRigid.transform.parent = null;
+
+        playerCamera.gameObject.SetActive(false);
+        deathCamera.gameObject.SetActive(true);
 
         if (movement != null)
         {
