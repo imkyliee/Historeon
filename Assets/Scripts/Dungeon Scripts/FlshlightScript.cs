@@ -8,13 +8,13 @@ public class FlshlightScript : MonoBehaviour, IUsableItem
 
     public void OnUsePrimary()
     {
-        isOn = true;
-        flashlightObject.SetActive(true);
+        isOn = !isOn;
+        flashlightObject.SetActive(isOn);
+
     }
 
     public void OnUseSecondary()
     {
-        isOn = false;
-        flashlightObject.SetActive(false);
+        
     }
 }

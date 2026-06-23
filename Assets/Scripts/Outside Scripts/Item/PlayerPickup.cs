@@ -6,6 +6,7 @@ public class PlayerPickup : MonoBehaviour
     public Camera playerCamera;
     public Transform itemParent;
     public GameObject pickupPrompt;
+    public PlayerAnimation playerAnimation;
 
     [Header("Settings")]
     public float pickupDistance = 3f;
@@ -72,6 +73,8 @@ public class PlayerPickup : MonoBehaviour
 
             if (item != null)
             {
+                playerAnimation.PlayPickup();
+
                 item.PickUp(itemParent);
 
                 heldItem = item;
@@ -85,6 +88,8 @@ public class PlayerPickup : MonoBehaviour
     void DropItem()
     {
         heldItem.Drop();
+
+        playerAnimation.StopHoldingItem();
 
         heldItem = null;
         usableItem = null;

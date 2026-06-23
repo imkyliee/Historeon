@@ -4,11 +4,10 @@ using UnityEngine;
 public class PlayerAnimation : MonoBehaviour
 {
     public Movement movement;
+    public Inventory inventory;
 
     private Animator animator;
     public string currentAnimation = "";
-
-    public bool isHoldingItem;
     public bool isPlayingAction;
 
     private void Start()
@@ -34,6 +33,13 @@ public class PlayerAnimation : MonoBehaviour
     {
         StartCoroutine(PickupRoutine());
     }
+    public void StopHoldingItem()
+    {
+        //isHoldingItem = false;
+        isPlayingAction = false;
+
+        ChangeAnimation("Idle");
+    }
 
     IEnumerator PickupRoutine()
     {
@@ -44,32 +50,31 @@ public class PlayerAnimation : MonoBehaviour
         yield return new WaitForSeconds(0.25f);
 
         isPlayingAction = false;
-
-        // Pickup completes
-        isHoldingItem = true;
     }
 
     private void CheckAnimation()
     {
+
         if (isPlayingAction)
             return;
 
-        if (isHoldingItem)
-        {
-            // Jumping
-            if (!movement.grounded)
-            {
-                if (movement.rb.linearVelocity.y > 0)
-                {
-                    ChangeAnimation("HoldingJumpUp");
-                }
-                else
-                {
-                    ChangeAnimation("HoldingJumpDown");
-                }
+        if (inventory.IsHoldingItem())
+    {
 
-                return;
+        if (!movement.grounded)
+        {
+
+            if (movement.rb.linearVelocity.y > 0)
+            {
+                ChangeAnimation("HoldingJumpUp");
             }
+            else
+            {
+                ChangeAnimation("HoldingJumpDown");
+            }
+
+            return;
+        }
 
             // Running
             if (movement.IsRunning)

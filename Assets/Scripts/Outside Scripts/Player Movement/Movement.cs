@@ -16,6 +16,7 @@ public class Movement : MonoBehaviour
     public float sensitivity = 100f;
     public Vector2 move, look;
     private float lookRotation;
+    public static Movement Instance;
 
     [Header("Grounded")]
     public bool grounded;
@@ -41,6 +42,7 @@ public class Movement : MonoBehaviour
     [Header("Pause")]
     public bool isPaused;
     public bool lookPaused;
+    public bool updatingRotation = true;
     
     // Checks if the player is currently sprinting.
     public bool IsRunning
@@ -60,7 +62,9 @@ public class Movement : MonoBehaviour
 
     public void OnLook(InputAction.CallbackContext context)
     {
-        if (isPaused) return;
+        if (isPaused || !updatingRotation)
+            return;
+
         look = context.ReadValue<Vector2>();
     }
 
@@ -82,12 +86,17 @@ public class Movement : MonoBehaviour
             isRunning = false;
     }
 
+    public void Awake()
+    {
+        Instance = this;
+    }
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        /*Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;*/
 
         currentStamina = maxStamina;
 
@@ -97,6 +106,9 @@ public class Movement : MonoBehaviour
 
     void Update()
     {
+        if (!updatingRotation)
+        return;
+
         HandleStamina();
         JumpParticlesPlay();
         WalkRunParticles();  
@@ -123,8 +135,7 @@ public class Movement : MonoBehaviour
             return;
         }
 
-        Vector3 currentVelocity =
-            new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        Vector3 currentVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
         bool sprinting = isRunning && grounded && currentStamina > 0f && move.y > 0f;
 
@@ -146,8 +157,7 @@ public class Movement : MonoBehaviour
         forward.Normalize();
         right.Normalize();
 
-        Vector3 targetVelocity =
-            (forward * move.y + right * move.x) * currentSpeed;
+        Vector3 targetVelocity = (forward * move.y + right * move.x) * currentSpeed;
 
         Vector3 velocityChange = targetVelocity - currentVelocity;
 
@@ -175,8 +185,6 @@ public class Movement : MonoBehaviour
 
         rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
 
-        if (playerAnimation != null)
-            playerAnimation.ChangeAnimation("JumpUp");
     }
 
     void Look()
@@ -187,12 +195,11 @@ public class Movement : MonoBehaviour
         float mouseY = look.y * sensitivity * Time.deltaTime;
 
         lookRotation -= mouseY;
-        lookRotation = Mathf.Clamp(lookRotation, -80f, 80f);
+        lookRotation = Mathf.Clamp(lookRotation, -80f, 70f);
 
         transform.Rotate(Vector3.up * mouseX);
 
-        head.localRotation =
-            Quaternion.Euler(lookRotation, 0f, 0f);
+        head.localRotation = Quaternion.Euler(lookRotation, 0f, 0f);
     }
 
     void HandleStamina()
@@ -277,5 +284,12 @@ public class Movement : MonoBehaviour
     public float GetStaminaPercent()
     {
         return currentStamina / maxStamina;
+    }
+    public void SetLookEnabled(bool state)
+    {
+        updatingRotation = state;
+
+        if (!state)
+            look = Vector2.zero;
     }
 }
