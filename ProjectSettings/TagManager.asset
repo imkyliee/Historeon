@@ -37,8 +37,8 @@ TagManager:
   - Mountain
   - void
   - Item
-  - Effects
-  - Enemy
+  - InventoryCamera
+  - 
   - 
   - 
   - 

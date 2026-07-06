@@ -15,5 +15,5 @@ MonoBehaviour:
   itemName: nigga
   icon: {fileID: 21300000, guid: 1b041dd912ead4142be1fedc86b55555, type: 3}
   maxStackSize: 10
-  itemPrefab: {fileID: 6435693474729287283, guid: a99946bdea80aac4886b72c72ea1c4ae, type: 3}
-  handItemPrefab: {fileID: 6435693474729287283, guid: a99946bdea80aac4886b72c72ea1c4ae, type: 3}
+  itemPrefab: {fileID: 8404279797035676176, guid: a99946bdea80aac4886b72c72ea1c4ae, type: 3}
+  handItemPrefab: {fileID: 9166762370766405546, guid: 2a0ca55f0f77f1645a5c137796e8e856, type: 3}

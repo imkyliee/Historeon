@@ -13,7 +13,6 @@ public class RagdollController : MonoBehaviour
     public Camera playerCamera;
     public Camera deathCamera;
     public Transform chestBone;
-    public Inventory inventory;
 
     Collider[] RagdollCollider;
     Rigidbody[] RagdollRigid;
@@ -27,19 +26,22 @@ public class RagdollController : MonoBehaviour
         deathCamera.gameObject.SetActive(false);
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            RagdollOn();
+        }
+    }
+
     void GetRagdollState()
     {
         RagdollCollider = MainRig.GetComponentsInChildren<Collider>();
         RagdollRigid = MainRig.GetComponentsInChildren<Rigidbody>();
     }
 
-    public void RagdollOn()
+    void RagdollOn()
     {
-        if (inventory != null)
-        {
-            inventory.HandleDropEquippedItem();
-        }
-
         animator.enabled = false;
 
         foreach (Collider col in RagdollCollider)

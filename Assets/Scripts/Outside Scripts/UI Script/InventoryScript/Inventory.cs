@@ -17,9 +17,7 @@ public class Inventory : MonoBehaviour
     public GameObject inventorySlotParent;
     public Image dragIcon;
     public GameObject container;
-    public GameObject hud1;
-    public GameObject hud2;
-    public bool IsOpen => container.activeSelf;
+     public bool IsOpen => container.activeSelf;
 
 
     [Header("Pickup Settings")]
@@ -271,8 +269,8 @@ public class Inventory : MonoBehaviour
         {
             currentOutline = lookedAtItem.GetComponent<Outline>();
 
-            /*Debug.Log("Found item: " + lookedAtItem.name);
-            Debug.Log("pickupUI assigned? " + (pickupUI != null));*/
+            Debug.Log("Found item: " + lookedAtItem.name);
+            Debug.Log("pickupUI assigned? " + (pickupUI != null));
 
             if (currentOutline != null)
                 currentOutline.enabled = true;
@@ -307,77 +305,44 @@ public class Inventory : MonoBehaviour
     }
 
     private void HandleHotBarSelection()
-{
-    for (int i = 0; i < hotbarSlots.Count; i++)
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+        for(int i = 0; i < 6; i++)
         {
-            equippedHotbarIndex = i;
-            UpdateHotBarOpacity();
-            EquipHandItem();
-            return;
+            if (Input.GetKeyDown((i + 1).ToString()))
+            {
+                equippedHotbarIndex = i;
+                UpdateHotBarOpacity();
+                EquipHandItem();
+            }
         }
     }
-}
 
-    public void HandleDropEquippedItem()
+    private void HandleDropEquippedItem()
     {
-        if (!Input.GetKeyDown(KeyCode.G)) return;
+        if(!Input.GetKeyDown(KeyCode.G)) return;
 
         Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
-        if (!equippedSlot.HasItem()) return;
+
+        if(!equippedSlot.HasItem()) return;
 
         ItemSO itemSO = equippedSlot.GetItem();
         GameObject prefab = itemSO.itemPrefab;
 
-        if (prefab == null) return;
+        if(prefab == null) return;
 
-        // Save the flashlight state before destroying the held item
-        bool flashlightState = false;
-
-        if (currentHandItem != null)
-        {
-            FlashlightScript heldFlashlight = currentHandItem.GetComponentInChildren<FlashlightScript>();
-
-            if (heldFlashlight != null)
-            {
-                flashlightState = heldFlashlight.IsOn;
-            }
-        }
-
-        // Spawn the dropped item
-        GameObject dropped = Instantiate(
-            prefab,
-            Camera.main.transform.position + Camera.main.transform.forward,
-            Quaternion.identity
-        );
+        GameObject dropped = Instantiate(prefab, Camera.main.transform.position + Camera.main.transform.forward, Quaternion.identity);
 
         Item item = dropped.GetComponent<Item>();
-
-        if (item != null)
-        {
-            item.item = itemSO;
-            item.amount = equippedSlot.GetAmount();
-            item.flashlightOn = flashlightState;
-        }
-
-        // Restore the flashlight state
-        FlashlightScript droppedFlashlight = dropped.GetComponentInChildren<FlashlightScript>();
-
-        if (droppedFlashlight != null)
-        {
-            droppedFlashlight.SetState(flashlightState);
-        }
+        item.item = itemSO;
+        item.amount = equippedSlot.GetAmount();
 
         equippedSlot.ClearSlot();
+
         EquipHandItem();
     }
 
     private void EquipHandItem()
     {
-        if (equippedHotbarIndex < 0 || equippedHotbarIndex >= hotbarSlots.Count)
-        return;
-
         if (currentHandItem != null)
         {
             Destroy(currentHandItem);
@@ -393,27 +358,6 @@ public class Inventory : MonoBehaviour
         currentHandItem = Instantiate(item.handItemPrefab, hand);
         currentHandItem.transform.localPosition = Vector3.zero;
         currentHandItem.transform.localRotation = Quaternion.identity;
-
-        // Disable all colliders
-        foreach (Collider col in currentHandItem.GetComponentsInChildren<Collider>())
-        {
-            col.enabled = false;
-        }
-
-        // Disable physics
-        foreach (Rigidbody rb in currentHandItem.GetComponentsInChildren<Rigidbody>())
-        {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-        }
-
-        // Disable Item.cs  
-        Item itemComponent = currentHandItem.GetComponentInChildren<Item>();
-
-        if (itemComponent != null)
-        {
-            itemComponent.enabled = false;
-        }
     }
 
     private void HandleItemUse()
@@ -433,36 +377,24 @@ public class Inventory : MonoBehaviour
     }
     
     public void OpenInventory()
-{
-    container.SetActive(true);
+    {
+        container.SetActive(true);
 
-    if (hud1 != null)
-        hud1.SetActive(false);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
-    if (hud2 != null)
-        hud2.SetActive(false);
-
-    Cursor.lockState = CursorLockMode.None;
-    Cursor.visible = true;
-
-    Movement.Instance.SetLookEnabled(false);
-}
+        Movement.Instance.SetLookEnabled(false);
+    }
 
     public void CloseInventory()
-{
-    container.SetActive(false);
+    {
+        container.SetActive(false);
 
-    if (hud1 != null)
-        hud1.SetActive(true);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
-    if (hud2 != null)
-        hud2.SetActive(true);
-
-    Cursor.lockState = CursorLockMode.Locked;
-    Cursor.visible = false;
-
-    Movement.Instance.SetLookEnabled(true);
-}
+        Movement.Instance.SetLookEnabled(true);
+    }
 
     public void ToggleInventory()
     {
@@ -471,5 +403,4 @@ public class Inventory : MonoBehaviour
         else
             OpenInventory();
     }
-    
 }
