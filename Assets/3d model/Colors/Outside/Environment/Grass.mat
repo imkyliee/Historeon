@@ -118,7 +118,7 @@ Material:
     - _Highlight_Size: 0.45
     - _Metallic: 0
     - _OcclusionStrength: 1
-    - _OutlineWidth: 0.093
+    - _OutlineWidth: 0
     - _Outline_Size: 0.3
     - _Parallax: 0.005
     - _QueueControl: 0

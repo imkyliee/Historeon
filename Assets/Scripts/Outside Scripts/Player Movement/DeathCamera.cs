@@ -4,7 +4,6 @@ public class DeathCameraFollow : MonoBehaviour
 {
     public Transform target;
     public GameObject[] HUD;
-
     private bool hudHidden;
 
     void LateUpdate()

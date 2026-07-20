@@ -7,10 +7,16 @@ public class PauseManager : MonoBehaviour
     public Inventory inventory;
     public GameObject pauseMenuUI;
     public SceneTransition transition;
+    
+    // singleton instance
     public static PauseManager Instance { get; private set; }
     public bool IsPaused => isPaused;
+
     public GameObject[] HUD;
     public MonoBehaviour[] disableOnPause;
+
+    [Header("Player")]
+    public Animator playerAnimator;
 
     private bool isPaused;
 
@@ -18,10 +24,12 @@ public class PauseManager : MonoBehaviour
     {
         Instance = this;
     }
+
     private void Start()
     {
         pauseMenuUI.SetActive(false);
         isPaused = false;
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -30,7 +38,6 @@ public class PauseManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            // Inventory open? Close it first.
             if (inventory != null && inventory.IsOpen)
             {
                 inventory.CloseInventory();
@@ -43,18 +50,14 @@ public class PauseManager : MonoBehaviour
                 Pause();
         }
     }
-    private bool InventoryOpen()
-    {
-        return inventory != null && inventory.container.activeInHierarchy;
-    }
 
     public void Pause()
     {
         if (isPaused)
             return;
-            
+
         if (inventory != null)
-        inventory.CloseInventory();
+            inventory.CloseInventory();
 
         pauseMenuUI.SetActive(true);
         isPaused = true;
@@ -64,6 +67,10 @@ public class PauseManager : MonoBehaviour
             if (ui != null)
                 ui.SetActive(false);
         }
+
+        // Disable Animator
+        if (playerAnimator != null)
+            playerAnimator.enabled = false;
 
         Time.timeScale = 0f;
 
@@ -87,6 +94,10 @@ public class PauseManager : MonoBehaviour
 
         pauseMenuUI.SetActive(false);
         isPaused = false;
+
+        // Enable Animator
+        if (playerAnimator != null)
+            playerAnimator.enabled = true;
 
         foreach (var ui in HUD)
         {
@@ -120,6 +131,10 @@ public class PauseManager : MonoBehaviour
         isPaused = false;
 
         Time.timeScale = 1f;
+
+        if (playerAnimator != null)
+            playerAnimator.speed = 1f;
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 

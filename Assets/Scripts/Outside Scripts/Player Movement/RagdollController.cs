@@ -14,6 +14,8 @@ public class RagdollController : MonoBehaviour
     public Camera deathCamera;
     public Transform chestBone;
     public Inventory inventory;
+    public PauseManager pauseManager;
+    public DeathTransition deathScreen;
 
     Collider[] RagdollCollider;
     Rigidbody[] RagdollRigid;
@@ -35,9 +37,19 @@ public class RagdollController : MonoBehaviour
 
     public void RagdollOn()
     {
+        // Drop equipped item
         if (inventory != null)
         {
             inventory.HandleDropEquippedItem();
+
+            // Disable Inventory script
+            inventory.enabled = false;
+        }
+
+        // Disable PauseManager script
+        if (pauseManager != null)
+        {
+            pauseManager.enabled = false;
         }
 
         animator.enabled = false;
@@ -47,6 +59,7 @@ public class RagdollController : MonoBehaviour
             if (col != playerCollider && col != groundChecker)
                 col.enabled = true;
         }
+
         foreach (Rigidbody rb in RagdollRigid)
         {
             rb.isKinematic = false;
@@ -66,6 +79,11 @@ public class RagdollController : MonoBehaviour
         if (movement != null)
         {
             movement.enabled = false;
+        }
+
+        if (deathScreen != null)
+        {
+            deathScreen.PlayDeath();
         }
     }
 
@@ -90,10 +108,16 @@ public class RagdollController : MonoBehaviour
 
         BagRigid.isKinematic = true;
 
-        // (optional) re-enable movement if you ever revive
         if (movement != null)
         {
             movement.enabled = true;
         }
+
+        // re-enable if the player revive
+        if (inventory != null)
+            inventory.enabled = true;
+
+        if (pauseManager != null)
+            pauseManager.enabled = true;
     }
 }
