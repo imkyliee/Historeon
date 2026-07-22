@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c7ab1770789e4b40be88b167cfe89cd, type: 3}
+  m_Name: Rolled Sleeping bag
+  m_EditorClassIdentifier: 
+  itemName: Rolled Sleeping bag
+  icon: {fileID: 21300000, guid: 1b041dd912ead4142be1fedc86b55555, type: 3}
+  maxStackSize: 1
+  itemPrefab: {fileID: 6771696975549969023, guid: 9f6bea97b206dab4388b816ed9842086, type: 3}
+  handItemPrefab: {fileID: 6771696975549969023, guid: f424f43bd16ce0240a264421c3c2f7ef, type: 3}

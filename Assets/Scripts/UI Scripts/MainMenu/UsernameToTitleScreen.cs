@@ -5,10 +5,16 @@ using TMPro;
 public class UsernameMenuController : MonoBehaviour
 {
     public TMP_InputField usernameInput;
+    public TMP_Text warningText; 
+
+    void Start()
+    {
+        if (warningText != null)
+            warningText.gameObject.SetActive(false);
+    }
 
     void Update()
     {
-        
         if (Input.GetKeyDown(KeyCode.Return))
         {
             SubmitUsername();
@@ -17,14 +23,25 @@ public class UsernameMenuController : MonoBehaviour
 
     public void SubmitUsername()
     {
-        string playerName = usernameInput.text;
+        string playerName = usernameInput.text.Trim();
 
-        if (string.IsNullOrWhiteSpace(playerName))
+        if (string.IsNullOrEmpty(playerName))
+        {
+            if (warningText != null)
+            {
+                warningText.gameObject.SetActive(true);
+            }
+
             return;
+        }
+
+        // Hide the warning if a valid username is entered
+        if (warningText != null)
+            warningText.gameObject.SetActive(false);
 
         PlayerPrefs.SetString("Username", playerName);
         PlayerPrefs.Save();
 
-        SceneManager.LoadScene("Main Menu");
+        SceneManager.LoadScene("Dynamic Main Menu");
     }
 }

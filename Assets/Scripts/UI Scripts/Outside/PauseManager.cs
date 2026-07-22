@@ -3,21 +3,26 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PauseManager : MonoBehaviour
-{
-    public Inventory inventory;
-    public GameObject pauseMenuUI;
-    public SceneTransition transition;
-    
-    // singleton instance
+{// Singleton
     public static PauseManager Instance { get; private set; }
+
+    // Properties
     public bool IsPaused => isPaused;
 
-    public GameObject[] HUD;
-    public MonoBehaviour[] disableOnPause;
-
-    [Header("Player")]
+    [Header("References")]
+    public Inventory inventory;
+    public SceneTransition transition;
     public Animator playerAnimator;
 
+   [Header("UI")]
+    public GameObject pauseMenuUI;
+    public GameObject optionsMenuUI;
+    public GameObject[] HUD;
+
+    [Header("Scripts")]
+    public MonoBehaviour[] disableOnPause;
+
+    // State
     private bool isPaused;
 
     private void Awake()
@@ -45,9 +50,21 @@ public class PauseManager : MonoBehaviour
             }
 
             if (isPaused)
-                Resume();
-            else
-                Pause();
+            {
+                // If inside Options, go back to Pause Menu.
+                if (optionsMenuUI.activeSelf)
+                {
+                    CloseOptions();
+                }
+                else
+                {
+                    Resume();
+                }
+
+                return;
+            }
+
+            Pause();
         }
     }
 
@@ -85,6 +102,17 @@ public class PauseManager : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+    public void OpenOptions()
+    {
+        pauseMenuUI.SetActive(false);
+        optionsMenuUI.SetActive(true);
+    }
+
+    public void CloseOptions()
+    {
+        optionsMenuUI.SetActive(false);
+        pauseMenuUI.SetActive(true);
     }
 
     public void Resume()
@@ -139,6 +167,6 @@ public class PauseManager : MonoBehaviour
         Cursor.visible = true;
 
         if (transition != null)
-            transition.OnButtonPressed("Main Menu");
+            transition.OnButtonPressed("Dynamic Main Menu");
     }
 }
