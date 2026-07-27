@@ -9,7 +9,7 @@ public class Inventory : MonoBehaviour
 {
     [Header("Test Items")]
     public ItemSO flashlightitem;
-    public ItemSO sphereitem;
+    public ItemSO sleepingbagitem;
 
 
     [Header("UI References")]
@@ -88,6 +88,30 @@ public class Inventory : MonoBehaviour
     public bool IsHoldingItem()
     {
         return currentHandItem != null;
+    }
+    public bool IsHoldingItem(ItemSO item)
+    {
+        if (equippedHotbarIndex < 0 || equippedHotbarIndex >= hotbarSlots.Count)
+            return false;
+
+        Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
+
+        if (!equippedSlot.HasItem())
+            return false;
+
+        return equippedSlot.GetItem() == item;
+    }
+    public bool HasItem(ItemSO item)
+    {
+        foreach (Slot slot in allSlots)
+        {
+            if (slot.HasItem() && slot.GetItem() == item)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void AddItem(ItemSO ItemToAdd, int amount)

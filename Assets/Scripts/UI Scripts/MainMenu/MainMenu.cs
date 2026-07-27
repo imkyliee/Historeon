@@ -26,8 +26,14 @@ public class MainMenu : MonoBehaviour
     [Header("Animation")]
     public float transitionDuration = 0.5f;
 
+    [Header("Audio")]
+    private SoundManager soundManager;
+
+
     void Start()
     {
+        soundManager = FindFirstObjectByType<SoundManager>();
+
         TitleScreen.SetActive(true);
         MainMenuButtons.SetActive(true);
 
@@ -38,10 +44,12 @@ public class MainMenu : MonoBehaviour
             volumeSlider.interactable = false;
     }
 
+
     public void PlayGame()
     {
         StartCoroutine(PlayGameRoutine());
     }
+
 
     IEnumerator PlayGameRoutine()
     {
@@ -50,16 +58,26 @@ public class MainMenu : MonoBehaviour
 
         yield return new WaitForSeconds(transitionDuration);
 
+
+        // Destroy background music
+        if (soundManager != null)
+        {
+            soundManager.DestroySound();
+        }
+
+
         TitleScreen.SetActive(false);
         MainMenuButtons.SetActive(false);
 
         sceneTransition.OnButtonPressed("Outside");
     }
 
+
     public void OpenOptions()
     {
         StartCoroutine(OpenOptionsRoutine());
     }
+
 
     IEnumerator OpenOptionsRoutine()
     {
@@ -78,10 +96,12 @@ public class MainMenu : MonoBehaviour
             volumeSlider.interactable = true;
     }
 
+
     public void OpenQuit()
     {
         StartCoroutine(OpenQuitRoutine());
     }
+
 
     IEnumerator OpenQuitRoutine()
     {
@@ -96,26 +116,35 @@ public class MainMenu : MonoBehaviour
         quitMenu.SetActive(true);
         quitMenuAnimator.Play("QuitMenu Open");
     }
+
+
     public void Back()
     {
         StartCoroutine(BackRoutine());
     }
+
 
     IEnumerator BackRoutine()
     {
         if (optionMenu.activeSelf)
         {
             optionMenuAnimator.Play("OptionMenu Close");
+
             yield return new WaitForSeconds(transitionDuration);
+
             optionMenu.SetActive(false);
         }
+
 
         if (quitMenu.activeSelf)
         {
             quitMenuAnimator.Play("QuitMenu Close");
+
             yield return new WaitForSeconds(transitionDuration);
+
             quitMenu.SetActive(false);
         }
+
 
         TitleScreen.SetActive(true);
         MainMenuButtons.SetActive(true);
@@ -123,14 +152,15 @@ public class MainMenu : MonoBehaviour
         TitleScreenAnimator.Play("TitleScreen Open");
         MainMenuButtonsAnimator.Play("MainMenu Open");
 
+
         if (volumeSlider != null)
             volumeSlider.interactable = false;
     }
+
 
     public void QuitGame()
     {
         Debug.Log("Quit Game");
         Application.Quit();
-
     }
 }

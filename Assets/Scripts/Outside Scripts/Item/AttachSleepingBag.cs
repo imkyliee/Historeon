@@ -1,42 +1,74 @@
 using UnityEngine;
+using UnityEngine.UI;
 
-public class AttachSleepingBag : MonoBehaviour
+public class AttachSleepingBagToBackpack : MonoBehaviour
 {
-    public Camera cam;
-    public float interactDistance = 3f;
+    [Header("References")]
+    public Inventory inventory;
+    public Camera playerCamera;
 
-    public GameObject backpack;
+    [Header("Backpack Objects")]
+    public GameObject normalBackpack;
     public GameObject backpackWithSleepingBag;
 
-    public GameObject heldSleepingBag; // assign in Inspector
+    [Header("UI")]
+    public GameObject pickupUI;
+
+    [Header("Raycast")]
+    public float interactDistance = 3f;
+    public LayerMask backpackLayer;
+
+    private bool lookingAtBackpack;
+
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        CheckBackpack();
+
+        if (lookingAtBackpack && Input.GetKeyDown(KeyCode.E))
         {
-            Ray ray = new Ray(cam.transform.position, cam.transform.forward);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, interactDistance))
-            {
-                if (hit.collider.CompareTag("Backpack"))
-                {
-                    // Check if player is holding the sleeping bag
-                    if (heldSleepingBag != null && heldSleepingBag.activeInHierarchy)
-                    {
-                        Debug.Log("Attaching sleeping bag");
-
-                        heldSleepingBag.SetActive(false);
-
-                        backpack.SetActive(false);
-                        backpackWithSleepingBag.SetActive(true);
-                    }
-                    else
-                    {
-                        Debug.Log("You don't have the sleeping bag");
-                    }
-                }
-            }
+            AttachSleepingBag();
         }
+    }
+
+
+    void CheckBackpack()
+    {
+        lookingAtBackpack = false;
+
+        Ray ray = new Ray(
+            playerCamera.transform.position,
+            playerCamera.transform.forward
+        );
+
+
+        if (Physics.Raycast(ray, out RaycastHit hit, interactDistance, backpackLayer))
+        {
+            if (inventory.HasItem(inventory.sleepingbagitem))
+            {
+                lookingAtBackpack = true;
+
+                if (pickupUI != null)
+                    pickupUI.SetActive(true);
+            }
+
+            return;
+        }
+
+
+        if (pickupUI != null)
+            pickupUI.SetActive(false);
+    }
+
+
+    void AttachSleepingBag()
+    {
+        normalBackpack.SetActive(false);
+        backpackWithSleepingBag.SetActive(true);
+
+        if (pickupUI != null)
+            pickupUI.SetActive(false);
+
+        Debug.Log("Sleeping bag attached to backpack");
     }
 }
