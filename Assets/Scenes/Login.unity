@@ -1023,62 +1023,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!1 &588755942
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 588755944}
-  - component: {fileID: 588755943}
-  m_Layer: 0
-  m_Name: MainMenu Management
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &588755943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 588755942}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dbe336519c580134e9e95a42296f1968, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  TitleScreen: {fileID: 0}
-  optionMenu: {fileID: 0}
-  quitMenu: {fileID: 0}
-  MainMenuButtons: {fileID: 0}
-  TitleScreenAnimator: {fileID: 0}
-  optionMenuAnimator: {fileID: 0}
-  quitMenuAnimator: {fileID: 0}
-  MainMenuButtonsAnimator: {fileID: 0}
-  sceneTransition: {fileID: 1620131778}
-  gameSceneName: Outside
-  volumeSlider: {fileID: 0}
-  transitionDuration: 0.5
---- !u!4 &588755944
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 588755942}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &662231580
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2891,17 +2835,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Padding: {x: -8, y: -5, z: -8, w: -5}
   m_Softness: {x: 0, y: 0}
---- !u!114 &1620131778 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6504416903463949332, guid: dbf1632afe29e0443bd76eeb70aa8a95, type: 3}
-  m_PrefabInstance: {fileID: 1391319081}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 05945db36c61086448f08b1e79dd5b37, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &1628842955 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 270ad9342e040db4b84b061854b2fef5, type: 3}
@@ -13426,7 +13359,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 1391319081}
   - {fileID: 7801700554280968252}
-  - {fileID: 588755944}
   - {fileID: 2061720172}
   - {fileID: 1500700070}
   - {fileID: 891936057}

@@ -650,6 +650,33 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 305f277e1529222439b495a441de2f0b, type: 3}
   m_PrefabInstance: {fileID: 84067255}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &91861603 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3111565609762313623, guid: 7cb0aa015b56b0549b20e88bd94a0073, type: 3}
+  m_PrefabInstance: {fileID: 1140837679}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &91861607
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91861603}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -6360558719573625917, guid: 7cb0aa015b56b0549b20e88bd94a0073, type: 3}
 --- !u!114 &116586827
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4863,6 +4890,9 @@ MonoBehaviour:
   whatIsPlayer:
     serializedVersion: 2
     m_Bits: 256
+  whatIsObstacle:
+    serializedVersion: 2
+    m_Bits: 0
   walkPoint: {x: 0, y: 0, z: 0}
   walkPointRange: 5
   sightRange: 15
@@ -5118,6 +5148,9 @@ MonoBehaviour:
   whatIsPlayer:
     serializedVersion: 2
     m_Bits: 256
+  whatIsObstacle:
+    serializedVersion: 2
+    m_Bits: 0
   walkPoint: {x: 0, y: 0, z: 0}
   walkPointRange: 5
   sightRange: 15
@@ -16099,7 +16132,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -3111565609762313623, guid: 7cb0aa015b56b0549b20e88bd94a0073, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 91861607}
+    - targetCorrespondingSourceObject: {fileID: -1807970279642858887, guid: 7cb0aa015b56b0549b20e88bd94a0073, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1711718876}
   m_SourcePrefab: {fileID: 100100000, guid: 7cb0aa015b56b0549b20e88bd94a0073, type: 3}
 --- !u!1 &1143681721
 GameObject:
@@ -20817,7 +20856,7 @@ Transform:
   m_GameObject: {fileID: 1678027094}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.2, y: -0.26, z: 57.4}
+  m_LocalPosition: {x: -7.2, y: -0.26, z: 57.863}
   m_LocalScale: {x: 9.34, y: 5.29, z: 7.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21185,6 +21224,33 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1703951326}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1711718872 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -1807970279642858887, guid: 7cb0aa015b56b0549b20e88bd94a0073, type: 3}
+  m_PrefabInstance: {fileID: 1140837679}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &1711718876
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1711718872}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 8733429697405204941, guid: 7cb0aa015b56b0549b20e88bd94a0073, type: 3}
 --- !u!224 &1712535628 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2320460307852828720, guid: b781b3b133ba6854c89b932d783a5bbf, type: 3}
@@ -21478,6 +21544,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3322609632041587732, guid: 71c38ef552375d7439a22beffa68c61d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4164364890556834293, guid: 71c38ef552375d7439a22beffa68c61d, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4438517161399539565, guid: 71c38ef552375d7439a22beffa68c61d, type: 3}
@@ -28340,6 +28410,9 @@ MonoBehaviour:
   whatIsPlayer:
     serializedVersion: 2
     m_Bits: 256
+  whatIsObstacle:
+    serializedVersion: 2
+    m_Bits: 0
   walkPoint: {x: 0, y: 0, z: 0}
   walkPointRange: 5
   sightRange: 15
