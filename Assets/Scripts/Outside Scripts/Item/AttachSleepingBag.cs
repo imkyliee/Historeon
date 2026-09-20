@@ -44,7 +44,7 @@ public class AttachSleepingBagToBackpack : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactDistance, backpackLayer))
         {
-            if (inventory.HasItem(inventory.sleepingbagitem))
+            if (inventory.HasItem(inventory.bagitem))
             {
                 lookingAtBackpack = true;
 

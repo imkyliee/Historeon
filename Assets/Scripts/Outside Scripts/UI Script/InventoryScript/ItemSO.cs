@@ -8,4 +8,7 @@ public class ItemSO : ScriptableObject
    public int maxStackSize;
    public GameObject itemPrefab;
    public GameObject handItemPrefab;
+
+   [Header("Equipment")]
+    public bool isTwoHanded;
 }

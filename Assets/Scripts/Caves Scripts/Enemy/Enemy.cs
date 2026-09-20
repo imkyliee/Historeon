@@ -6,16 +6,15 @@ public class Enemy : MonoBehaviour
     [Header("References")]
     [SerializeField] private NavMeshAgent agent;
     [SerializeField] private Transform player;
-    [SerializeField] private Animator animator;
+    [SerializeField] private EnemyAnimation enemyAnimation;
+    [SerializeField] private EnemyHealth health;
+
     private PlayerHealth playerHealth;
 
     [Header("Layers")]
     [SerializeField] private LayerMask whatIsGround;
     [SerializeField] private LayerMask whatIsPlayer;
     [SerializeField] private LayerMask whatBlocksSight;
-
-    [Header("Health")]
-    [SerializeField] private float health = 100f;
 
     [Header("Patrolling")]
     [SerializeField] private Collider patrolArea;
@@ -27,10 +26,11 @@ public class Enemy : MonoBehaviour
     private bool patrolWaiting;
     private float patrolWaitTimer;
 
-   [Header("Attacking")]
+    [Header("Attacking")]
     [SerializeField] private float timeBetweenAttacks = 2f;
     [SerializeField] private float attackRange = 2f;
     [SerializeField] private int attackDamage = 10;
+
     private bool alreadyAttacked;
 
     [Header("Detection")]
@@ -49,10 +49,6 @@ public class Enemy : MonoBehaviour
     private bool waitingAtLastKnownPosition;
     private float lastKnownWaitTimer;
 
-    [Header("Animation")]
-    [SerializeField] private float animationCrossfade = 0.2f;
-
-    private string currentAnimation = "";
     private bool dead;
 
     private void Awake()
@@ -60,25 +56,36 @@ public class Enemy : MonoBehaviour
         if (agent == null)
             agent = GetComponent<NavMeshAgent>();
 
-        if (animator == null)
-            animator = GetComponent<Animator>();
+        if (enemyAnimation == null)
+            enemyAnimation = GetComponent<EnemyAnimation>();
+
+        if (health == null)
+            health = GetComponent<EnemyHealth>();
 
         if (player == null)
         {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            GameObject playerObject =
+                GameObject.FindGameObjectWithTag("Player");
 
             if (playerObject != null)
             {
                 player = playerObject.transform;
-                playerHealth = playerObject.GetComponent<PlayerHealth>();
+                playerHealth =
+                    playerObject.GetComponent<PlayerHealth>();
+
+                if (playerHealth == null)
+                    playerHealth =
+                        playerObject.GetComponentInParent<PlayerHealth>();
             }
         }
         else
         {
-            playerHealth = player.GetComponent<PlayerHealth>();
+            playerHealth =
+                player.GetComponent<PlayerHealth>();
 
             if (playerHealth == null)
-                playerHealth = player.GetComponentInParent<PlayerHealth>();
+                playerHealth =
+                    player.GetComponentInParent<PlayerHealth>();
         }
 
         if (patrolWaitMax < patrolWaitMin)
@@ -95,13 +102,10 @@ public class Enemy : MonoBehaviour
         {
             alreadyAttacked = false;
             patrolWaiting = false;
-
             CancelInvoke(nameof(ResetAttack));
 
             if (agent.isOnNavMesh)
-            {
                 agent.isStopped = false;
-            }
 
             Patroling();
             return;
@@ -220,34 +224,14 @@ public class Enemy : MonoBehaviour
         return false;
     }
 
-    private void ChangeAnimation(
-        string animationName,
-        float crossfade = 0.2f)
-    {
-        if (animator == null)
-            return;
-
-        if (currentAnimation == animationName)
-            return;
-
-        currentAnimation = animationName;
-
-        animator.CrossFade(
-            animationName,
-            crossfade
-        );
-    }
-
     private void Patroling()
     {
         if (patrolWaiting)
         {
             agent.isStopped = true;
 
-            ChangeAnimation(
-                "Idle",
-                animationCrossfade
-            );
+            if (enemyAnimation != null)
+                enemyAnimation.PlayIdle();
 
             patrolWaitTimer -= Time.deltaTime;
 
@@ -266,10 +250,8 @@ public class Enemy : MonoBehaviour
 
             if (!walkPointSet)
             {
-                ChangeAnimation(
-                    "Idle",
-                    animationCrossfade
-                );
+                if (enemyAnimation != null)
+                    enemyAnimation.PlayIdle();
 
                 return;
             }
@@ -277,17 +259,14 @@ public class Enemy : MonoBehaviour
 
         agent.isStopped = false;
 
-        ChangeAnimation(
-            "Walk",
-            animationCrossfade
-        );
+        if (enemyAnimation != null)
+            enemyAnimation.PlayWalk();
 
         if (!agent.pathPending &&
             agent.remainingDistance <=
             agent.stoppingDistance + 0.2f)
         {
             agent.isStopped = true;
-
             walkPointSet = false;
             patrolWaiting = true;
 
@@ -297,10 +276,8 @@ public class Enemy : MonoBehaviour
                     patrolWaitMax
                 );
 
-            ChangeAnimation(
-                "Idle",
-                animationCrossfade
-            );
+            if (enemyAnimation != null)
+                enemyAnimation.PlayIdle();
 
             return;
         }
@@ -328,10 +305,11 @@ public class Enemy : MonoBehaviour
     private void SearchWalkPoint()
     {
         if (patrolArea == null)
+        {
             return;
+        }
 
-        Bounds bounds =
-            patrolArea.bounds;
+        Bounds bounds = patrolArea.bounds;
 
         for (int i = 0; i < 30; i++)
         {
@@ -350,18 +328,17 @@ public class Enemy : MonoBehaviour
             Vector3 randomPoint =
                 new Vector3(
                     randomX,
-                    bounds.center.y,
+                    transform.position.y,
                     randomZ
                 );
 
             if (NavMesh.SamplePosition(
                 randomPoint,
                 out NavMeshHit hit,
-                5f,
-                NavMesh.AllAreas))
+                2f,
+                agent.areaMask))
             {
-                NavMeshPath path =
-                    new NavMeshPath();
+                NavMeshPath path = new NavMeshPath();
 
                 bool pathFound =
                     agent.CalculatePath(
@@ -373,18 +350,10 @@ public class Enemy : MonoBehaviour
                     path.status ==
                     NavMeshPathStatus.PathComplete)
                 {
-                    walkPoint =
-                        hit.position;
-
-                    walkPointSet =
-                        true;
-
-                    agent.isStopped =
-                        false;
-
-                    agent.SetDestination(
-                        walkPoint
-                    );
+                    walkPoint = hit.position;
+                    walkPointSet = true;
+                    agent.isStopped = false;
+                    agent.SetDestination(walkPoint);
 
                     return;
                 }
@@ -398,24 +367,18 @@ public class Enemy : MonoBehaviour
     {
         patrolWaiting = false;
         walkPointSet = false;
-
         goingToLastKnownPosition = false;
         waitingAtLastKnownPosition = false;
 
         agent.isStopped = false;
 
-        ChangeAnimation(
-            "Walk",
-            animationCrossfade
-        );
+        if (enemyAnimation != null)
+            enemyAnimation.PlayWalk();
 
-        agent.SetDestination(
-            player.position
-        );
+        agent.SetDestination(player.position);
 
         Vector3 direction =
-            player.position -
-            transform.position;
+            player.position - transform.position;
 
         direction.y = 0f;
 
@@ -439,7 +402,8 @@ public class Enemy : MonoBehaviour
         {
             agent.isStopped = true;
 
-            ChangeAnimation("Idle", animationCrossfade);
+            if (enemyAnimation != null)
+                enemyAnimation.PlayIdle();
 
             lastKnownWaitTimer -= Time.deltaTime;
 
@@ -449,7 +413,6 @@ public class Enemy : MonoBehaviour
                 waitingAtLastKnownPosition = false;
                 hasLastKnownPosition = false;
                 goingToLastKnownPosition = false;
-
                 walkPointSet = false;
                 patrolWaiting = false;
             }
@@ -460,7 +423,6 @@ public class Enemy : MonoBehaviour
         if (!goingToLastKnownPosition)
         {
             goingToLastKnownPosition = true;
-
             patrolWaiting = false;
             walkPointSet = false;
 
@@ -472,9 +434,7 @@ public class Enemy : MonoBehaviour
                 NavMesh.AllAreas))
             {
                 lastKnownPosition = hit.position;
-
                 agent.isStopped = false;
-
                 agent.SetDestination(lastKnownPosition);
             }
             else
@@ -482,10 +442,8 @@ public class Enemy : MonoBehaviour
                 // If the position cannot be reached, forget it and patrol.
                 goingToLastKnownPosition = false;
                 hasLastKnownPosition = false;
-
                 patrolWaiting = false;
                 walkPointSet = false;
-
                 agent.isStopped = false;
 
                 return;
@@ -494,20 +452,21 @@ public class Enemy : MonoBehaviour
 
         agent.isStopped = false;
 
-        ChangeAnimation("Walk", animationCrossfade);
+        if (enemyAnimation != null)
+            enemyAnimation.PlayWalk();
 
         // Enemy reached the last known position.
         if (!agent.pathPending &&
-            agent.remainingDistance <= agent.stoppingDistance + 0.2f)
+            agent.remainingDistance <=
+            agent.stoppingDistance + 0.2f)
         {
             agent.isStopped = true;
-
             goingToLastKnownPosition = false;
             waitingAtLastKnownPosition = true;
-
             lastKnownWaitTimer = lastKnownWaitTime;
 
-            ChangeAnimation("Idle", animationCrossfade);
+            if (enemyAnimation != null)
+                enemyAnimation.PlayIdle();
 
             return;
         }
@@ -537,18 +496,22 @@ public class Enemy : MonoBehaviour
         agent.isStopped = true;
         agent.ResetPath();
 
-        Vector3 direction = player.position - transform.position;
+        Vector3 direction =
+            player.position - transform.position;
+
         direction.y = 0f;
 
         if (direction.sqrMagnitude > 0.01f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            Quaternion targetRotation =
+                Quaternion.LookRotation(direction);
 
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                targetRotation,
-                Time.deltaTime * 10f
-            );
+            transform.rotation =
+                Quaternion.Slerp(
+                    transform.rotation,
+                    targetRotation,
+                    Time.deltaTime * 10f
+                );
         }
 
         if (!alreadyAttacked)
@@ -556,10 +519,14 @@ public class Enemy : MonoBehaviour
             alreadyAttacked = true;
 
             // Start the attack animation.
-            ChangeAnimation("Attack", animationCrossfade);
+            if (enemyAnimation != null)
+                enemyAnimation.PlayAttack();
 
             // Animation Event will call DealAttackDamage().
-            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+            Invoke(
+                nameof(ResetAttack),
+                Mathf.Max(0.01f, timeBetweenAttacks)
+            );
         }
     }
 
@@ -568,19 +535,22 @@ public class Enemy : MonoBehaviour
         if (dead || player == null)
             return;
 
-        float distance = Vector3.Distance(
-            transform.position,
-            player.position
-        );
+        float distance =
+            Vector3.Distance(
+                transform.position,
+                player.position
+            );
 
         // Make sure the player is still close enough when the attack lands.
         if (distance > attackRange + 0.5f)
             return;
 
-        PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
+        PlayerHealth playerHealth =
+            player.GetComponent<PlayerHealth>();
 
         if (playerHealth == null)
-            playerHealth = player.GetComponentInParent<PlayerHealth>();
+            playerHealth =
+                player.GetComponentInParent<PlayerHealth>();
 
         if (playerHealth != null)
         {
@@ -591,7 +561,9 @@ public class Enemy : MonoBehaviour
     private void ResetAttack()
     {
         alreadyAttacked = false;
-        currentAnimation = "";
+
+        if (enemyAnimation != null)
+            enemyAnimation.ResetAnimationState();
     }
 
     public void TakeDamage(int damage)
@@ -599,14 +571,17 @@ public class Enemy : MonoBehaviour
         if (dead)
             return;
 
-        health -= damage;
+        if (health == null)
+            return;
 
-        if (health <= 0f)
-            Die();
+        health.TakeDamage(damage);
     }
 
-    private void Die()
+    public void Die()
     {
+        if (dead)
+            return;
+
         dead = true;
 
         if (agent != null)
@@ -617,7 +592,8 @@ public class Enemy : MonoBehaviour
 
         CancelInvoke();
 
-        ChangeAnimation("Death", animationCrossfade);
+        if (enemyAnimation != null)
+            enemyAnimation.PlayDeath();
 
         Invoke(nameof(DestroyEnemy), 0.5f);
     }
@@ -630,48 +606,115 @@ public class Enemy : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        Gizmos.DrawWireSphere(
+            transform.position,
+            attackRange
+        );
+
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, sightRange);
-        Vector3 origin = transform.position + Vector3.up * 0.1f;
 
-        float halfFOV = fieldOfView * 0.5f;
+        Gizmos.DrawWireSphere(
+            transform.position,
+            sightRange
+        );
 
-        Vector3 leftDirection = Quaternion.Euler(0f, -halfFOV, 0f) * transform.forward;
-        Vector3 rightDirection = Quaternion.Euler(0f, halfFOV, 0f) * transform.forward;
+        Vector3 origin =
+            transform.position + Vector3.up * 0.1f;
+
+        float halfFOV =
+            fieldOfView * 0.5f;
+
+        Vector3 leftDirection =
+            Quaternion.Euler(
+                0f,
+                -halfFOV,
+                0f
+            ) * transform.forward;
+
+        Vector3 rightDirection =
+            Quaternion.Euler(
+                0f,
+                halfFOV,
+                0f
+            ) * transform.forward;
 
         Gizmos.color = Color.cyan;
-        Gizmos.DrawLine(origin, origin + leftDirection * sightRange);
-        Gizmos.DrawLine(origin, origin + rightDirection * sightRange);
+
+        Gizmos.DrawLine(
+            origin,
+            origin + leftDirection * sightRange
+        );
+
+        Gizmos.DrawLine(
+            origin,
+            origin + rightDirection * sightRange
+        );
+
         Gizmos.color = Color.green;
-        Gizmos.DrawLine(origin, origin + transform.forward * sightRange);
+
+        Gizmos.DrawLine(
+            origin,
+            origin + transform.forward * sightRange
+        );
 
         if (patrolArea != null)
         {
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireCube(patrolArea.bounds.center, patrolArea.bounds.size);
+
+            Gizmos.DrawWireCube(
+                patrolArea.bounds.center,
+                patrolArea.bounds.size
+            );
         }
 
         if (walkPointSet)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawSphere(walkPoint, 0.3f);
-            Gizmos.DrawLine(transform.position, walkPoint);
+
+            Gizmos.DrawSphere(
+                walkPoint,
+                0.3f
+            );
+
+            Gizmos.DrawLine(
+                transform.position,
+                walkPoint
+            );
         }
 
         if (hasLastKnownPosition)
         {
             Gizmos.color = Color.magenta;
-            Gizmos.DrawSphere(lastKnownPosition, 0.3f);
-            Gizmos.DrawLine(transform.position, lastKnownPosition);
+
+            Gizmos.DrawSphere(
+                lastKnownPosition,
+                0.3f
+            );
+
+            Gizmos.DrawLine(
+                transform.position,
+                lastKnownPosition
+            );
         }
 
         if (player != null)
         {
-            Vector3 rayStart = transform.position + Vector3.up * 1.5f;
-            Vector3 rayEnd = player.position + Vector3.up * 1.0f;
-            Gizmos.color = CanSeePlayer() ? Color.green : Color.red;
-            Gizmos.DrawLine(rayStart, rayEnd);
+            Vector3 rayStart =
+                transform.position + Vector3.up * 1.5f;
+
+            Vector3 rayEnd =
+                player.position + Vector3.up * 1.0f;
+
+            Gizmos.color =
+                CanSeePlayer()
+                    ? Color.green
+                    : Color.red;
+
+            Gizmos.DrawLine(
+                rayStart,
+                rayEnd
+            );
         }
     }
 }

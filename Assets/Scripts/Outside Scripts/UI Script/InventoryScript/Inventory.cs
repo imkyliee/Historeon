@@ -9,7 +9,9 @@ public class Inventory : MonoBehaviour
 {
     [Header("Test Items")]
     public ItemSO flashlightitem;
-    public ItemSO sleepingbagitem;
+    public ItemSO bagitem;
+    public ItemSO hatchetitem;
+
 
 
     [Header("UI References")]
@@ -36,7 +38,10 @@ public class Inventory : MonoBehaviour
 
 
     [Header("Equipment")]
-    public Transform hand;
+    public Transform flashlightHand;
+    public Transform bagHand;
+    public Transform hatchetHand;
+
     private GameObject currentHandItem;
     
 
@@ -84,6 +89,37 @@ public class Inventory : MonoBehaviour
 
             HandleItemUse();
     }
+    private Transform GetHandForItem(ItemSO item)
+    {
+        if (item == flashlightitem)
+            return flashlightHand;
+
+        if (item == bagitem)
+            return bagHand;
+
+        if (item == hatchetitem)
+            return hatchetHand;
+
+        return null;
+    }
+    public bool IsHoldingTwoHandedItem()
+    {
+        if (equippedHotbarIndex < 0 || equippedHotbarIndex >= hotbarSlots.Count)
+            return false;
+
+        Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
+
+        if (!equippedSlot.HasItem())
+            return false;
+
+        ItemSO equippedItem = equippedSlot.GetItem();
+
+        if (equippedItem == null)
+            return false;
+
+        return equippedItem.isTwoHanded;
+    }
+
 
     public bool IsHoldingItem()
     {
@@ -346,7 +382,7 @@ public class Inventory : MonoBehaviour
 
     public void HandleDropEquippedItem()
     {
-        if (!Input.GetKeyDown(KeyCode.G)) return;
+        if (!Input.GetKeyDown(KeyCode.Q)) return;
 
         Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
         if (!equippedSlot.HasItem()) return;
@@ -400,8 +436,9 @@ public class Inventory : MonoBehaviour
     private void EquipHandItem()
     {
         if (equippedHotbarIndex < 0 || equippedHotbarIndex >= hotbarSlots.Count)
-        return;
+            return;
 
+        // Destroy currently held item
         if (currentHandItem != null)
         {
             Destroy(currentHandItem);
@@ -409,14 +446,30 @@ public class Inventory : MonoBehaviour
         }
 
         Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
-        if(!equippedSlot.HasItem()) return;
+
+        if (!equippedSlot.HasItem())
+            return;
 
         ItemSO item = equippedSlot.GetItem();
-        if(item.handItemPrefab == null) return;
 
-        currentHandItem = Instantiate(item.handItemPrefab, hand);
+        if (item.handItemPrefab == null)
+            return;
+
+        // Get the correct hand transform
+        Transform selectedHand = GetHandForItem(item);
+
+        if (selectedHand == null)
+        {
+            Debug.LogWarning("No hand transform assigned for: " + item.itemName);
+            return;
+        }
+
+        // Spawn the hand item on the correct hand
+        currentHandItem = Instantiate(item.handItemPrefab, selectedHand);
+
         currentHandItem.transform.localPosition = Vector3.zero;
         currentHandItem.transform.localRotation = Quaternion.identity;
+        currentHandItem.transform.localScale = Vector3.one;
 
         // Disable all colliders
         foreach (Collider col in currentHandItem.GetComponentsInChildren<Collider>())
@@ -431,7 +484,7 @@ public class Inventory : MonoBehaviour
             rb.useGravity = false;
         }
 
-        // Disable Item.cs  
+        // Disable Item.cs
         Item itemComponent = currentHandItem.GetComponentInChildren<Item>();
 
         if (itemComponent != null)
