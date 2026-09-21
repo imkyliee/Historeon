@@ -150,18 +150,19 @@ public class Inventory : MonoBehaviour
         return false;
     }
 
-    public void AddItem(ItemSO ItemToAdd, int amount)
+   public void AddItem(ItemSO ItemToAdd, int amount)
     {
         int remaining = amount;
 
-        foreach(Slot slot in allSlots)
+        // Try stacking in the hotbar first
+        foreach (Slot slot in hotbarSlots)
         {
-            if(slot.HasItem() && slot.GetItem() == ItemToAdd)
+            if (slot.HasItem() && slot.GetItem() == ItemToAdd)
             {
                 int currentAmount = slot.GetAmount();
                 int maxStack = ItemToAdd.maxStackSize;
 
-                if(currentAmount < maxStack)
+                if (currentAmount < maxStack)
                 {
                     int spaceLeft = maxStack - currentAmount;
                     int amountToAdd = Mathf.Min(spaceLeft, remaining);
@@ -169,26 +170,67 @@ public class Inventory : MonoBehaviour
                     slot.SetItem(ItemToAdd, currentAmount + amountToAdd);
                     remaining -= amountToAdd;
 
-                    if(remaining <= 0)
-                    return;
+                    if (remaining <= 0)
+                        return;
                 }
             }
         }
-        foreach(Slot slot in allSlots)
+
+        // Try empty hotbar slots
+        foreach (Slot slot in hotbarSlots)
         {
             if (!slot.HasItem())
             {
                 int amountToPlace = Mathf.Min(ItemToAdd.maxStackSize, remaining);
+
                 slot.SetItem(ItemToAdd, amountToPlace);
                 remaining -= amountToPlace;
 
-                if(remaining <= 0)
-                return;
+                if (remaining <= 0)
+                    return;
             }
         }
-        if(remaining > 0)
+
+        // If hotbar is full, put the item in the inventory
+        foreach (Slot slot in inventorySlots)
         {
-            Debug.Log("Inventory Is Full, could not add " + remaining + " of "+ ItemToAdd.itemName);
+            if (slot.HasItem() && slot.GetItem() == ItemToAdd)
+            {
+                int currentAmount = slot.GetAmount();
+                int maxStack = ItemToAdd.maxStackSize;
+
+                if (currentAmount < maxStack)
+                {
+                    int spaceLeft = maxStack - currentAmount;
+                    int amountToAdd = Mathf.Min(spaceLeft, remaining);
+
+                    slot.SetItem(ItemToAdd, currentAmount + amountToAdd);
+                    remaining -= amountToAdd;
+
+                    if (remaining <= 0)
+                        return;
+                }
+            }
+        }
+
+        // Try empty inventory slots
+        foreach (Slot slot in inventorySlots)
+        {
+            if (!slot.HasItem())
+            {
+                int amountToPlace = Mathf.Min(ItemToAdd.maxStackSize, remaining);
+
+                slot.SetItem(ItemToAdd, amountToPlace);
+                remaining -= amountToPlace;
+
+                if (remaining <= 0)
+                    return;
+            }
+        }
+
+        if (remaining > 0)
+        {
+            Debug.Log("Inventory Is Full, could not add " + remaining + " of " + ItemToAdd.itemName);
         }
     }
 
@@ -238,26 +280,40 @@ public class Inventory : MonoBehaviour
 
     private void HandleDrop(Slot from, Slot to)
     {
-        if(from == to) return;
+        if (from == to)
+            return;
+
+        int fromHotbarIndex = hotbarSlots.IndexOf(from);
 
         // Stacking
-        if(to.HasItem() && to.GetItem() == from.GetItem())
+        if (to.HasItem() && to.GetItem() == from.GetItem())
         {
             int max = to.GetItem().maxStackSize;
             int space = max - to.GetAmount();
 
-            if(space > 0)
+            if (space > 0)
             {
                 int move = Mathf.Min(space, from.GetAmount());
+
                 to.SetItem(to.GetItem(), to.GetAmount() + move);
                 from.SetItem(from.GetItem(), from.GetAmount() - move);
 
-                if(from.GetAmount() <= 0)
-                   from.ClearSlot();
-            }
-            return;
+                if (from.GetAmount() <= 0)
+                    from.ClearSlot();
 
+                // If the destination is a hotbar slot, equip it
+                int hotbarIndex = hotbarSlots.IndexOf(to);
+
+                if (hotbarIndex >= 0)
+                {
+                    equippedHotbarIndex = hotbarIndex;
+                    EquipHandItem();
+                }
+            }
+
+            return;
         }
+
         // Different Item
         if (to.HasItem())
         {
@@ -266,12 +322,35 @@ public class Inventory : MonoBehaviour
 
             to.SetItem(from.GetItem(), from.GetAmount());
             from.SetItem(tempItem, tempAmount);
-            return;
         }
-        // Empty Slot
-        to.SetItem(from.GetItem(), from.GetAmount());
-        from.ClearSlot();
+        else
+        {
+            // Empty Slot
+            to.SetItem(from.GetItem(), from.GetAmount());
+            from.ClearSlot();
+        }
+
+        // Check if the destination is a hotbar slot
+        int hotbarIndexAfterDrop = hotbarSlots.IndexOf(to);
+
+        if (hotbarIndexAfterDrop >= 0)
+        {
+            // Make this hotbar slot the selected/equipped slot
+            equippedHotbarIndex = hotbarIndexAfterDrop;
+
+            // Immediately equip the item
+            EquipHandItem();
+
+            // Update the hotbar visual
+            UpdateHotBarOpacity();
+        }
+        else if (fromHotbarIndex == equippedHotbarIndex)
+        {
+            EquipHandItem();
+            UpdateHotBarOpacity();
+        }
     }
+        
     private void UpdateDragItemPosition()
     {
         if (isDragging)

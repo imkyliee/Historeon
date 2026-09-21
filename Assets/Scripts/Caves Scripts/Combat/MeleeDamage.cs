@@ -20,7 +20,7 @@ public class MeleeDamage : MonoBehaviour
 
         if (hitbox == null)
         {
-           // Debug.LogError("Hatchet needs a Box Collider!");
+            Debug.LogError("Hatchet needs a Box Collider!");
             return;
         }
 
@@ -42,7 +42,7 @@ public class MeleeDamage : MonoBehaviour
             hitbox.enabled = true;
         }
 
-        //Debug.Log("HATCHET ATTACK STARTED");
+        Debug.Log("HATCHET ATTACK STARTED");
     }
 
     // Called by the attack animation
@@ -53,7 +53,25 @@ public class MeleeDamage : MonoBehaviour
         if (hitbox != null)
             hitbox.enabled = false;
 
-        //Debug.Log("HATCHET ATTACK ENDED");
+        Debug.Log("HATCHET ATTACK ENDED");
+    }
+
+    // Use this when opening Inventory/Pause
+    public void CancelAttack()
+    {
+        attackActive = false;
+        hitEnemies.Clear();
+
+        if (hitbox != null)
+            hitbox.enabled = false;
+
+        // Stop any currently playing attack animation
+        Animator animator = GetComponentInParent<Animator>();
+
+        if (animator != null)
+        {
+            animator.ResetTrigger("Attack");
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -72,8 +90,6 @@ public class MeleeDamage : MonoBehaviour
             return;
 
         hitEnemies.Add(enemy);
-
-        //Debug.Log("Hatchet damaging: " + enemy.name);
 
         enemy.TakeDamage(damage);
     }

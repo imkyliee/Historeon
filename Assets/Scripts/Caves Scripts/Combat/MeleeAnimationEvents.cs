@@ -29,4 +29,15 @@ public class MeleeAnimationEvents : MonoBehaviour
             Debug.LogWarning("No MeleeDamage found!");
         }
     }
+
+    // Used when pausing/inventory opens
+    public void CancelMeleeAttack()
+    {
+        MeleeDamage meleeDamage = GetComponentInChildren<MeleeDamage>();
+
+        if (meleeDamage != null)
+        {
+            meleeDamage.EndAttack();
+        }
+    }
 }

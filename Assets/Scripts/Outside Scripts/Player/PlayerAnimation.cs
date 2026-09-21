@@ -17,6 +17,7 @@ public class PlayerAnimation : MonoBehaviour
 
     private void Update()
     {
+        HandleAttackInput();
         CheckAnimation();
     }
 
@@ -29,17 +30,49 @@ public class PlayerAnimation : MonoBehaviour
         animator.CrossFade(animation, crossfade);
     }
 
-    // Attack
-    public void Attack()
+    private void HandleAttackInput()
     {
+        if (PauseManager.Instance != null &&
+            PauseManager.Instance.IsPaused)
+            return;
+
+        if (inventory != null && inventory.IsOpen)
+            return;
+
+        if (inventory == null ||
+            !inventory.IsHoldingItem(inventory.hatchetitem))
+            return;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            Attack();
+        }
+    }
+
+    // Attack
+   public void Attack()
+    {
+        // Don't attack while paused
+        if (PauseManager.Instance != null &&
+            PauseManager.Instance.IsPaused)
+            return;
+
+        // Don't attack while inventory is open
+        if (inventory != null && inventory.IsOpen)
+            return;
+
+        // Don't attack if already attacking
         if (isPlayingAction)
             return;
 
-        if (!inventory.IsHoldingItem(inventory.hatchetitem))
+        // Make sure the hatchet is equipped
+        if (inventory == null ||
+            !inventory.IsHoldingItem(inventory.hatchetitem))
             return;
 
         // Don't attack while falling
-        if (!movement.grounded && movement.rb.linearVelocity.y <= 0)
+        if (!movement.grounded &&
+            movement.rb.linearVelocity.y <= 0)
             return;
 
         StartCoroutine(AttackRoutine());
