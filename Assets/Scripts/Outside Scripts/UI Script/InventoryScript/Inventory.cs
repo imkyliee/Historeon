@@ -471,11 +471,30 @@ public class Inventory : MonoBehaviour
         currentHandItem.transform.localRotation = Quaternion.identity;
         currentHandItem.transform.localScale = Vector3.one;
 
+
         // Disable all colliders
         foreach (Collider col in currentHandItem.GetComponentsInChildren<Collider>())
         {
             col.enabled = false;
         }
+
+
+        // Enable melee hitbox if this item has one
+        MeleeDamage meleeDamage =
+            currentHandItem.GetComponentInChildren<MeleeDamage>();
+
+        if (meleeDamage != null)
+        {
+            BoxCollider meleeCollider =
+                meleeDamage.GetComponent<BoxCollider>();
+
+            if (meleeCollider != null)
+            {
+                meleeCollider.enabled = true;
+                meleeCollider.isTrigger = true;
+            }
+        }
+
 
         // Disable physics
         foreach (Rigidbody rb in currentHandItem.GetComponentsInChildren<Rigidbody>())
@@ -484,8 +503,10 @@ public class Inventory : MonoBehaviour
             rb.useGravity = false;
         }
 
+
         // Disable Item.cs
-        Item itemComponent = currentHandItem.GetComponentInChildren<Item>();
+        Item itemComponent =
+            currentHandItem.GetComponentInChildren<Item>();
 
         if (itemComponent != null)
         {

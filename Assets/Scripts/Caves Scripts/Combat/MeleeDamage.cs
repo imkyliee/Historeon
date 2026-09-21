@@ -11,6 +11,8 @@ public class MeleeDamage : MonoBehaviour
 
     private HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
+    private bool attackActive = false;
+
     private void Awake()
     {
         if (hitbox == null)
@@ -18,18 +20,50 @@ public class MeleeDamage : MonoBehaviour
 
         if (hitbox == null)
         {
-            Debug.LogError("Hatchet needs a Box Collider!");
+           // Debug.LogError("Hatchet needs a Box Collider!");
             return;
         }
 
         hitbox.isTrigger = true;
+
+        // Don't damage anything until an attack starts
+        hitbox.enabled = false;
+    }
+
+    // Called by the attack animation
+    public void StartAttack()
+    {
+        attackActive = true;
+        hitEnemies.Clear();
+
+        if (hitbox != null)
+        {
+            hitbox.enabled = false;
+            hitbox.enabled = true;
+        }
+
+        //Debug.Log("HATCHET ATTACK STARTED");
+    }
+
+    // Called by the attack animation
+    public void EndAttack()
+    {
+        attackActive = false;
+
+        if (hitbox != null)
+            hitbox.enabled = false;
+
+        //Debug.Log("HATCHET ATTACK ENDED");
     }
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!attackActive)
+            return;
+
         Debug.Log("Hatchet collided with: " + other.name);
 
-        Enemy enemy = other.GetComponentInParent<Enemy>();
+        Enemy enemy = other.GetComponent<Enemy>();
 
         if (enemy == null)
             return;
@@ -39,24 +73,9 @@ public class MeleeDamage : MonoBehaviour
 
         hitEnemies.Add(enemy);
 
-        Debug.Log("Hatchet damaging: " + enemy.name);
+        //Debug.Log("Hatchet damaging: " + enemy.name);
 
         enemy.TakeDamage(damage);
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        Enemy enemy = other.GetComponentInParent<Enemy>();
-
-        if (enemy != null)
-        {
-            hitEnemies.Remove(enemy);
-        }
-    }
-
-    public void ResetHits()
-    {
-        hitEnemies.Clear();
     }
 
     private void OnDrawGizmosSelected()
@@ -72,7 +91,6 @@ public class MeleeDamage : MonoBehaviour
         Gizmos.color = Color.red;
 
         Matrix4x4 oldMatrix = Gizmos.matrix;
-
         Gizmos.matrix = transform.localToWorldMatrix;
 
         Gizmos.DrawWireCube(

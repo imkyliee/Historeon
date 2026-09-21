@@ -594,13 +594,6 @@ public class Enemy : MonoBehaviour
 
         if (enemyAnimation != null)
             enemyAnimation.PlayDeath();
-
-        Invoke(nameof(DestroyEnemy), 0.5f);
-    }
-
-    private void DestroyEnemy()
-    {
-        Destroy(gameObject);
     }
 
     private void OnDrawGizmosSelected()
