@@ -3,7 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PauseManager : MonoBehaviour
-{// Singleton
+{
+    // Singleton
     public static PauseManager Instance { get; private set; }
 
     // Properties
@@ -14,10 +15,12 @@ public class PauseManager : MonoBehaviour
     public SceneTransition transition;
     public Animator playerAnimator;
 
-   [Header("UI")]
+    [Header("UI")]
     public GameObject pauseMenuUI;
     public GameObject optionsMenuUI;
     public GameObject[] HUD;
+    public GameObject tutorialUI;
+    public GameObject[] gameplayPrompts;
 
     [Header("Scripts")]
     public MonoBehaviour[] disableOnPause;
@@ -85,6 +88,15 @@ public class PauseManager : MonoBehaviour
                 ui.SetActive(false);
         }
 
+        if (tutorialUI != null)
+            tutorialUI.SetActive(false);
+
+        foreach (var prompt in gameplayPrompts)
+        {
+            if (prompt != null)
+                prompt.SetActive(false);
+        }
+
         // Disable Animator
         if (playerAnimator != null)
             playerAnimator.enabled = false;
@@ -103,6 +115,7 @@ public class PauseManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
+
     public void OpenOptions()
     {
         pauseMenuUI.SetActive(false);
@@ -132,6 +145,9 @@ public class PauseManager : MonoBehaviour
             if (ui != null)
                 ui.SetActive(true);
         }
+
+        if (tutorialUI != null)
+            tutorialUI.SetActive(true);
 
         Time.timeScale = 1f;
 

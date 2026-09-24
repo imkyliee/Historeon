@@ -42,7 +42,7 @@ public class MeleeDamage : MonoBehaviour
             hitbox.enabled = true;
         }
 
-        Debug.Log("HATCHET ATTACK STARTED");
+        //Debug.Log("HATCHET ATTACK STARTED");
     }
 
     // Called by the attack animation
@@ -53,7 +53,7 @@ public class MeleeDamage : MonoBehaviour
         if (hitbox != null)
             hitbox.enabled = false;
 
-        Debug.Log("HATCHET ATTACK ENDED");
+        //Debug.Log("HATCHET ATTACK ENDED");
     }
 
     // Use this when opening Inventory/Pause
@@ -79,7 +79,7 @@ public class MeleeDamage : MonoBehaviour
         if (!attackActive)
             return;
 
-        Debug.Log("Hatchet collided with: " + other.name);
+        //Debug.Log("Hatchet collided with: " + other.name);
 
         Enemy enemy = other.GetComponent<Enemy>();
 

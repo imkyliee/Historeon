@@ -1,4 +1,4 @@
-using UnityEngine;
+ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
@@ -23,12 +23,21 @@ public class Inventory : MonoBehaviour
     public GameObject hud2;
     public bool IsOpen => container.activeSelf;
 
+    [Header("Control Prompts")]
+    public GameObject hatchetAttackPrompt;
+
+    public GameObject flashlightRmbPrompt;
+    public GameObject flashlightOnPrompt;
+    public GameObject flashlightOffPrompt;
+
+    public GameObject qPrompt;
+    public GameObject ePrompt;
+
 
     [Header("Pickup Settings")]
     public float pickupRange = 3f;  
     private Item lookedAtItem = null;
     private Outline currentOutline;
-    public GameObject pickupUI;
 
 
     [Header("Hotbar Settings")]
@@ -88,7 +97,58 @@ public class Inventory : MonoBehaviour
             UpdateHotBarOpacity();
 
             HandleItemUse();
+            UpdatePickupDropPrompts();
+            
     }
+
+    private void UpdateHatchetPrompt()
+    {
+        if (hatchetAttackPrompt == null)
+            return;
+
+        bool holdingHatchet = IsHoldingItem(hatchetitem);
+
+        hatchetAttackPrompt.SetActive(holdingHatchet);
+    }
+
+    private void UpdatePickupDropPrompts()
+    {
+        if (PauseManager.Instance != null && PauseManager.Instance.IsPaused)
+        {
+            if (ePrompt != null)
+                ePrompt.SetActive(false);
+
+            if (qPrompt != null)
+                qPrompt.SetActive(false);
+
+            if (hatchetAttackPrompt != null)
+                hatchetAttackPrompt.SetActive(false);
+
+            if (flashlightRmbPrompt != null)
+                flashlightRmbPrompt.SetActive(false);
+
+            if (flashlightOnPrompt != null)
+                flashlightOnPrompt.SetActive(false);
+
+            if (flashlightOffPrompt != null)
+                flashlightOffPrompt.SetActive(false);
+
+            return;
+        }
+
+        if (ePrompt != null)
+        {
+            ePrompt.SetActive(lookedAtItem != null && !IsOpen);
+        }
+
+        if (qPrompt != null)
+        {
+            qPrompt.SetActive(currentHandItem != null && !IsOpen);
+        }
+
+        UpdateHatchetPrompt();
+    }
+
     private Transform GetHandForItem(ItemSO item)
     {
         if (item == flashlightitem)
@@ -354,7 +414,7 @@ public class Inventory : MonoBehaviour
     private void UpdateDragItemPosition()
     {
         if (isDragging)
-        {
+        {   
             dragIcon.transform.position = Input.mousePosition;
         }   
     }
@@ -370,12 +430,15 @@ public class Inventory : MonoBehaviour
             }
 
             AddItem(lookedAtItem.item, lookedAtItem.amount);
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompletePickup(lookedAtItem.item, hatchetitem, flashlightitem);
+            }
+
             Destroy(lookedAtItem.gameObject);
 
             lookedAtItem = null;
-
-            if (pickupUI != null)
-                pickupUI.SetActive(false);
 
             EquipHandItem();
         }
@@ -386,7 +449,10 @@ public class Inventory : MonoBehaviour
         if (Camera.main == null)
             return;
 
-        Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
+        Ray ray = new Ray(
+            Camera.main.transform.position,
+            Camera.main.transform.forward
+        );
 
         Item newItem = null;
 
@@ -410,19 +476,8 @@ public class Inventory : MonoBehaviour
         {
             currentOutline = lookedAtItem.GetComponent<Outline>();
 
-            /*Debug.Log("Found item: " + lookedAtItem.name);
-            Debug.Log("pickupUI assigned? " + (pickupUI != null));*/
-
             if (currentOutline != null)
                 currentOutline.enabled = true;
-
-            if (pickupUI != null)
-                pickupUI.SetActive(true);
-        }
-        else
-        {
-            if (pickupUI != null)
-                pickupUI.SetActive(false);
         }
     }
 
@@ -510,10 +565,22 @@ public class Inventory : MonoBehaviour
 
         equippedSlot.ClearSlot();
         EquipHandItem();
+
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.CompleteDrop();
+        }
     }
 
+    private void HideFlashlightPrompt()
+    {
+        if (flashlightRmbPrompt != null)
+            flashlightRmbPrompt.SetActive(false);
+    }
     private void EquipHandItem()
     {
+        HideFlashlightPrompt();
+
         if (equippedHotbarIndex < 0 || equippedHotbarIndex >= hotbarSlots.Count)
             return;
 
@@ -527,7 +594,10 @@ public class Inventory : MonoBehaviour
         Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
 
         if (!equippedSlot.HasItem())
+        {
+            UpdateHatchetPrompt();
             return;
+        }
 
         ItemSO item = equippedSlot.GetItem();
 
@@ -549,6 +619,15 @@ public class Inventory : MonoBehaviour
         currentHandItem.transform.localPosition = Vector3.zero;
         currentHandItem.transform.localRotation = Quaternion.identity;
         currentHandItem.transform.localScale = Vector3.one;
+
+        // Setup flashlight control UI
+        FlashlightScript flashlight =
+            currentHandItem.GetComponentInChildren<FlashlightScript>();
+
+        if (flashlight != null)
+        {
+           flashlight.SetControlUI(flashlightRmbPrompt, flashlightOnPrompt, flashlightOffPrompt);
+        }
 
 
         // Disable all colliders
@@ -591,6 +670,8 @@ public class Inventory : MonoBehaviour
         {
             itemComponent.enabled = false;
         }
+
+        UpdateHatchetPrompt();
     }
 
     private void HandleItemUse()
@@ -606,6 +687,11 @@ public class Inventory : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             usable.OnUsePrimary();
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteFlashlightUse();
+            }
         }
     }
     

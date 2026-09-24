@@ -68,6 +68,14 @@ public class Movement : MonoBehaviour
             return;
 
         move = context.ReadValue<Vector2>();
+
+        if (context.performed && move != Vector2.zero)
+        {
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteWASD();
+            }
+        }
     }
 
     public void OnLook(InputAction.CallbackContext context)
@@ -90,15 +98,27 @@ public class Movement : MonoBehaviour
         if (context.performed && grounded)
         {
             Jump();
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteSpace();
+            }
         }
     }
 
     public void OnRun(InputAction.CallbackContext context)
     {
+        if (isPaused)
+            return;
+
         if (context.performed)
+        {
             isRunning = true;
+        }
         else if (context.canceled)
+        {
             isRunning = false;
+        }
     }
 
     // Attack input
@@ -112,6 +132,11 @@ public class Movement : MonoBehaviour
             if (playerAnimation != null)
             {
                 playerAnimation.Attack();
+            }
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteHatchetAttack();
             }
         }
     }
@@ -158,6 +183,14 @@ public class Movement : MonoBehaviour
         HandleStamina();
         JumpParticlesPlay();
         WalkRunParticles();
+
+        if (isRunning && move.y > 0f && grounded && !isCrouching && currentStamina > 0f)
+        {
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteLShift();
+            }
+        }
     }
 
     void FixedUpdate()
