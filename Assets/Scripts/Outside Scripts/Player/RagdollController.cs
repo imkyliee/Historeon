@@ -20,17 +20,35 @@ public class RagdollController : MonoBehaviour
     Collider[] RagdollCollider;
     Rigidbody[] RagdollRigid;
 
+    void Awake()
+    {
+        // Automatically find the BoxCollider if it was not assigned
+        if (boxCollider == null)
+        {
+            boxCollider = GetComponent<BoxCollider>();
+        }
+    }
+
     void Start()
     {
         GetRagdollState();
         RagdollOff();
 
-        playerCamera.gameObject.SetActive(true);
-        deathCamera.gameObject.SetActive(false);
+        if (playerCamera != null)
+            playerCamera.gameObject.SetActive(true);
+
+        if (deathCamera != null)
+            deathCamera.gameObject.SetActive(false);
     }
 
     void GetRagdollState()
     {
+        if (MainRig == null)
+        {
+            Debug.LogWarning("RagdollController: MainRig is not assigned.");
+            return;
+        }
+
         RagdollCollider = MainRig.GetComponentsInChildren<Collider>();
         RagdollRigid = MainRig.GetComponentsInChildren<Rigidbody>();
     }
@@ -40,7 +58,7 @@ public class RagdollController : MonoBehaviour
         // Drop equipped item
         if (inventory != null)
         {
-            inventory.HandleDropEquippedItem();
+            inventory.RagdollDropHeldItem();
 
             // Disable Inventory script
             inventory.enabled = false;
@@ -52,29 +70,47 @@ public class RagdollController : MonoBehaviour
             pauseManager.enabled = false;
         }
 
-        animator.enabled = false;
+        if (animator != null)
+            animator.enabled = false;
 
-        foreach (Collider col in RagdollCollider)
+        if (RagdollCollider != null)
         {
-            if (col != playerCollider && col != groundChecker)
-                col.enabled = true;
+            foreach (Collider col in RagdollCollider)
+            {
+                if (col != playerCollider && col != groundChecker)
+                    col.enabled = true;
+            }
         }
 
-        foreach (Rigidbody rb in RagdollRigid)
+        if (RagdollRigid != null)
         {
-            rb.isKinematic = false;
+            foreach (Rigidbody rb in RagdollRigid)
+            {
+                rb.isKinematic = false;
+            }
         }
 
-        playerCollider.enabled = false;
-        mainRb.isKinematic = true;
+        if (playerCollider != null)
+            playerCollider.enabled = false;
 
-        boxCollider.enabled = true;
+        if (mainRb != null)
+            mainRb.isKinematic = true;
 
-        BagRigid.isKinematic = false;
-        BagRigid.transform.parent = null;
+        if (boxCollider != null)
+            boxCollider.enabled = true;
 
-        playerCamera.gameObject.SetActive(false);
-        deathCamera.gameObject.SetActive(true);
+        // Drop the bag
+        if (BagRigid != null)
+        {
+            BagRigid.isKinematic = false;
+            BagRigid.transform.SetParent(null);
+        }
+
+        if (playerCamera != null)
+            playerCamera.gameObject.SetActive(false);
+
+        if (deathCamera != null)
+            deathCamera.gameObject.SetActive(true);
 
         if (movement != null)
         {
@@ -89,31 +125,44 @@ public class RagdollController : MonoBehaviour
 
     void RagdollOff()
     {
-        foreach (Collider col in RagdollCollider)
+        if (RagdollCollider != null)
         {
-            if (col != playerCollider && col != groundChecker)
-                col.enabled = false;
+            foreach (Collider col in RagdollCollider)
+            {
+                if (col != playerCollider && col != groundChecker)
+                    col.enabled = false;
+            }
         }
 
-        foreach (Rigidbody rb in RagdollRigid)
+        if (RagdollRigid != null)
         {
-            rb.isKinematic = true;
+            foreach (Rigidbody rb in RagdollRigid)
+            {
+                rb.isKinematic = true;
+            }
         }
 
-        animator.enabled = true;
-        playerCollider.enabled = true;
-        mainRb.isKinematic = false;
+        if (animator != null)
+            animator.enabled = true;
 
-        boxCollider.enabled = false;
+        if (playerCollider != null)
+            playerCollider.enabled = true;
 
-        BagRigid.isKinematic = true;
+        if (mainRb != null)
+            mainRb.isKinematic = false;
+
+        if (boxCollider != null)
+            boxCollider.enabled = false;
+
+        if (BagRigid != null)
+            BagRigid.isKinematic = true;
 
         if (movement != null)
         {
             movement.enabled = true;
         }
 
-        // re-enable if the player revive
+        // Re-enable if the player revives
         if (inventory != null)
             inventory.enabled = true;
 

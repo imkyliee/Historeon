@@ -1,4 +1,4 @@
- using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
@@ -12,8 +12,6 @@ public class Inventory : MonoBehaviour
     public ItemSO bagitem;
     public ItemSO hatchetitem;
 
-
-
     [Header("UI References")]
     public GameObject hotbarObj;
     public GameObject inventorySlotParent;
@@ -25,41 +23,36 @@ public class Inventory : MonoBehaviour
 
     [Header("Control Prompts")]
     public GameObject hatchetAttackPrompt;
-
     public GameObject flashlightRmbPrompt;
     public GameObject flashlightOnPrompt;
     public GameObject flashlightOffPrompt;
-
     public GameObject qPrompt;
     public GameObject ePrompt;
-
+    public GameObject tabPrompt;
 
     [Header("Pickup Settings")]
-    public float pickupRange = 3f;  
+    public float pickupRange = 3f;
     private Item lookedAtItem = null;
     private Outline currentOutline;
-
 
     [Header("Hotbar Settings")]
     private int equippedHotbarIndex = 0;
     public float equipOpacity = 0.9f;
     public float normalOpacity = 0.58f;
 
-
     [Header("Equipment")]
     public Transform flashlightHand;
     public Transform bagHand;
+    public Transform bagHolder;
     public Transform hatchetHand;
 
     private GameObject currentHandItem;
-    
-
+    private GameObject bagObject;
 
     [Header("Inventory Data")]
     private List<Slot> inventorySlots = new List<Slot>();
     private List<Slot> hotbarSlots = new List<Slot>();
     private List<Slot> allSlots = new List<Slot>();
-
 
     [Header("Drag & Drop")]
     private Slot draggedSlot = null;
@@ -69,36 +62,38 @@ public class Inventory : MonoBehaviour
     {
         inventorySlots.AddRange(inventorySlotParent.GetComponentsInChildren<Slot>());
         hotbarSlots.AddRange(hotbarObj.GetComponentsInChildren<Slot>());
-        
+
         allSlots.AddRange(inventorySlots);
         allSlots.AddRange(hotbarSlots);
     }
 
     void Update()
-    {     
+    {
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             if (PauseManager.Instance != null &&
                 PauseManager.Instance.IsPaused)
                 return;
 
+            if (!HasItem(bagitem))
+                return;
+
             ToggleInventory();
         }
 
-            DetectLookedAtItem();
-            Pickup();
+        DetectLookedAtItem();
+        Pickup();
 
-            StartDrag();
-            UpdateDragItemPosition();
-            EndDrag();
+        StartDrag();
+        UpdateDragItemPosition();
+        EndDrag();
 
-            HandleHotBarSelection();
-            HandleDropEquippedItem();
-            UpdateHotBarOpacity();
+        HandleHotBarSelection();
+        HandleDropEquippedItem();
+        UpdateHotBarOpacity();
 
-            HandleItemUse();
-            UpdatePickupDropPrompts();
-            
+        HandleItemUse();
+        UpdatePickupDropPrompts();
     }
 
     private void UpdateHatchetPrompt()
@@ -133,6 +128,9 @@ public class Inventory : MonoBehaviour
             if (flashlightOffPrompt != null)
                 flashlightOffPrompt.SetActive(false);
 
+            if (tabPrompt != null)
+                tabPrompt.SetActive(false);
+
             return;
         }
 
@@ -144,6 +142,11 @@ public class Inventory : MonoBehaviour
         if (qPrompt != null)
         {
             qPrompt.SetActive(currentHandItem != null && !IsOpen);
+        }
+
+        if (tabPrompt != null)
+        {
+            tabPrompt.SetActive(IsHoldingItem(bagitem) && !IsOpen);
         }
 
         UpdateHatchetPrompt();
@@ -162,6 +165,7 @@ public class Inventory : MonoBehaviour
 
         return null;
     }
+
     public bool IsHoldingTwoHandedItem()
     {
         if (equippedHotbarIndex < 0 || equippedHotbarIndex >= hotbarSlots.Count)
@@ -180,11 +184,11 @@ public class Inventory : MonoBehaviour
         return equippedItem.isTwoHanded;
     }
 
-
     public bool IsHoldingItem()
     {
         return currentHandItem != null;
     }
+
     public bool IsHoldingItem(ItemSO item)
     {
         if (equippedHotbarIndex < 0 || equippedHotbarIndex >= hotbarSlots.Count)
@@ -197,6 +201,7 @@ public class Inventory : MonoBehaviour
 
         return equippedSlot.GetItem() == item;
     }
+
     public bool HasItem(ItemSO item)
     {
         foreach (Slot slot in allSlots)
@@ -210,8 +215,34 @@ public class Inventory : MonoBehaviour
         return false;
     }
 
-   public void AddItem(ItemSO ItemToAdd, int amount)
+    public void AddItem(ItemSO ItemToAdd, int amount)
     {
+        // Bag always goes to hotbar slot 5
+        if (ItemToAdd == bagitem)
+        {
+            int bagSlotIndex = 4; // Slot 5
+
+            if (bagSlotIndex < hotbarSlots.Count)
+            {
+                Slot bagSlot = hotbarSlots[bagSlotIndex];
+
+                if (!bagSlot.HasItem())
+                {
+                    bagSlot.SetItem(ItemToAdd, amount);
+                    return;
+                }
+
+                if (bagSlot.GetItem() == ItemToAdd)
+                {
+                    bagSlot.SetItem(ItemToAdd, bagSlot.GetAmount() + amount);
+                    return;
+                }
+            }
+
+            Debug.LogWarning("Could not place bag into hotbar slot 5.");
+            return;
+        }
+
         int remaining = amount;
 
         // Try stacking in the hotbar first
@@ -228,6 +259,7 @@ public class Inventory : MonoBehaviour
                     int amountToAdd = Mathf.Min(spaceLeft, remaining);
 
                     slot.SetItem(ItemToAdd, currentAmount + amountToAdd);
+
                     remaining -= amountToAdd;
 
                     if (remaining <= 0)
@@ -244,6 +276,7 @@ public class Inventory : MonoBehaviour
                 int amountToPlace = Mathf.Min(ItemToAdd.maxStackSize, remaining);
 
                 slot.SetItem(ItemToAdd, amountToPlace);
+
                 remaining -= amountToPlace;
 
                 if (remaining <= 0)
@@ -265,6 +298,7 @@ public class Inventory : MonoBehaviour
                     int amountToAdd = Mathf.Min(spaceLeft, remaining);
 
                     slot.SetItem(ItemToAdd, currentAmount + amountToAdd);
+
                     remaining -= amountToAdd;
 
                     if (remaining <= 0)
@@ -281,6 +315,7 @@ public class Inventory : MonoBehaviour
                 int amountToPlace = Mathf.Min(ItemToAdd.maxStackSize, remaining);
 
                 slot.SetItem(ItemToAdd, amountToPlace);
+
                 remaining -= amountToPlace;
 
                 if (remaining <= 0)
@@ -296,17 +331,21 @@ public class Inventory : MonoBehaviour
 
     private void StartDrag()
     {
-        if(Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
-          Slot   hovered = GetHoveredSlot();
+            Slot hovered = GetHoveredSlot();
 
-          if(hovered != null && hovered.HasItem())
+            if (hovered != null && hovered.HasItem())
             {
-              draggedSlot = hovered;
-              isDragging = true;
+                // Don't allow the bag to be moved
+                if (hovered.GetItem() == bagitem)
+                    return;
+
+                draggedSlot = hovered;
+                isDragging = true;
 
                 dragIcon.sprite = hovered.GetItem().icon;
-                dragIcon.color = new Color(1,1,1,0.5f);
+                dragIcon.color = new Color(1, 1, 1, 0.5f);
                 dragIcon.enabled = true;
             }
         }
@@ -314,11 +353,11 @@ public class Inventory : MonoBehaviour
 
     private void EndDrag()
     {
-        if(Input.GetMouseButtonUp(0) && isDragging)
+        if (Input.GetMouseButtonUp(0) && isDragging)
         {
             Slot hovered = GetHoveredSlot();
 
-            if(hovered != null)
+            if (hovered != null)
             {
                 HandleDrop(draggedSlot, hovered);
 
@@ -328,18 +367,33 @@ public class Inventory : MonoBehaviour
             }
         }
     }
+
     private Slot GetHoveredSlot()
     {
-        foreach(Slot s in allSlots)
+        foreach (Slot s in allSlots)
         {
-            if(s.hovering)
-            return s;
+            if (s.hovering)
+                return s;
         }
+
         return null;
     }
 
     private void HandleDrop(Slot from, Slot to)
     {
+        if (from == null || to == null)
+            return;
+
+        // Don't allow the bag to be moved
+        if (from.HasItem() && from.GetItem() == bagitem)
+            return;
+
+        if (to.HasItem() && to.GetItem() == bagitem)
+            return;
+
+        if (from == to)
+            return;  
+
         if (from == to)
             return;
 
@@ -410,13 +464,13 @@ public class Inventory : MonoBehaviour
             UpdateHotBarOpacity();
         }
     }
-        
+
     private void UpdateDragItemPosition()
     {
         if (isDragging)
-        {   
+        {
             dragIcon.transform.position = Input.mousePosition;
-        }   
+        }
     }
 
     private void Pickup()
@@ -433,12 +487,50 @@ public class Inventory : MonoBehaviour
 
             if (TutorialManager.Instance != null)
             {
-                TutorialManager.Instance.CompletePickup(lookedAtItem.item, hatchetitem, flashlightitem);
+                TutorialManager.Instance.CompletePickup(
+                    lookedAtItem.item,
+                    hatchetitem,
+                    flashlightitem
+                );
             }
+
+            bool pickedUpBag = lookedAtItem.item == bagitem;
 
             Destroy(lookedAtItem.gameObject);
 
             lookedAtItem = null;
+
+            if (pickedUpBag)
+            {
+                // Create the bag on the player's body
+                if (bagObject == null && bagitem.handItemPrefab != null && bagHolder != null)
+                {
+                   bagObject = Instantiate(bagitem.itemPrefab, bagHolder);
+
+                    bagObject.transform.localPosition = Vector3.zero;
+                    bagObject.transform.localRotation = Quaternion.identity;
+                    bagObject.transform.localScale = Vector3.one;
+
+                    foreach (Collider col in bagObject.GetComponentsInChildren<Collider>())
+                    {
+                        col.enabled = false;
+                    }
+
+                    foreach (Rigidbody rb in bagObject.GetComponentsInChildren<Rigidbody>())
+                    {
+                        rb.isKinematic = true;
+                        rb.useGravity = false;
+                    }
+
+                    Item bagItemComponent =
+                        bagObject.GetComponentInChildren<Item>();
+
+                    if (bagItemComponent != null)
+                    {
+                        bagItemComponent.enabled = false;
+                    }
+                }
+            }
 
             EquipHandItem();
         }
@@ -483,10 +575,11 @@ public class Inventory : MonoBehaviour
 
     private void UpdateHotBarOpacity()
     {
-        for(int i = 0; i < hotbarSlots.Count; i++)
+        for (int i = 0; i < hotbarSlots.Count; i++)
         {
             Image icon = hotbarSlots[i].GetComponent<Image>();
-            if(icon != null)
+
+            if (icon != null)
             {
                 if (i == equippedHotbarIndex)
                 {
@@ -501,37 +594,44 @@ public class Inventory : MonoBehaviour
     }
 
     private void HandleHotBarSelection()
-{
-    for (int i = 0; i < hotbarSlots.Count; i++)
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+        for (int i = 0; i < hotbarSlots.Count; i++)
         {
-            equippedHotbarIndex = i;
-            UpdateHotBarOpacity();
-            EquipHandItem();
-            return;
+            if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+            {
+                equippedHotbarIndex = i;
+
+                UpdateHotBarOpacity();
+                EquipHandItem();
+
+                return;
+            }
         }
     }
-}
 
     public void HandleDropEquippedItem()
     {
-        if (!Input.GetKeyDown(KeyCode.Q)) return;
+        if (!Input.GetKeyDown(KeyCode.Q))
+            return;
 
         Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
-        if (!equippedSlot.HasItem()) return;
+
+        if (!equippedSlot.HasItem())
+            return;
 
         ItemSO itemSO = equippedSlot.GetItem();
         GameObject prefab = itemSO.itemPrefab;
 
-        if (prefab == null) return;
+        if (prefab == null)
+            return;
 
         // Save the flashlight state before destroying the held item
         bool flashlightState = false;
 
         if (currentHandItem != null)
         {
-            FlashlightScript heldFlashlight = currentHandItem.GetComponentInChildren<FlashlightScript>();
+            FlashlightScript heldFlashlight =
+                currentHandItem.GetComponentInChildren<FlashlightScript>();
 
             if (heldFlashlight != null)
             {
@@ -556,7 +656,8 @@ public class Inventory : MonoBehaviour
         }
 
         // Restore the flashlight state
-        FlashlightScript droppedFlashlight = dropped.GetComponentInChildren<FlashlightScript>();
+        FlashlightScript droppedFlashlight =
+            dropped.GetComponentInChildren<FlashlightScript>();
 
         if (droppedFlashlight != null)
         {
@@ -564,6 +665,12 @@ public class Inventory : MonoBehaviour
         }
 
         equippedSlot.ClearSlot();
+
+        if (itemSO == bagitem)
+        {
+            CloseInventory();
+        }
+
         EquipHandItem();
 
         if (TutorialManager.Instance != null)
@@ -577,6 +684,7 @@ public class Inventory : MonoBehaviour
         if (flashlightRmbPrompt != null)
             flashlightRmbPrompt.SetActive(false);
     }
+
     private void EquipHandItem()
     {
         HideFlashlightPrompt();
@@ -591,10 +699,17 @@ public class Inventory : MonoBehaviour
             currentHandItem = null;
         }
 
+        // Make sure the normal bag is visible on the BagHolder
+        if (bagObject != null)
+        {
+            bagObject.SetActive(true);
+        }
+
         Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
 
         if (!equippedSlot.HasItem())
         {
+            CloseInventory();
             UpdateHatchetPrompt();
             return;
         }
@@ -602,7 +717,63 @@ public class Inventory : MonoBehaviour
         ItemSO item = equippedSlot.GetItem();
 
         if (item.handItemPrefab == null)
+        {
+            CloseInventory();
             return;
+        }
+
+        // BAG
+        if (item == bagitem)
+        {
+            if (bagHand == null)
+            {
+                Debug.LogWarning("Bag Hand is not assigned.");
+                return;
+            }
+
+            // Show the normal bag on the BagHolder
+            if (bagObject != null)
+            {
+                bagObject.SetActive(false);
+            }
+
+            // Create the hand version
+            currentHandItem = Instantiate(item.handItemPrefab, bagHand);
+
+            currentHandItem.transform.localPosition = Vector3.zero;
+            currentHandItem.transform.localRotation = Quaternion.identity;
+            currentHandItem.transform.localScale = Vector3.one;
+
+            // Disable all colliders
+            foreach (Collider col in currentHandItem.GetComponentsInChildren<Collider>())
+            {
+                col.enabled = false;
+            }
+
+            // Disable physics
+            foreach (Rigidbody rb in currentHandItem.GetComponentsInChildren<Rigidbody>())
+            {
+                rb.isKinematic = true;
+                rb.useGravity = false;
+            }
+
+            // Disable Item.cs
+            Item bagHandItemComponent =
+                currentHandItem.GetComponentInChildren<Item>();
+
+            if (bagHandItemComponent != null)
+            {
+                bagHandItemComponent.enabled = false;
+            }
+
+            UpdateHatchetPrompt();
+            return;
+        }
+
+        if (item != bagitem && IsOpen)
+        {
+            CloseInventory();
+        }
 
         // Get the correct hand transform
         Transform selectedHand = GetHandForItem(item);
@@ -626,16 +797,18 @@ public class Inventory : MonoBehaviour
 
         if (flashlight != null)
         {
-           flashlight.SetControlUI(flashlightRmbPrompt, flashlightOnPrompt, flashlightOffPrompt);
+            flashlight.SetControlUI(
+                flashlightRmbPrompt,
+                flashlightOnPrompt,
+                flashlightOffPrompt
+            );
         }
-
 
         // Disable all colliders
         foreach (Collider col in currentHandItem.GetComponentsInChildren<Collider>())
         {
             col.enabled = false;
         }
-
 
         // Enable melee hitbox if this item has one
         MeleeDamage meleeDamage =
@@ -653,14 +826,12 @@ public class Inventory : MonoBehaviour
             }
         }
 
-
         // Disable physics
         foreach (Rigidbody rb in currentHandItem.GetComponentsInChildren<Rigidbody>())
         {
             rb.isKinematic = true;
             rb.useGravity = false;
         }
-
 
         // Disable Item.cs
         Item itemComponent =
@@ -676,13 +847,17 @@ public class Inventory : MonoBehaviour
 
     private void HandleItemUse()
     {
-        if (container.activeInHierarchy) return; 
+        if (container.activeInHierarchy)
+            return;
 
-        if (currentHandItem == null) return;
+        if (currentHandItem == null)
+            return;
 
-        IUsableItem usable = currentHandItem.GetComponent<IUsableItem>();
+        IUsableItem usable =
+            currentHandItem.GetComponent<IUsableItem>();
 
-        if (usable == null) return;
+        if (usable == null)
+            return;
 
         if (Input.GetMouseButtonDown(1))
         {
@@ -694,38 +869,38 @@ public class Inventory : MonoBehaviour
             }
         }
     }
-    
+
     public void OpenInventory()
-{
-    container.SetActive(true);
+    {
+        container.SetActive(true);
 
-    if (hud1 != null)
-        hud1.SetActive(false);
+        if (hud1 != null)
+            hud1.SetActive(false);
 
-    if (hud2 != null)
-        hud2.SetActive(false);
+        if (hud2 != null)
+            hud2.SetActive(false);
 
-    Cursor.lockState = CursorLockMode.None;
-    Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
-    Movement.Instance.SetLookEnabled(false);
-}
+        Movement.Instance.SetLookEnabled(false);
+    }
 
     public void CloseInventory()
-{
-    container.SetActive(false);
+    {
+        container.SetActive(false);
 
-    if (hud1 != null)
-        hud1.SetActive(true);
+        if (hud1 != null)
+            hud1.SetActive(true);
 
-    if (hud2 != null)
-        hud2.SetActive(true);
+        if (hud2 != null)
+            hud2.SetActive(true);
 
-    Cursor.lockState = CursorLockMode.Locked;
-    Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
-    Movement.Instance.SetLookEnabled(true);
-}
+        Movement.Instance.SetLookEnabled(true);
+    }
 
     public void ToggleInventory()
     {
@@ -734,5 +909,130 @@ public class Inventory : MonoBehaviour
         else
             OpenInventory();
     }
-    
+    public void RagdollDropHeldItem()
+    {
+        if (currentHandItem == null)
+            return;
+
+        GameObject heldItem = currentHandItem;
+        currentHandItem = null;
+
+        // Get the currently equipped item
+        if (equippedHotbarIndex < 0 || equippedHotbarIndex >= hotbarSlots.Count)
+        {
+            Destroy(heldItem);
+            return;
+        }
+
+        Slot equippedSlot = hotbarSlots[equippedHotbarIndex];
+
+        if (!equippedSlot.HasItem())
+        {
+            Destroy(heldItem);
+            return;
+        }
+
+        ItemSO itemSO = equippedSlot.GetItem();
+
+        if (itemSO == null || itemSO.itemPrefab == null)
+        {
+            Destroy(heldItem);
+            return;
+        }
+
+        // Don't spawn another normal bag here
+        // The RagdollController handles the bag separately
+        if (itemSO == bagitem)
+        {
+            Destroy(heldItem);
+            return;
+        }
+
+        // Save flashlight state
+        bool flashlightState = false;
+
+        FlashlightScript heldFlashlight =
+            heldItem.GetComponentInChildren<FlashlightScript>();
+
+        if (heldFlashlight != null)
+        {
+            flashlightState = heldFlashlight.IsOn;
+        }
+
+        // Remember where the item was being held
+        Vector3 dropPosition = heldItem.transform.position;
+        Quaternion dropRotation = heldItem.transform.rotation;
+
+        // Destroy the hand version
+        Destroy(heldItem);
+
+        // Spawn the normal world prefab
+        GameObject droppedItem = Instantiate(
+            itemSO.itemPrefab,
+            dropPosition,
+            dropRotation
+        );
+
+        // Setup Item component
+        Item itemComponent = droppedItem.GetComponentInChildren<Item>();
+
+        if (itemComponent != null)
+        {
+            itemComponent.item = itemSO;
+            itemComponent.amount = equippedSlot.GetAmount();
+        }
+
+        // Restore flashlight state
+        FlashlightScript droppedFlashlight =
+            droppedItem.GetComponentInChildren<FlashlightScript>();
+
+        if (droppedFlashlight != null)
+        {
+            droppedFlashlight.SetState(flashlightState);
+        }
+
+        // Enable all colliders
+        foreach (Collider col in droppedItem.GetComponentsInChildren<Collider>())
+        {
+            col.enabled = true;
+            col.isTrigger = false;
+        }
+
+        // Find Rigidbody
+        Rigidbody rb = droppedItem.GetComponentInChildren<Rigidbody>();
+
+        if (rb == null)
+        {
+            rb = droppedItem.GetComponent<Rigidbody>();
+        }
+
+        if (rb == null)
+        {
+            rb = droppedItem.AddComponent<Rigidbody>();
+        }
+
+        rb.isKinematic = false;
+        rb.useGravity = true;
+
+        // Better collision with the floor
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+
+        if (rb.mass <= 0)
+        {
+            rb.mass = 1f;
+        }
+
+        // Yank the item away from the player
+        Vector3 yankDirection = transform.forward * 3f;
+        yankDirection += Vector3.up * 2f;
+
+        rb.AddForce(yankDirection, ForceMode.Impulse);
+
+        // Add some rotation
+        rb.AddTorque(
+            Random.insideUnitSphere * 3f,
+            ForceMode.Impulse
+        );
+    }
 }

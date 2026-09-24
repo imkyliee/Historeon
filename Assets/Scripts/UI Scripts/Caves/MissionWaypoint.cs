@@ -12,6 +12,9 @@ public class MissionWaypoint : MonoBehaviour
     public Transform target;
     public Transform player;
 
+    [Header("Objective")]
+    [SerializeField] private string requiredQuest = "Find the cave";
+
     [Header("Settings")]
     public Vector3 offset;
 
@@ -24,15 +27,43 @@ public class MissionWaypoint : MonoBehaviour
     {
         indicatorRect = img.GetComponent<RectTransform>();
         canvas = img.GetComponentInParent<Canvas>();
+
+        if (img != null)
+            img.gameObject.SetActive(false);
+
+        if (meter != null)
+            meter.gameObject.SetActive(false);
     }
 
     private void Update()
     {
+        if (MainManager.mainManager == null)
+            return;
+
+        bool questActive = MainManager.mainManager.questNames.Contains(requiredQuest);
+
+        if (!questActive)
+        {
+            if (img != null)
+                img.gameObject.SetActive(false);
+
+            if (meter != null)
+                meter.gameObject.SetActive(false);
+
+            return;
+        }
+
         if (target == null || player == null || img == null)
             return;
 
         if (Camera.main == null || canvas == null)
             return;
+
+        if (!img.gameObject.activeSelf)
+            img.gameObject.SetActive(true);
+
+        if (meter != null && !meter.gameObject.activeSelf)
+            meter.gameObject.SetActive(true);
 
         // Target screen position
         Vector3 screenPos = Camera.main.WorldToScreenPoint(
@@ -120,6 +151,7 @@ public class MissionWaypoint : MonoBehaviour
             )
         );
 
-        meter.text = distance + "m";
+        if (meter != null)
+            meter.text = distance + "m";
     }
 }
