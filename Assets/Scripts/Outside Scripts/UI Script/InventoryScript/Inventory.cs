@@ -502,26 +502,30 @@ public class Inventory : MonoBehaviour
 
             if (pickedUpBag)
             {
-                // Create the bag on the player's body
                 if (bagObject == null && bagitem.handItemPrefab != null && bagHolder != null)
                 {
-                   bagObject = Instantiate(bagitem.itemPrefab, bagHolder);
+                    // Create BagHand and attach it to the BagHolder
+                    bagObject = Instantiate(bagitem.handItemPrefab, bagHolder);
 
                     bagObject.transform.localPosition = Vector3.zero;
                     bagObject.transform.localRotation = Quaternion.identity;
                     bagObject.transform.localScale = Vector3.one;
 
+                    // Disable the collider while the bag is attached
                     foreach (Collider col in bagObject.GetComponentsInChildren<Collider>())
                     {
                         col.enabled = false;
                     }
 
+                    // Disable any Rigidbody on the prefab
                     foreach (Rigidbody rb in bagObject.GetComponentsInChildren<Rigidbody>())
                     {
                         rb.isKinematic = true;
                         rb.useGravity = false;
+                        rb.detectCollisions = false;
                     }
 
+                    // Disable Item script because this is now the player's bag
                     Item bagItemComponent =
                         bagObject.GetComponentInChildren<Item>();
 
@@ -530,9 +534,17 @@ public class Inventory : MonoBehaviour
                         bagItemComponent.enabled = false;
                     }
                 }
-            }
 
-            EquipHandItem();
+                if (bagObject != null)
+                {
+                    bagObject.transform.SetParent(bagHolder, false);
+
+                    bagObject.transform.localPosition = Vector3.zero;
+                    bagObject.transform.localRotation = Quaternion.identity;
+
+                    bagObject.SetActive(true);
+                }
+            }
         }
     }
 
@@ -702,6 +714,7 @@ public class Inventory : MonoBehaviour
         // Make sure the normal bag is visible on the BagHolder
         if (bagObject != null)
         {
+            AttachBagToHolder();
             bagObject.SetActive(true);
         }
 
@@ -725,45 +738,48 @@ public class Inventory : MonoBehaviour
         // BAG
         if (item == bagitem)
         {
-            if (bagHand == null)
+            if (bagObject == null)
             {
-                Debug.LogWarning("Bag Hand is not assigned.");
+                Debug.LogWarning("BagHand has not been created.");
                 return;
             }
 
-            // Show the normal bag on the BagHolder
-            if (bagObject != null)
+            if (bagHand == null)
             {
-                bagObject.SetActive(false);
+                Debug.LogWarning("Bag Hand transform is not assigned.");
+                return;
             }
 
-            // Create the hand version
+            // Hide the bag on the player's back
+            bagObject.SetActive(false);
+
+            // Create the BagHand version in the player's hand
             currentHandItem = Instantiate(item.handItemPrefab, bagHand);
 
             currentHandItem.transform.localPosition = Vector3.zero;
             currentHandItem.transform.localRotation = Quaternion.identity;
             currentHandItem.transform.localScale = Vector3.one;
 
-            // Disable all colliders
+            // Disable collider while being held
             foreach (Collider col in currentHandItem.GetComponentsInChildren<Collider>())
             {
                 col.enabled = false;
             }
 
-            // Disable physics
+            // Disable physics while being held
             foreach (Rigidbody rb in currentHandItem.GetComponentsInChildren<Rigidbody>())
             {
                 rb.isKinematic = true;
                 rb.useGravity = false;
+                rb.detectCollisions = false;
             }
 
-            // Disable Item.cs
-            Item bagHandItemComponent =
+            Item bagHandItem =
                 currentHandItem.GetComponentInChildren<Item>();
 
-            if (bagHandItemComponent != null)
+            if (bagHandItem != null)
             {
-                bagHandItemComponent.enabled = false;
+                bagHandItem.enabled = false;
             }
 
             UpdateHatchetPrompt();
@@ -1034,5 +1050,94 @@ public class Inventory : MonoBehaviour
             Random.insideUnitSphere * 3f,
             ForceMode.Impulse
         );
+    }
+    private void AttachBagToHolder()
+    {
+        if (bagObject == null || bagHolder == null)
+            return;
+
+        // Get the exact position and rotation of the BagHolder
+        Vector3 holderPosition = bagHolder.position;
+        Quaternion holderRotation = bagHolder.rotation;
+
+        // Parent the bag
+        bagObject.transform.SetParent(bagHolder);
+
+        // Match the BagHolder exactly
+        bagObject.transform.position = holderPosition;
+        bagObject.transform.rotation = holderRotation;
+
+        // Keep the prefab's original scale
+        bagObject.transform.localScale = Vector3.one;
+
+        // Disable physics while attached
+        foreach (Collider col in bagObject.GetComponentsInChildren<Collider>())
+        {
+            col.enabled = false;
+        }
+
+        foreach (Rigidbody rb in bagObject.GetComponentsInChildren<Rigidbody>())
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+    }
+
+    public void RagdollDropBag()
+    {
+        if (bagObject == null)
+            return;
+
+        GameObject bag = bagObject;
+
+        // Remove the bag from the BagHolder
+        bag.transform.SetParent(null);
+
+        // Enable colliders
+        Collider[] colliders = bag.GetComponentsInChildren<Collider>();
+
+        foreach (Collider col in colliders)
+        {
+            col.enabled = true;
+            col.isTrigger = false;
+        }
+
+        // Find or create Rigidbody
+        Rigidbody rb = bag.GetComponent<Rigidbody>();
+
+        if (rb == null)
+        {
+            rb = bag.GetComponentInChildren<Rigidbody>();
+        }
+
+        if (rb == null)
+        {
+            rb = bag.AddComponent<Rigidbody>();
+        }
+
+        rb.isKinematic = false;
+        rb.useGravity = true;
+        rb.detectCollisions = true;
+
+        rb.collisionDetectionMode =
+            CollisionDetectionMode.ContinuousDynamic;
+
+        rb.interpolation =
+            RigidbodyInterpolation.Interpolate;
+
+        // Yank the bag away
+        Vector3 yankDirection = transform.forward * 3f;
+        yankDirection += Vector3.up * 2f;
+
+        rb.AddForce(yankDirection, ForceMode.Impulse);
+
+        // Spin the bag
+        rb.AddTorque(
+            Random.insideUnitSphere * 3f,
+            ForceMode.Impulse
+        );
+
+        // The attached bag no longer exists
+        bagObject = null;
     }
 }
