@@ -4,10 +4,19 @@ public class TabMenuManager : MonoBehaviour
 {
     [Header("Menu")]
     public GameObject logbookObjectiveWindow;
-    public ObjectiveBook questBook;
+    public ObjectiveBook objectiveBook;
 
     [Header("Inventory")]
     public Inventory inventory;
+
+    public bool IsMenuOpen
+    {
+        get
+        {
+            return logbookObjectiveWindow != null &&
+                   logbookObjectiveWindow.activeSelf;
+        }
+    }
 
     void Update()
     {
@@ -17,7 +26,8 @@ public class TabMenuManager : MonoBehaviour
                 PauseManager.Instance.IsPaused)
                 return;
 
-            if (inventory != null && inventory.IsHoldingItem(inventory.bagitem))
+            if (inventory != null &&
+                inventory.IsHoldingItem(inventory.bagitem))
                 return;
 
             ToggleMenu();
@@ -34,11 +44,14 @@ public class TabMenuManager : MonoBehaviour
 
     private void OpenMenu()
     {
+        if (PauseManager.Instance != null)
+            PauseManager.Instance.HideUIForLogbook();
+
         logbookObjectiveWindow.SetActive(true);
 
-        if (questBook != null)
+        if (objectiveBook != null)
         {
-            questBook.WriteQuests();
+            objectiveBook.WriteQuests();
         }
 
         Cursor.lockState = CursorLockMode.None;
@@ -47,9 +60,13 @@ public class TabMenuManager : MonoBehaviour
         Movement.Instance.SetLookEnabled(false);
     }
 
-    private void CloseMenu()
+    public void CloseMenu()
     {
-        logbookObjectiveWindow.SetActive(false);
+        if (logbookObjectiveWindow != null)
+            logbookObjectiveWindow.SetActive(false);
+
+        if (PauseManager.Instance != null)
+            PauseManager.Instance.RestoreUIAfterLogbook();
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;

@@ -38,9 +38,7 @@ public class OpenDoor : MonoBehaviour
 
         if (doorAnimator == null)
         {
-            Debug.LogError(
-                "OpenDoor: No Animator found on Door, its parent, or its children!"
-            );
+           // Debug.LogError( "OpenDoor: No Animator found on Door, its parent, or its children!");
         }
     }
 
@@ -98,7 +96,7 @@ public class OpenDoor : MonoBehaviour
     {
         isUnlocked = true;
 
-        Debug.Log("Door unlocked!");
+        //Debug.Log("Door unlocked!");
 
         HideAllUI();
     }
@@ -107,7 +105,7 @@ public class OpenDoor : MonoBehaviour
     {
         if (doorAnimator == null)
         {
-            Debug.LogError("OpenDoor: Animator is missing!");
+            //Debug.LogError("OpenDoor: Animator is missing!");
             return;
         }
 

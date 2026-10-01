@@ -18,6 +18,10 @@ public class QuestionData
 
 public class QuizManager : MonoBehaviour
 {
+    public static QuizManager Current { get; private set; }
+
+    public bool IsQuizOpen { get; private set; }
+
     [Header("UI Elements")]
     public TextMeshProUGUI QuestionTextDisplay;
     public GameObject[] AnswerButtons;
@@ -50,13 +54,24 @@ public class QuizManager : MonoBehaviour
     private bool hasQuestion = false;
     private bool isCheckingAnswer = false;
 
+    public void StartQuiz()
+    {
+        IsQuizOpen = true;
+
+        DisablePlayerMovement();
+        DisableCameraBobs();
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
     private void OnEnable()
     {
-        // Disable player movement
-        DisablePlayerMovement();
+        Current = this;
+        IsQuizOpen = true;
 
-        // Disable both camera bob scripts
         DisableCameraBobs();
+        DisablePlayerMovement();
 
         if (WrongUI != null)
             WrongUI.SetActive(false);
@@ -79,6 +94,22 @@ public class QuizManager : MonoBehaviour
         if (!hasQuestion)
         {
             DisplayNextQuestion();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (Current == this)
+            Current = null;
+
+        IsQuizOpen = false;
+    }
+
+    private void Update()
+    {
+        if (IsQuizOpen && Input.GetKeyDown(KeyCode.X))
+        {
+            CloseUI();
         }
     }
 
@@ -189,6 +220,9 @@ public class QuizManager : MonoBehaviour
 
     public void SelectAnswer(int buttonIndex)
     {
+        if (!IsQuizOpen)
+            return;
+
         if (isCheckingAnswer)
             return;
 
@@ -310,6 +344,8 @@ public class QuizManager : MonoBehaviour
 
     public void CloseUI()
     {
+        IsQuizOpen = false;
+
         if (WrongUI != null)
             WrongUI.SetActive(false);
 

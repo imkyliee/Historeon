@@ -1,8 +1,13 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class FlashlightScript : MonoBehaviour, IUsableItem
 {
+    [Header("Flashlight")]
     [SerializeField] private GameObject flashlightObject;
+
+    [Header("Quiz")]
+    [SerializeField] private GameObject quizUI;
 
     [Header("Control UI")]
     [SerializeField] private GameObject rmbPrompt;
@@ -17,9 +22,24 @@ public class FlashlightScript : MonoBehaviour, IUsableItem
     private void Awake()
     {
         itemData = GetComponentInParent<Item>();
+
+        // Make sure flashlight starts OFF
+        isOn = false;
+
+        if (flashlightObject != null)
+            flashlightObject.SetActive(false);
     }
 
-    // Called by Inventory after the flashlight is spawned
+    private void Update()
+    {
+        // RMB = flashlight ON/OFF
+        if (Mouse.current != null &&
+            Mouse.current.rightButton.wasPressedThisFrame)
+        {
+            OnUseSecondary();
+        }
+    }
+
     public void SetControlUI(
         GameObject rmbUI,
         GameObject onUI,
@@ -37,33 +57,42 @@ public class FlashlightScript : MonoBehaviour, IUsableItem
         isOn = state;
 
         if (flashlightObject != null)
-            flashlightObject.SetActive(state);
+            flashlightObject.SetActive(isOn);
 
         if (itemData != null)
-            itemData.flashlightOn = state;
+            itemData.flashlightOn = isOn;
 
         UpdateControlUI();
     }
 
+    // LMB
     public void OnUsePrimary()
     {
-        SetState(!isOn);
+        // Flashlight doesn't use LMB
     }
 
+    // RMB
     public void OnUseSecondary()
     {
+        SetState(!isOn);
+
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.CompleteFlashlightUse();
+        }
     }
 
     private void UpdateControlUI()
     {
-        // Show the whole RMB prompt
+        // RMB prompt
         if (rmbPrompt != null)
             rmbPrompt.SetActive(true);
 
-        // Show either ON or OFF
+        // ON prompt when flashlight is OFF
         if (onPrompt != null)
             onPrompt.SetActive(!isOn);
 
+        // OFF prompt when flashlight is ON
         if (offPrompt != null)
             offPrompt.SetActive(isOn);
     }

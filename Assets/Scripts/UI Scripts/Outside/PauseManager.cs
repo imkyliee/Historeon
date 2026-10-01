@@ -10,8 +10,12 @@ public class PauseManager : MonoBehaviour
     // Properties
     public bool IsPaused => isPaused;
 
+    public bool IsLogbookOpen =>
+        tabMenuManager != null && tabMenuManager.IsMenuOpen;
+
     [Header("References")]
     public Inventory inventory;
+    public TabMenuManager tabMenuManager;
     public SceneTransition transition;
     public Animator playerAnimator;
 
@@ -19,8 +23,6 @@ public class PauseManager : MonoBehaviour
     public GameObject pauseMenuUI;
     public GameObject optionsMenuUI;
     public GameObject[] HUD;
-    public GameObject tutorialUI;
-    public GameObject[] gameplayPrompts;
 
     [Header("Scripts")]
     public MonoBehaviour[] disableOnPause;
@@ -46,15 +48,24 @@ public class PauseManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            // Close Inventory first
             if (inventory != null && inventory.IsOpen)
             {
                 inventory.CloseInventory();
                 return;
             }
 
+            // Close Logbook/Objectives first
+            if (tabMenuManager != null &&
+                tabMenuManager.IsMenuOpen)
+            {
+                tabMenuManager.CloseMenu();
+                return;
+            }
+
             if (isPaused)
             {
-                // If inside Options, go back to Pause Menu.
+                // If inside Options, go back to Pause Menu
                 if (optionsMenuUI.activeSelf)
                 {
                     CloseOptions();
@@ -79,6 +90,12 @@ public class PauseManager : MonoBehaviour
         if (inventory != null)
             inventory.CloseInventory();
 
+        if (tabMenuManager != null &&
+            tabMenuManager.IsMenuOpen)
+        {
+            tabMenuManager.CloseMenu();
+        }
+
         pauseMenuUI.SetActive(true);
         isPaused = true;
 
@@ -86,15 +103,6 @@ public class PauseManager : MonoBehaviour
         {
             if (ui != null)
                 ui.SetActive(false);
-        }
-
-        if (tutorialUI != null)
-            tutorialUI.SetActive(false);
-
-        foreach (var prompt in gameplayPrompts)
-        {
-            if (prompt != null)
-                prompt.SetActive(false);
         }
 
         // Disable Animator
@@ -146,9 +154,6 @@ public class PauseManager : MonoBehaviour
                 ui.SetActive(true);
         }
 
-        if (tutorialUI != null)
-            tutorialUI.SetActive(true);
-
         Time.timeScale = 1f;
 
         foreach (var script in disableOnPause)
@@ -184,5 +189,32 @@ public class PauseManager : MonoBehaviour
 
         if (transition != null)
             transition.OnButtonPressed("Dynamic Main Menu");
+    }
+
+    public void HideUIForLogbook()
+    {
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
+
+        if (optionsMenuUI != null)
+            optionsMenuUI.SetActive(false);
+
+        foreach (var ui in HUD)
+        {
+            if (ui != null)
+                ui.SetActive(false);
+        }
+    }
+
+    public void RestoreUIAfterLogbook()
+    {
+        if (isPaused)
+            return;
+
+        foreach (var ui in HUD)
+        {
+            if (ui != null)
+                ui.SetActive(true);
+        }
     }
 }

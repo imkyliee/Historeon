@@ -7,7 +7,6 @@ public class RagdollController : MonoBehaviour
     public Animator animator;
     public Rigidbody mainRb;
     public BoxCollider boxCollider;
-    public Rigidbody BagRigid;
     public BoxCollider groundChecker;
     public Movement movement;
     public Camera playerCamera;
@@ -59,8 +58,8 @@ public class RagdollController : MonoBehaviour
         if (inventory != null)
         {
             inventory.RagdollDropHeldItem();
+            inventory.RagdollDropBag();
 
-            // Disable Inventory script
             inventory.enabled = false;
         }
 
@@ -98,13 +97,6 @@ public class RagdollController : MonoBehaviour
 
         if (boxCollider != null)
             boxCollider.enabled = true;
-
-        // Drop the bag
-        if (BagRigid != null)
-        {
-            BagRigid.isKinematic = false;
-            BagRigid.transform.SetParent(null);
-        }
 
         if (playerCamera != null)
             playerCamera.gameObject.SetActive(false);
@@ -153,9 +145,6 @@ public class RagdollController : MonoBehaviour
 
         if (boxCollider != null)
             boxCollider.enabled = false;
-
-        if (BagRigid != null)
-            BagRigid.isKinematic = true;
 
         if (movement != null)
         {

@@ -3,12 +3,18 @@ using UnityEngine;
 
 public class PlayerAnimation : MonoBehaviour
 {
+    [Header("References")]
     public Movement movement;
     public Inventory inventory;
+
     private Animator animator;
 
+    [Header("Animation")]
     public string currentAnimation = "";
     public bool isPlayingAction;
+
+    [Header("Attack")]
+    private bool attackEnabled = true;
 
     private void Start()
     {
@@ -36,7 +42,12 @@ public class PlayerAnimation : MonoBehaviour
             PauseManager.Instance.IsPaused)
             return;
 
-        if (inventory != null && inventory.IsOpen)
+        if (inventory != null &&
+            inventory.IsOpen)
+            return;
+
+        // Don't attack while quiz is open
+        if (!attackEnabled)
             return;
 
         if (inventory == null ||
@@ -50,15 +61,20 @@ public class PlayerAnimation : MonoBehaviour
     }
 
     // Attack
-   public void Attack()
+    public void Attack()
     {
+        // Don't attack while quiz is open
+        if (!attackEnabled)
+            return;
+
         // Don't attack while paused
         if (PauseManager.Instance != null &&
             PauseManager.Instance.IsPaused)
             return;
 
         // Don't attack while inventory is open
-        if (inventory != null && inventory.IsOpen)
+        if (inventory != null &&
+            inventory.IsOpen)
             return;
 
         // Don't attack if already attacking
@@ -93,21 +109,25 @@ public class PlayerAnimation : MonoBehaviour
             {
                 attackAnimation = "CrouchAttack";
             }
+
             // Forward
             else if (movement.move.y > 0)
             {
                 attackAnimation = "CrouchWalkAttack";
             }
+
             // Backward
             else if (movement.move.y < 0)
             {
                 attackAnimation = "CrouchBackAttack";
             }
+
             // Left
             else if (movement.move.x < 0)
             {
                 attackAnimation = "CrouchLeftAttack";
             }
+
             // Right
             else if (movement.move.x > 0)
             {
@@ -118,21 +138,26 @@ public class PlayerAnimation : MonoBehaviour
                 attackAnimation = "CrouchAttack";
             }
         }
+
         // Jumping upward
-        else if (!movement.grounded && movement.rb.linearVelocity.y > 0)
+        else if (!movement.grounded &&
+                 movement.rb.linearVelocity.y > 0)
         {
             attackAnimation = "AttackJump";
         }
+
         // Running
         else if (movement.IsRunning)
         {
             attackAnimation = "AttackRun";
         }
+
         // Walking
         else if (movement.move.magnitude > 0.1f)
         {
             attackAnimation = "AttackWalk";
         }
+
         // Standing
         else
         {
@@ -148,8 +173,9 @@ public class PlayerAnimation : MonoBehaviour
             yield return null;
         }
 
-        while (animator.GetCurrentAnimatorStateInfo(0).IsName(attackAnimation) &&
-               animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+        while (
+            animator.GetCurrentAnimatorStateInfo(0).IsName(attackAnimation) &&
+            animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
         {
             yield return null;
         }
@@ -172,8 +198,11 @@ public class PlayerAnimation : MonoBehaviour
     IEnumerator PickupRoutine()
     {
         isPlayingAction = true;
+
         ChangeAnimation("PickUp");
+
         yield return new WaitForSeconds(0.25f);
+
         isPlayingAction = false;
     }
 
@@ -506,5 +535,11 @@ public class PlayerAnimation : MonoBehaviour
 
         // Idle
         ChangeAnimation("TwoHandIdle");
+    }
+
+    // Enable or disable player attack input
+    public void SetAttackEnabled(bool state)
+    {
+        attackEnabled = state;
     }
 }
