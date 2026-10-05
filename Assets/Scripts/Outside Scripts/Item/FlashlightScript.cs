@@ -78,7 +78,7 @@ public class FlashlightScript : MonoBehaviour, IUsableItem
 
         if (TutorialManager.Instance != null)
         {
-            TutorialManager.Instance.CompleteFlashlightUse();
+            TutorialManager.Instance.CompleteRightClickBG();
         }
     }
 

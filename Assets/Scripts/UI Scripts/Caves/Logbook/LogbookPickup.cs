@@ -107,6 +107,12 @@ public class LogbookPickup : MonoBehaviour
         if (outline != null)
             outline.enabled = false;
 
+        // Move to the next tutorial
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.CompleteLogbookBG();
+        }
+
         // Create objective
         if (objectiveCatalyst != null)
         {

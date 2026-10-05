@@ -43,10 +43,6 @@ public class QuizManager : MonoBehaviour
     public MonoBehaviour doorOpenerScript;
     public MonoBehaviour PlayerMovement;
 
-    [Header("Camera Bob References")]
-    public CameraBob mainCameraBob;
-    public CameraBob itemCameraBob;
-
     private QuestionData currentQuestion;
     private List<string> shuffledAnswers = new List<string>();
 
@@ -59,7 +55,6 @@ public class QuizManager : MonoBehaviour
         IsQuizOpen = true;
 
         DisablePlayerMovement();
-        DisableCameraBobs();
 
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
@@ -70,7 +65,6 @@ public class QuizManager : MonoBehaviour
         Current = this;
         IsQuizOpen = true;
 
-        DisableCameraBobs();
         DisablePlayerMovement();
 
         if (WrongUI != null)
@@ -118,32 +112,6 @@ public class QuizManager : MonoBehaviour
         if (PlayerMovement != null)
         {
             PlayerMovement.enabled = false;
-        }
-    }
-
-    private void DisableCameraBobs()
-    {
-        if (mainCameraBob != null)
-        {
-            mainCameraBob.enabled = false;
-        }
-
-        if (itemCameraBob != null)
-        {
-            itemCameraBob.enabled = false;
-        }
-    }
-
-    private void EnableCameraBobs()
-    {
-        if (mainCameraBob != null)
-        {
-            mainCameraBob.enabled = true;
-        }
-
-        if (itemCameraBob != null)
-        {
-            itemCameraBob.enabled = true;
         }
     }
 
@@ -354,9 +322,6 @@ public class QuizManager : MonoBehaviour
         {
             PlayerMovement.enabled = true;
         }
-
-        // Re-enable both camera bob scripts
-        EnableCameraBobs();
 
         // Hide quiz UI
         gameObject.SetActive(false);

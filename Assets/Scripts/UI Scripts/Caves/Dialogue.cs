@@ -168,6 +168,7 @@ public class Dialogue : MonoBehaviour
             {
                 playerMovement.rb.linearVelocity = Vector3.zero;
                 playerMovement.rb.angularVelocity = Vector3.zero;
+                playerMovement.rb.isKinematic = true;
             }
 
             playerMovement.enabled = false;
@@ -367,6 +368,7 @@ public class Dialogue : MonoBehaviour
 
             if (playerMovement.rb != null)
             {
+                playerMovement.rb.isKinematic = false;
                 playerMovement.rb.linearVelocity = Vector3.zero;
                 playerMovement.rb.angularVelocity = Vector3.zero;
             }
@@ -429,5 +431,10 @@ public class Dialogue : MonoBehaviour
 
         if (playerAnimation != null)
             playerAnimation.enabled = true;
+
+        if (playerMovement != null && playerMovement.rb != null)
+        {
+            playerMovement.rb.isKinematic = false;
+        }
     }
 }

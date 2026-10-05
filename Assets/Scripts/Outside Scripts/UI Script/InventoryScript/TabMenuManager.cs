@@ -58,6 +58,11 @@ public class TabMenuManager : MonoBehaviour
         Cursor.visible = true;
 
         Movement.Instance.SetLookEnabled(false);
+
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.CompleteInventoryBG();
+        }
     }
 
     public void CloseMenu()

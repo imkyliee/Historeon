@@ -132,7 +132,6 @@ public class Movement : MonoBehaviour
             isRunning = false;
         }
     }
-
     // Attack input
     public void OnAttack(InputAction.CallbackContext context)
     {
@@ -152,7 +151,7 @@ public class Movement : MonoBehaviour
 
             if (TutorialManager.Instance != null)
             {
-                TutorialManager.Instance.CompleteHatchetAttack();
+                TutorialManager.Instance.CompleteThirdLeftClick();
             }
         }
     }
@@ -176,6 +175,11 @@ public class Movement : MonoBehaviour
         if (context.performed)
         {
             isCrouching = true;
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteCrouch();
+            }
         }
         else if (context.canceled)
         {

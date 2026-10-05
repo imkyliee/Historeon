@@ -1107,9 +1107,18 @@ public class Inventory : MonoBehaviour
     public void ToggleInventory()
     {
         if (IsOpen)
+        {
             CloseInventory();
+        }
         else
+        {
             OpenInventory();
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteInventoryBG();
+            }
+        }
     }
 
     public void RagdollDropHeldItem()

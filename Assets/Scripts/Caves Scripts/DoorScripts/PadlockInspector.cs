@@ -11,6 +11,10 @@ public class PadlockInspector : MonoBehaviour
     public PlayerAnimation playerAnimation;
     public Animator playerAnimator;
 
+    [Header("Camera Bob References")]
+    public CameraBob mainCameraBob;
+    public CameraBob itemCameraBob;
+
     [Header("Inventory")]
     public Inventory inventory;
 
@@ -48,6 +52,7 @@ public class PadlockInspector : MonoBehaviour
             return;
         }
 
+        // Don't check the padlock while the quiz is open
         if (quizIsOpen)
             return;
 
@@ -74,13 +79,25 @@ public class PadlockInspector : MonoBehaviour
 
         if (isLookingAtPadlock)
         {
+            // Hide the UI from another padlock
+            // if we switched to this one.
+            if (currentPadlock != null &&
+                currentPadlock != this)
+            {
+                currentPadlock.HideInteractUI();
+            }
+
             currentPadlock = this;
 
-            if (InteractUI != null)
-                InteractUI.SetActive(true);
+            ShowInteractUI();
 
             if (Input.GetKeyDown(KeyCode.E))
             {
+                if (TutorialManager.Instance != null)
+                {
+                    TutorialManager.Instance.CompletePadlock();
+                }
+
                 OpenQuiz();
             }
         }
@@ -90,10 +107,21 @@ public class PadlockInspector : MonoBehaviour
             {
                 currentPadlock = null;
 
-                if (InteractUI != null)
-                    InteractUI.SetActive(false);
+                HideInteractUI();
             }
         }
+    }
+
+    private void ShowInteractUI()
+    {
+        if (InteractUI != null)
+            InteractUI.SetActive(true);
+    }
+
+    private void HideInteractUI()
+    {
+        if (InteractUI != null)
+            InteractUI.SetActive(false);
     }
 
     private void OpenQuiz()
@@ -111,9 +139,8 @@ public class PadlockInspector : MonoBehaviour
         if (tabMenuManager != null)
             tabMenuManager.enabled = false;
 
-        // Hide E interaction prompt
-        if (InteractUI != null)
-            InteractUI.SetActive(false);
+        // Hide interaction UI
+        HideInteractUI();
 
         // Show quiz
         if (quizUI != null)
@@ -122,42 +149,40 @@ public class PadlockInspector : MonoBehaviour
         // Disable player movement
         if (playerMovement != null)
         {
-            playerMovement.SetAttackEnabled(false);
-            playerMovement.SetCrouchEnabled(false);
-            playerMovement.SetJumpEnabled(false);
-
+            // Stop Rigidbody
             if (playerMovement.rb != null)
             {
                 playerMovement.rb.linearVelocity = Vector3.zero;
                 playerMovement.rb.angularVelocity = Vector3.zero;
+
+                // Freeze Rigidbody physics
+                playerMovement.rb.isKinematic = true;
             }
 
+            // Disable Movement script
             playerMovement.enabled = false;
         }
 
-        // Disable hotbar
+        // Disable inventory / hotbar
         if (inventory != null)
             inventory.enabled = false;
 
-        // Disable player animation
+        // Disable PlayerAnimation
         if (playerAnimation != null)
-        {
             playerAnimation.enabled = false;
-        }
 
         // Disable Animator
         if (playerAnimator != null)
         {
-            playerAnimator.Rebind();
-            playerAnimator.Update(0f);
             playerAnimator.enabled = false;
         }
 
-        // Disable player attack
-        if (playerAnimation != null)
-        {
-            playerAnimation.SetAttackEnabled(false);
-        }
+        // Disable Camera Bob
+        if (mainCameraBob != null)
+            mainCameraBob.enabled = false;
+
+        if (itemCameraBob != null)
+            itemCameraBob.enabled = false;
 
         // Unlock mouse
         Cursor.visible = true;
@@ -168,38 +193,30 @@ public class PadlockInspector : MonoBehaviour
     {
         quizIsOpen = false;
 
-        // Enable PauseManager
-        if (pauseManager != null)
-            pauseManager.enabled = true;
-
-        // Enable Tab Menu
-        if (tabMenuManager != null)
-            tabMenuManager.enabled = true;
-
         // Hide quiz
         if (quizUI != null)
             quizUI.SetActive(false);
 
-        // Re-enable player movement
+        // Re-enable Rigidbody
         if (playerMovement != null)
         {
-            playerMovement.enabled = true;
-            playerMovement.SetAttackEnabled(true);
-            playerMovement.SetCrouchEnabled(true);
-            playerMovement.SetJumpEnabled(true);
-
             if (playerMovement.rb != null)
             {
+                playerMovement.rb.isKinematic = false;
+
                 playerMovement.rb.linearVelocity = Vector3.zero;
                 playerMovement.rb.angularVelocity = Vector3.zero;
             }
+
+            // Re-enable Movement script
+            playerMovement.enabled = true;
         }
 
-        // Enable hotbar
+        // Re-enable inventory
         if (inventory != null)
             inventory.enabled = true;
 
-        // Enable player animation
+        // Re-enable Animator
         if (playerAnimator != null)
         {
             playerAnimator.enabled = true;
@@ -207,18 +224,26 @@ public class PadlockInspector : MonoBehaviour
             playerAnimator.Update(0f);
         }
 
+        // Re-enable PlayerAnimation
         if (playerAnimation != null)
-        {
             playerAnimation.enabled = true;
-        }
 
-        // Re-enable player attack
-        if (playerAnimation != null)
-        {
-            playerAnimation.SetAttackEnabled(true);
-        }
+        // Re-enable Camera Bob
+        if (mainCameraBob != null)
+            mainCameraBob.enabled = true;
 
-        // Lock mouse back to game
+        if (itemCameraBob != null)
+            itemCameraBob.enabled = true;
+
+        // Re-enable PauseManager
+        if (pauseManager != null)
+            pauseManager.enabled = true;
+
+        // Re-enable Tab Menu
+        if (tabMenuManager != null)
+            tabMenuManager.enabled = true;
+
+        // Lock mouse
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
@@ -229,10 +254,10 @@ public class PadlockInspector : MonoBehaviour
         {
             currentPadlock = null;
 
-            if (InteractUI != null)
-                InteractUI.SetActive(false);
+            HideInteractUI();
         }
 
+        // Safety: re-enable everything if padlock is destroyed
         if (pauseManager != null)
             pauseManager.enabled = true;
 
@@ -242,10 +267,27 @@ public class PadlockInspector : MonoBehaviour
         if (inventory != null)
             inventory.enabled = true;
 
+        if (playerMovement != null)
+        {
+            if (playerMovement.rb != null)
+            {
+                playerMovement.rb.isKinematic = false;
+            }
+
+            playerMovement.enabled = true;
+        }
+
         if (playerAnimator != null)
             playerAnimator.enabled = true;
 
         if (playerAnimation != null)
             playerAnimation.enabled = true;
+
+        // Re-enable Camera Bob
+        if (mainCameraBob != null)
+            mainCameraBob.enabled = true;
+
+        if (itemCameraBob != null)
+            itemCameraBob.enabled = true;
     }
 }

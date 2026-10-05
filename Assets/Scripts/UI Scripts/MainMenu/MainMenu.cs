@@ -10,6 +10,8 @@ public class MainMenu : MonoBehaviour
     public GameObject quitMenu;
     public GameObject MainMenuButtons;
     public GameObject tutorialWindow;
+    public GameObject leaderboardWindow;
+    public GameObject controlWindow;
 
     [Header("Volume Menu")]
     public GameObject volumeMenu;
@@ -21,6 +23,8 @@ public class MainMenu : MonoBehaviour
     public Animator quitMenuAnimator;
     public Animator MainMenuButtonsAnimator;
     public Animator tutorialWindowAnimator;
+    public Animator leaderboardWindowAnimator;
+    public Animator controlWindowAnimator;
 
     [Header("Scene Transition")]
     public SceneTransition sceneTransition;
@@ -38,35 +42,60 @@ public class MainMenu : MonoBehaviour
 
     private bool isVolumeMenuOpen = false;
 
+    private const string TutorialCompletedKey = "TutorialCompleted";
 
     void Start()
     {
         soundManager = FindFirstObjectByType<SoundManager>();
 
-        // TUTORIAL FIRST
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
-        tutorialWindow.SetActive(true);
+        bool tutorialCompleted =
+            PlayerPrefs.GetInt(TutorialCompletedKey, 0) == 1;
 
-        if (tutorialWindowAnimator != null)
+        if (!tutorialCompleted)
         {
-            tutorialWindowAnimator.Play(
-                "Base Layer.TutorialMenu Open",
-                0,
-                0f
-            );
-        }
+            tutorialWindow.SetActive(true);
 
-        // Hide normal main menu while tutorial is open
-        TitleScreen.SetActive(false);
-        MainMenuButtons.SetActive(false);
+            if (tutorialWindowAnimator != null)
+            {
+                tutorialWindowAnimator.Play("TutorialMenu Open");
+            }
+
+            TitleScreen.SetActive(false);
+            MainMenuButtons.SetActive(false);
+        }
+        else
+        {
+            tutorialWindow.SetActive(false);
+
+            TitleScreen.SetActive(true);
+            MainMenuButtons.SetActive(true);
+
+            if (TitleScreenAnimator != null)
+                TitleScreenAnimator.Play("TitleScreen Open");
+
+            if (MainMenuButtonsAnimator != null)
+                MainMenuButtonsAnimator.Play("MainMenu Open");
+        }
 
         optionMenu.SetActive(false);
         quitMenu.SetActive(false);
 
-        // Hide Volume menu
         if (volumeMenu != null)
         {
             volumeMenu.SetActive(false);
+        }
+
+        if (leaderboardWindow != null)
+        {
+            leaderboardWindow.SetActive(false);
+        }
+
+        if (controlWindow != null)
+        {
+            controlWindow.SetActive(false);
         }
 
         isVolumeMenuOpen = false;
@@ -75,7 +104,6 @@ public class MainMenu : MonoBehaviour
             volumeSlider.interactable = false;
     }
 
-
     // TUTORIAL - LET'S GO
 
     public void TutorialLetsGo()
@@ -83,37 +111,30 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(TutorialLetsGoRoutine());
     }
 
-
     IEnumerator TutorialLetsGoRoutine()
     {
-        // Destroy background music
         if (soundManager != null)
         {
             soundManager.DestroySound();
         }
 
-        // Play tutorial closing animation
         if (tutorialWindowAnimator != null)
         {
-            tutorialWindowAnimator.Play(
-                "Base Layer.TutorialMenu Close",
-                0,
-                0f
-            );
+            tutorialWindowAnimator.Play("TutorialMenu Close");
 
             yield return new WaitForSeconds(tutorialTransitionDuration);
         }
 
-        // Destroy tutorial window
         if (tutorialWindow != null)
         {
             Destroy(tutorialWindow);
         }
 
-        // Start scene transition
-        sceneTransition.OnButtonPressed("Test");
+        if (sceneTransition != null)
+        {
+            sceneTransition.OnButtonPressed("Tutorial");
+        }
     }
-
 
     // TUTORIAL - SKIP
 
@@ -122,38 +143,35 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(TutorialSkipRoutine());
     }
 
-
     IEnumerator TutorialSkipRoutine()
     {
-        // Play tutorial closing animation
         if (tutorialWindowAnimator != null)
         {
-            tutorialWindowAnimator.Play(
-                "Base Layer.TutorialMenu Close",
-                0,
-                0f
-            );
+            tutorialWindowAnimator.Play("TutorialMenu Close");
 
             yield return new WaitForSeconds(tutorialTransitionDuration);
         }
 
-        // Destroy tutorial window
         if (tutorialWindow != null)
         {
             Destroy(tutorialWindow);
         }
 
-        // Show normal main menu
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         TitleScreen.SetActive(true);
         MainMenuButtons.SetActive(true);
 
-        TitleScreenAnimator.Play("TitleScreen Open");
-        MainMenuButtonsAnimator.Play("MainMenu Open");
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Open");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Open");
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;
     }
-
 
     // TUTORIAL - MAIN MENU
 
@@ -162,38 +180,35 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(TutorialMainMenuRoutine());
     }
 
-
     IEnumerator TutorialMainMenuRoutine()
     {
-        // Play tutorial closing animation
         if (tutorialWindowAnimator != null)
         {
-            tutorialWindowAnimator.Play(
-                "Base Layer.TutorialMenu Close",
-                0,
-                0f
-            );
+            tutorialWindowAnimator.Play("TutorialMenu Close");
 
             yield return new WaitForSeconds(tutorialTransitionDuration);
         }
 
-        // Destroy tutorial window
         if (tutorialWindow != null)
         {
             Destroy(tutorialWindow);
         }
 
-        // Show normal main menu
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         TitleScreen.SetActive(true);
         MainMenuButtons.SetActive(true);
 
-        TitleScreenAnimator.Play("TitleScreen Open");
-        MainMenuButtonsAnimator.Play("MainMenu Open");
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Open");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Open");
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;
     }
-
 
     // PLAY GAME
 
@@ -202,7 +217,6 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(PlayGameRoutine());
     }
 
-
     IEnumerator PlayGameRoutine()
     {
         TitleScreenAnimator.Play("TitleScreen Close");
@@ -210,7 +224,6 @@ public class MainMenu : MonoBehaviour
 
         yield return new WaitForSeconds(transitionDuration);
 
-        // Destroy background music
         if (soundManager != null)
         {
             soundManager.DestroySound();
@@ -219,9 +232,11 @@ public class MainMenu : MonoBehaviour
         TitleScreen.SetActive(false);
         MainMenuButtons.SetActive(false);
 
-        sceneTransition.OnButtonPressed("Outside");
+        if (sceneTransition != null)
+        {
+            sceneTransition.OnButtonPressed("Outside");
+        }
     }
-
 
     // OPTIONS
 
@@ -229,7 +244,6 @@ public class MainMenu : MonoBehaviour
     {
         StartCoroutine(OpenOptionsRoutine());
     }
-
 
     IEnumerator OpenOptionsRoutine()
     {
@@ -241,13 +255,21 @@ public class MainMenu : MonoBehaviour
         TitleScreen.SetActive(false);
         MainMenuButtons.SetActive(false);
 
-        // Show Options
         optionMenu.SetActive(true);
 
-        // Hide Volume
         if (volumeMenu != null)
         {
             volumeMenu.SetActive(false);
+        }
+
+        if (leaderboardWindow != null)
+        {
+            leaderboardWindow.SetActive(false);
+        }
+
+        if (controlWindow != null)
+        {
+            controlWindow.SetActive(false);
         }
 
         isVolumeMenuOpen = false;
@@ -258,7 +280,6 @@ public class MainMenu : MonoBehaviour
             volumeSlider.interactable = false;
     }
 
-
     // VOLUME
 
     public void OpenVolume()
@@ -266,44 +287,34 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(OpenVolumeRoutine());
     }
 
-
     IEnumerator OpenVolumeRoutine()
-{
-    // Play Options closing animation
-    if (optionMenuAnimator != null)
     {
-        optionMenuAnimator.Play(
-            "Base Layer.OptionMenu Close",
-            0,
-            0f
-        );
+        if (optionMenuAnimator != null)
+        {
+            optionMenuAnimator.Play("OptionMenu Close");
 
-        yield return new WaitForSeconds(transitionDuration);
+            yield return new WaitForSeconds(transitionDuration);
+        }
+
+        optionMenu.SetActive(false);
+
+        if (volumeMenu != null)
+        {
+            volumeMenu.SetActive(true);
+        }
+
+        isVolumeMenuOpen = true;
+
+        if (volumeMenuAnimator != null)
+        {
+            volumeMenuAnimator.Play("Volume Open");
+        }
+
+        if (volumeSlider != null)
+        {
+            volumeSlider.interactable = true;
+        }
     }
-
-    // Hide Options
-    optionMenu.SetActive(false);
-
-    // Show Volume
-    if (volumeMenu != null)
-    {
-        volumeMenu.SetActive(true);
-    }
-
-    isVolumeMenuOpen = true;
-
-    // Play Volume opening animation
-    if (volumeMenuAnimator != null)
-    {
-        volumeMenuAnimator.Play("Base Layer.Volume Open", 0, 0f);
-    }
-
-    if (volumeSlider != null)
-    {
-        volumeSlider.interactable = true;
-    }
-}   
-
 
     // QUIT MENU
 
@@ -311,7 +322,6 @@ public class MainMenu : MonoBehaviour
     {
         StartCoroutine(OpenQuitRoutine());
     }
-
 
     IEnumerator OpenQuitRoutine()
     {
@@ -323,10 +333,86 @@ public class MainMenu : MonoBehaviour
         TitleScreen.SetActive(false);
         MainMenuButtons.SetActive(false);
 
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
+
+        if (volumeMenu != null)
+            volumeMenu.SetActive(false);
+
+        if (leaderboardWindow != null)
+            leaderboardWindow.SetActive(false);
+
+        if (controlWindow != null)
+            controlWindow.SetActive(false);
+
         quitMenu.SetActive(true);
+
         quitMenuAnimator.Play("QuitMenu Open");
     }
 
+    // LEADERBOARD
+
+    public void OpenLeaderboard()
+    {
+        StartCoroutine(OpenLeaderboardRoutine());
+    }
+
+    IEnumerator OpenLeaderboardRoutine()
+    {
+        if (optionMenuAnimator != null)
+        {
+            optionMenuAnimator.Play("OptionMenu Close");
+
+            yield return new WaitForSeconds(transitionDuration);
+        }
+
+        optionMenu.SetActive(false);
+
+        if (leaderboardWindow != null)
+        {
+            leaderboardWindow.SetActive(true);
+        }
+
+        if (leaderboardWindowAnimator != null)
+        {
+            leaderboardWindowAnimator.Play("Leaderboard Open");
+        }
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
+
+    // CONTROL
+
+    public void OpenControl()
+    {
+        StartCoroutine(OpenControlRoutine());
+    }
+
+    IEnumerator OpenControlRoutine()
+    {
+        if (optionMenuAnimator != null)
+        {
+            optionMenuAnimator.Play("OptionMenu Close");
+
+            yield return new WaitForSeconds(transitionDuration);
+        }
+
+        optionMenu.SetActive(false);
+
+        if (controlWindow != null)
+        {
+            controlWindow.SetActive(true);
+        }
+
+        if (controlWindowAnimator != null)
+        {
+            controlWindowAnimator.Play("Control Open");
+        }
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
 
     // BACK BUTTON
 
@@ -335,24 +421,17 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(BackRoutine());
     }
 
-
     IEnumerator BackRoutine()
     {
         if (isVolumeMenuOpen)
         {
-            // Play Volume closing animation
             if (volumeMenuAnimator != null)
             {
-                volumeMenuAnimator.Play(
-                    "Base Layer.Volume Close",
-                    0,
-                    0f
-                );
+                volumeMenuAnimator.Play("Volume Close");
 
                 yield return new WaitForSeconds(transitionDuration);
             }
 
-            // Hide Volume
             if (volumeMenu != null)
             {
                 volumeMenu.SetActive(false);
@@ -360,14 +439,9 @@ public class MainMenu : MonoBehaviour
 
             isVolumeMenuOpen = false;
 
-            // Show Options
             optionMenu.SetActive(true);
 
-            optionMenuAnimator.Play(
-                "Base Layer.OptionMenu Open",
-                0,
-                0f
-            );
+            optionMenuAnimator.Play("OptionMenu Open");
 
             if (volumeSlider != null)
                 volumeSlider.interactable = false;
@@ -375,8 +449,54 @@ public class MainMenu : MonoBehaviour
             yield break;
         }
 
+        // Leaderboard → Options
+
+        if (leaderboardWindow != null && leaderboardWindow.activeSelf)
+        {
+            if (leaderboardWindowAnimator != null)
+            {
+                leaderboardWindowAnimator.Play("Leaderboard Close");
+
+                yield return new WaitForSeconds(transitionDuration);
+            }
+
+            leaderboardWindow.SetActive(false);
+
+            optionMenu.SetActive(true);
+
+            optionMenuAnimator.Play("OptionMenu Open");
+
+            if (volumeSlider != null)
+                volumeSlider.interactable = false;
+
+            yield break;
+        }
+
+        // Control → Options
+
+        if (controlWindow != null && controlWindow.activeSelf)
+        {
+            if (controlWindowAnimator != null)
+            {
+                controlWindowAnimator.Play("Control Close");
+
+                yield return new WaitForSeconds(transitionDuration);
+            }
+
+            controlWindow.SetActive(false);
+
+            optionMenu.SetActive(true);
+
+            optionMenuAnimator.Play("OptionMenu Open");
+
+            if (volumeSlider != null)
+                volumeSlider.interactable = false;
+
+            yield break;
+        }
 
         // Options → Main Menu
+
         if (optionMenu.activeSelf)
         {
             optionMenuAnimator.Play("OptionMenu Close");
@@ -386,8 +506,8 @@ public class MainMenu : MonoBehaviour
             optionMenu.SetActive(false);
         }
 
-
         // Quit Menu → Main Menu
+
         if (quitMenu.activeSelf)
         {
             quitMenuAnimator.Play("QuitMenu Close");
@@ -397,8 +517,9 @@ public class MainMenu : MonoBehaviour
             quitMenu.SetActive(false);
         }
 
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
-        // Show Main Menu
         TitleScreen.SetActive(true);
         MainMenuButtons.SetActive(true);
 
@@ -409,8 +530,8 @@ public class MainMenu : MonoBehaviour
             volumeSlider.interactable = false;
     }
 
-
     // QUIT GAME
+
     public void QuitGame()
     {
         Debug.Log("Quit Game");
