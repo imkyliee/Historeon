@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SpawnPoint : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class SpawnPoint : MonoBehaviour
     private static Vector3 savedSpawnPosition;
     private static Quaternion savedSpawnRotation;
     private static bool hasSavedSpawnPoint = false;
+    private static string savedSpawnScene = "";
 
     private void Awake()
     {
@@ -21,34 +23,53 @@ public class SpawnPoint : MonoBehaviour
 
         Instance = this;
 
-        // If there is no checkpoint yet,
-        // use the default SpawnPoint.
-        if (!hasSavedSpawnPoint)
-        {
-            savedSpawnPosition = defaultSpawnPoint != null
-                ? defaultSpawnPoint.position
-                : transform.position;
+        string currentScene = SceneManager.GetActiveScene().name;
 
-            savedSpawnRotation = defaultSpawnPoint != null
-                ? defaultSpawnPoint.rotation
-                : transform.rotation;
+        if (!hasSavedSpawnPoint || savedSpawnScene != currentScene)
+        {
+            SetDefaultSpawnPoint();
         }
+    }
+
+    private void SetDefaultSpawnPoint()
+    {
+        savedSpawnPosition = defaultSpawnPoint != null
+            ? defaultSpawnPoint.position
+            : transform.position;
+
+        savedSpawnRotation = defaultSpawnPoint != null
+            ? defaultSpawnPoint.rotation
+            : transform.rotation;
+
+        savedSpawnScene = SceneManager.GetActiveScene().name;
+
+        Debug.Log(
+            "SpawnPoint: Using default spawn point for scene: " +
+            savedSpawnScene
+        );
     }
 
     public void SetSpawnPoint(Transform newSpawnPoint)
     {
         if (newSpawnPoint == null)
         {
-            Debug.LogWarning("SpawnPoint: New spawn point is missing.");
+            Debug.LogWarning(
+                "SpawnPoint: New spawn point is missing."
+            );
             return;
         }
 
         savedSpawnPosition = newSpawnPoint.position;
         savedSpawnRotation = newSpawnPoint.rotation;
 
+        savedSpawnScene = SceneManager.GetActiveScene().name;
+
         hasSavedSpawnPoint = true;
 
-        Debug.Log("Spawn point updated to: " + newSpawnPoint.name);
+        Debug.Log(
+            "Spawn point updated to: " +
+            newSpawnPoint.name
+        );
     }
 
     public Vector3 GetSpawnPosition()
@@ -64,5 +85,10 @@ public class SpawnPoint : MonoBehaviour
     public static bool HasSavedSpawnPoint()
     {
         return hasSavedSpawnPoint;
+    }
+
+    public static string GetSavedSpawnScene()
+    {
+        return savedSpawnScene;
     }
 }

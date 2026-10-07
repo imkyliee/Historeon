@@ -13,6 +13,15 @@ public class MainMenu : MonoBehaviour
     public GameObject leaderboardWindow;
     public GameObject controlWindow;
 
+    [Header("Save Menu")]
+    public GameObject startButton;
+    public GameObject continueButton;
+    public GameObject newGameButton;
+
+    [Header("New Game Confirmation")]
+    public GameObject startNewGameWindow;
+    public Animator startNewGameAnimator;
+
     [Header("Volume Menu")]
     public GameObject volumeMenu;
     public Animator volumeMenuAnimator;
@@ -28,7 +37,7 @@ public class MainMenu : MonoBehaviour
 
     [Header("Scene Transition")]
     public SceneTransition sceneTransition;
-    public string gameSceneName = "GameScene";
+    public string gameSceneName = "Outside";
 
     [Header("Settings")]
     public Slider volumeSlider;
@@ -44,12 +53,17 @@ public class MainMenu : MonoBehaviour
 
     private const string TutorialCompletedKey = "TutorialCompleted";
 
-    void Start()
+    private void Start()
     {
         soundManager = FindFirstObjectByType<SoundManager>();
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        if (startNewGameWindow != null)
+            startNewGameWindow.SetActive(false);
+
+        RefreshSaveMenu();
 
         bool tutorialCompleted =
             PlayerPrefs.GetInt(TutorialCompletedKey, 0) == 1;
@@ -102,6 +116,204 @@ public class MainMenu : MonoBehaviour
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;
+    }
+
+    public void RefreshSaveMenu()
+    {
+        if (PlayFabSaveManager.Instance == null)
+        {
+            SetNoSaveMenu();
+            return;
+        }
+
+        PlayFabSaveManager.Instance.HasSave(hasSave =>
+        {
+            if (hasSave)
+            {
+                SetSaveMenu();
+            }
+            else
+            {
+                SetNoSaveMenu();
+            }
+        });
+    }
+
+    private void SetNoSaveMenu()
+    {
+        if (startButton != null)
+            startButton.SetActive(true);
+
+        if (continueButton != null)
+            continueButton.SetActive(false);
+
+        if (newGameButton != null)
+            newGameButton.SetActive(false);
+    }
+
+    private void SetSaveMenu()
+    {
+        if (startButton != null)
+            startButton.SetActive(false);
+
+        if (continueButton != null)
+            continueButton.SetActive(true);
+
+        if (newGameButton != null)
+            newGameButton.SetActive(true);
+    }
+
+    // START GAME
+
+    public void PlayGame()
+    {
+        if (PlayFabSaveManager.Instance == null)
+        {
+            Debug.LogWarning(
+                "PlayFabSaveManager was not found."
+            );
+            return;
+        }
+
+        StartCoroutine(StartGameRoutine());
+    }
+
+    private IEnumerator StartGameRoutine()
+    {
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
+
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (soundManager != null)
+        {
+            soundManager.DestroySound();
+        }
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        PlayFabSaveManager.Instance.StartNewGame(gameSceneName);
+    }
+
+    // CONTINUE
+
+    public void ContinueGame()
+    {
+        if (PlayFabSaveManager.Instance == null)
+        {
+            Debug.LogWarning(
+                "PlayFabSaveManager was not found."
+            );
+            return;
+        }
+
+        StartCoroutine(ContinueGameRoutine());
+    }
+
+    private IEnumerator ContinueGameRoutine()
+    {
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
+
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (soundManager != null)
+        {
+            soundManager.DestroySound();
+        }
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        PlayFabSaveManager.Instance.ContinueGame();
+    }
+
+    // NEW GAME
+
+    public void OpenNewGameConfirmation()
+    {
+        if (startNewGameWindow == null)
+            return;
+
+        startNewGameWindow.SetActive(true);
+
+        if (startNewGameAnimator != null)
+        {
+            startNewGameAnimator.Play("Startnewgame Open");
+        }
+    }
+
+    public void ConfirmNewGame()
+    {
+        if (startNewGameAnimator != null)
+        {
+            startNewGameAnimator.Play("Startnewgame Close");
+        }
+
+        StartCoroutine(ConfirmNewGameRoutine());
+    }
+
+    private IEnumerator ConfirmNewGameRoutine()
+    {
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (startNewGameWindow != null)
+            startNewGameWindow.SetActive(false);
+
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
+
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (soundManager != null)
+        {
+            soundManager.DestroySound();
+        }
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.StartNewGame(gameSceneName);
+        }
+    }
+
+    public void CancelNewGame()
+    {
+        if (startNewGameAnimator != null)
+        {
+            startNewGameAnimator.Play("Startnewgame Close");
+        }
+
+        StartCoroutine(CancelNewGameRoutine());
+    }
+
+    private IEnumerator CancelNewGameRoutine()
+    {
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (startNewGameWindow != null)
+            startNewGameWindow.SetActive(false);
     }
 
     // TUTORIAL - LET'S GO
@@ -208,34 +420,6 @@ public class MainMenu : MonoBehaviour
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;
-    }
-
-    // PLAY GAME
-
-    public void PlayGame()
-    {
-        StartCoroutine(PlayGameRoutine());
-    }
-
-    IEnumerator PlayGameRoutine()
-    {
-        TitleScreenAnimator.Play("TitleScreen Close");
-        MainMenuButtonsAnimator.Play("MainMenu Close");
-
-        yield return new WaitForSeconds(transitionDuration);
-
-        if (soundManager != null)
-        {
-            soundManager.DestroySound();
-        }
-
-        TitleScreen.SetActive(false);
-        MainMenuButtons.SetActive(false);
-
-        if (sceneTransition != null)
-        {
-            sceneTransition.OnButtonPressed("Outside");
-        }
     }
 
     // OPTIONS
@@ -449,8 +633,6 @@ public class MainMenu : MonoBehaviour
             yield break;
         }
 
-        // Leaderboard → Options
-
         if (leaderboardWindow != null && leaderboardWindow.activeSelf)
         {
             if (leaderboardWindowAnimator != null)
@@ -471,8 +653,6 @@ public class MainMenu : MonoBehaviour
 
             yield break;
         }
-
-        // Control → Options
 
         if (controlWindow != null && controlWindow.activeSelf)
         {
@@ -495,8 +675,6 @@ public class MainMenu : MonoBehaviour
             yield break;
         }
 
-        // Options → Main Menu
-
         if (optionMenu.activeSelf)
         {
             optionMenuAnimator.Play("OptionMenu Close");
@@ -505,8 +683,6 @@ public class MainMenu : MonoBehaviour
 
             optionMenu.SetActive(false);
         }
-
-        // Quit Menu → Main Menu
 
         if (quitMenu.activeSelf)
         {
@@ -535,7 +711,6 @@ public class MainMenu : MonoBehaviour
     public void QuitGame()
     {
         Debug.Log("Quit Game");
-
         Application.Quit();
     }
 }

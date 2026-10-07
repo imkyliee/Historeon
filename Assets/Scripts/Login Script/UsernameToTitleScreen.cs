@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-public class UsernameMenuController : MonoBehaviour
+public class UsernameToTitleScreen : MonoBehaviour
 {
     public TMP_InputField usernameInput;
     public TMP_Text warningText; 

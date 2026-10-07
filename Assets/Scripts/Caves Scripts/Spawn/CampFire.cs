@@ -17,24 +17,22 @@ public class CampFire : MonoBehaviour
     public Transform campfireSpawnPoint;
 
     private Camera playerCamera;
-
     private bool isLit = false;
 
     private void Start()
     {
-        // Automatically find the Main Camera
         playerCamera = Camera.main;
 
-        // Fire starts turned off
         if (fireObject != null)
             fireObject.SetActive(false);
 
         if (fireLight != null)
             fireLight.enabled = false;
 
-        // Interaction UI starts hidden
         if (interactUI != null)
             interactUI.SetActive(false);
+
+        CheckIfThisIsSavedCampfire();
     }
 
     private void Update()
@@ -61,10 +59,8 @@ public class CampFire : MonoBehaviour
 
             if (campfire == this)
             {
-                // Show interaction UI
                 ShowInteractionUI();
 
-                // Press E
                 if (Input.GetKeyDown(KeyCode.E))
                 {
                     LightCampfire();
@@ -74,23 +70,51 @@ public class CampFire : MonoBehaviour
             }
         }
 
-        // Not looking at campfire
         HideInteractionUI();
+    }
+
+    private void CheckIfThisIsSavedCampfire()
+    {
+        if (SpawnPoint.Instance == null)
+            return;
+
+        if (!SpawnPoint.HasSavedSpawnPoint())
+            return;
+
+        if (campfireSpawnPoint == null)
+            return;
+
+        float distance = Vector3.Distance(
+            campfireSpawnPoint.position,
+            SpawnPoint.Instance.GetSpawnPosition()
+        );
+
+        if (distance < 0.1f)
+        {
+            isLit = true;
+
+            if (fireObject != null)
+                fireObject.SetActive(true);
+
+            if (fireLight != null)
+                fireLight.enabled = true;
+
+            Debug.Log(
+                "CampFire: This is the saved campfire. Fire restored."
+            );
+        }
     }
 
     private void LightCampfire()
     {
         isLit = true;
 
-        // Turn fire on
         if (fireObject != null)
             fireObject.SetActive(true);
 
-        // Turn light on
         if (fireLight != null)
             fireLight.enabled = true;
 
-        // Update the main SpawnPoint system
         if (SpawnPoint.Instance != null)
         {
             if (campfireSpawnPoint != null)
@@ -111,16 +135,25 @@ public class CampFire : MonoBehaviour
             );
         }
 
-        // Hide interaction UI
         HideInteractionUI();
 
-        // Show notification
         if (notification != null)
         {
             notification.ShowNotification();
         }
 
-        Debug.Log("Campfire lit!");
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.SaveGame();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "CampFire: PlayFabSaveManager was not found."
+            );
+        }
+
+        Debug.Log("Campfire lit and game saved!");
     }
 
     private void ShowInteractionUI()
