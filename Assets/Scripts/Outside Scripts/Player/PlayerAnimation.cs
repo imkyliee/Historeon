@@ -19,46 +19,6 @@ public class PlayerAnimation : MonoBehaviour
     private void Start()
     {
         animator = GetComponent<Animator>();
-
-        StartCoroutine(PlayStartAnimation());
-    }
-
-    private IEnumerator PlayStartAnimation()
-    {
-        isPlayingAction = true;
-
-        if (movement != null)
-        {
-            movement.enabled = false;
-
-            if (movement.rb != null)
-            {
-                movement.rb.isKinematic = true;
-            }
-        }
-
-        animator.Play("Start", 0, 0f);
-
-        yield return null;
-
-        while (animator.GetCurrentAnimatorStateInfo(0).IsName("Start") &&
-            animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
-        {
-            yield return null;
-        }
-
-        if (movement != null)
-        {
-            if (movement.rb != null)
-            {
-                movement.rb.isKinematic = false;
-            }
-
-            movement.enabled = true;
-        }
-
-        isPlayingAction = false;
-        currentAnimation = "";
     }
 
     private void Update()

@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class TrophyInteraction : MonoBehaviour
 {
@@ -23,8 +25,8 @@ public class TrophyInteraction : MonoBehaviour
     public int scorpionCount = 1;
 
     [Header("Enemy Spawn Points")]
-    public Transform spiderSpawnPoint;
-    public Transform scorpionSpawnPoint;
+    public Transform[] spiderSpawnPoints;
+    public Transform[] scorpionSpawnPoints;
 
     [Header("Player References")]
     public Movement playerMovement;
@@ -150,32 +152,114 @@ public class TrophyInteraction : MonoBehaviour
 
         spawnedEnemies.Clear();
 
+        SpawnSpiders();
+        SpawnScorpions();
+    }
+
+    private void SpawnSpiders()
+    {
+        if (spiderPrefab == null)
+            return;
+
         for (int i = 0; i < spiderCount; i++)
         {
-            if (spiderPrefab != null && spiderSpawnPoint != null)
-            {
-                GameObject spider = Instantiate(
-                    spiderPrefab,
-                    spiderSpawnPoint.position,
-                    spiderSpawnPoint.rotation
-                );
+            Transform spawnPoint = GetSpawnPoint(
+                spiderSpawnPoints,
+                i
+            );
 
-                spawnedEnemies.Add(spider);
-            }
+            if (spawnPoint == null)
+                continue;
+
+            GameObject spider = Instantiate(
+                spiderPrefab,
+                spawnPoint.position,
+                spawnPoint.rotation
+            );
+
+            PlaceEnemyOnNavMesh(spider, spawnPoint);
+
+            spawnedEnemies.Add(spider);
         }
+    }
+
+    private void SpawnScorpions()
+    {
+        if (scorpionPrefab == null)
+            return;
 
         for (int i = 0; i < scorpionCount; i++)
         {
-            if (scorpionPrefab != null && scorpionSpawnPoint != null)
-            {
-                GameObject scorpion = Instantiate(
-                    scorpionPrefab,
-                    scorpionSpawnPoint.position,
-                    scorpionSpawnPoint.rotation
-                );
+            Transform spawnPoint = GetSpawnPoint(
+                scorpionSpawnPoints,
+                i
+            );
 
-                spawnedEnemies.Add(scorpion);
-            }
+            if (spawnPoint == null)
+                continue;
+
+            GameObject scorpion = Instantiate(
+                scorpionPrefab,
+                spawnPoint.position,
+                spawnPoint.rotation
+            );
+
+            PlaceEnemyOnNavMesh(scorpion, spawnPoint);
+
+            spawnedEnemies.Add(scorpion);
+        }
+    }
+
+    private Transform GetSpawnPoint(Transform[] spawnPoints, int index)
+    {
+        if (spawnPoints == null || spawnPoints.Length == 0)
+            return null;
+
+        if (index < spawnPoints.Length && spawnPoints[index] != null)
+            return spawnPoints[index];
+
+        for (int i = 0; i < spawnPoints.Length; i++)
+        {
+            if (spawnPoints[i] != null)
+                return spawnPoints[i];
+        }
+
+        return null;
+    }
+
+    private void PlaceEnemyOnNavMesh(GameObject enemy, Transform spawnPoint)
+    {
+        if (enemy == null || spawnPoint == null)
+            return;
+
+        NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
+
+        if (agent != null)
+        {
+            agent.enabled = false;
+        }
+
+        NavMeshHit navHit;
+
+        if (NavMesh.SamplePosition(
+            spawnPoint.position,
+            out navHit,
+            3f,
+            NavMesh.AllAreas))
+        {
+            enemy.transform.position = navHit.position;
+        }
+        else
+        {
+            enemy.transform.position = spawnPoint.position;
+        }
+
+        enemy.transform.rotation = spawnPoint.rotation;
+
+        if (agent != null)
+        {
+            agent.enabled = true;
+            agent.Warp(enemy.transform.position);
         }
     }
 

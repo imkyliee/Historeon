@@ -5,6 +5,7 @@ public class CinematicCamera : MonoBehaviour
     [Header("Cinematic Camera")]
     public Animator animator;
     public Camera cinematicCamera;
+    public string Clip1, Clip2;
 
     [Header("Disable Reference")]
     public Camera mainCamera;
@@ -46,7 +47,7 @@ public class CinematicCamera : MonoBehaviour
             }
         }
 
-        animator.Play("Cinematic1", 0, 0f);
+        animator.Play(Clip1, 0, 0f);
     }
 
     public void PlayCinematic2()
@@ -54,7 +55,7 @@ public class CinematicCamera : MonoBehaviour
         if (animator == null)
             return;
 
-        animator.Play("Cinematic2", 0, 0f);
+        animator.Play(Clip2, 0, 0f);
     }
 
     public void DisablePlayer()

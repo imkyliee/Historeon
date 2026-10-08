@@ -11,7 +11,6 @@ public class TutorialManager : MonoBehaviour
     public GameObject tutorialUI2;
     public GameObject tutorialUI3;
     public GameObject tutorialUI4;
-    public GameObject tutorialUI5;
 
     [Header("Second Tutorial")]
     public Collider secondTutorialTrigger;
@@ -27,6 +26,16 @@ public class TutorialManager : MonoBehaviour
     public GameObject openBG;
     public GameObject hatchetBG;
     public GameObject leftClicking;
+
+    [Header("Block Doors")]
+    public GameObject blockDoor1;
+    public GameObject blockDoor2;
+    public GameObject blockDoor3;
+
+    [Header("Tutorial Doors")]
+    public TutorialDoor tutorialDoor1;
+    public TutorialDoor tutorialDoor2;
+    public TutorialDoor tutorialDoor3;
 
     [Header("References")]
     public CinematicCamera cinematicCamera;
@@ -68,6 +77,15 @@ public class TutorialManager : MonoBehaviour
         if (secondTutorialTrigger != null)
             secondTutorialTrigger.enabled = false;
 
+        if (tutorialDoor1 != null)
+            tutorialDoor1.enabled = false;
+
+        if (tutorialDoor2 != null)
+            tutorialDoor2.enabled = false;
+
+        if (tutorialDoor3 != null)
+            tutorialDoor3.enabled = false;
+
         ShowStartingTutorial(0);
     }
 
@@ -95,9 +113,6 @@ public class TutorialManager : MonoBehaviour
 
         if (tutorialUI4 != null)
             tutorialUI4.SetActive(false);
-
-        if (tutorialUI5 != null)
-            tutorialUI5.SetActive(false);
     }
 
     private void ShowStartingTutorial(int index)
@@ -126,11 +141,6 @@ public class TutorialManager : MonoBehaviour
             case 3:
                 if (tutorialUI4 != null)
                     tutorialUI4.SetActive(true);
-                break;
-
-            case 4:
-                if (tutorialUI5 != null)
-                    tutorialUI5.SetActive(true);
                 break;
         }
     }
@@ -164,15 +174,27 @@ public class TutorialManager : MonoBehaviour
         if (startingTutorialIndex != 3)
             return;
 
-        ShowStartingTutorial(4);
+        HideAllStartingTutorials();
+
+        if (blockDoor1 != null)
+            Destroy(blockDoor1);
+
+        if (tutorialDoor1 != null)
+            tutorialDoor1.enabled = true;
     }
 
     public void CompletePadlock()
     {
-        if (startingTutorialIndex != 4)
+        if (startingTutorialIndex != 3)
             return;
 
         HideAllStartingTutorials();
+
+        if (blockDoor1 != null)
+            Destroy(blockDoor1);
+
+        if (tutorialDoor1 != null)
+            tutorialDoor1.enabled = true;
     }
 
     public void StartSecondTutorial()
@@ -194,9 +216,6 @@ public class TutorialManager : MonoBehaviour
 
         if (tutorialUI4 != null)
             Destroy(tutorialUI4);
-
-        if (tutorialUI5 != null)
-            Destroy(tutorialUI5);
 
         if (tutorialTrigger != null)
             tutorialTrigger.enabled = false;
@@ -266,6 +285,11 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case 6:
+                if (blockDoor2 != null)
+                    Destroy(blockDoor2);
+
+                if (tutorialDoor2 != null)
+                    tutorialDoor2.enabled = true;
                 break;
         }
     }
@@ -553,6 +577,11 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case 4:
+                if (blockDoor3 != null)
+                    Destroy(blockDoor3);
+
+                if (tutorialDoor3 != null)
+                    tutorialDoor3.enabled = true;
                 break;
         }
     }
