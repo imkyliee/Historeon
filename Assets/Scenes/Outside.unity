@@ -2479,9 +2479,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: {fileID: 543014965}
   HUD:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 558256729}
+  - {fileID: 530644701}
+  - {fileID: 607110681}
+  - {fileID: 439776761}
+  - {fileID: 499107454}
 --- !u!114 &245563770
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9270,7 +9272,7 @@ GameObject:
   - component: {fileID: 872212500}
   m_Layer: 8
   m_Name: Character
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29877,7 +29879,7 @@ Light:
   m_RenderMode: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 34472569
   m_RenderingLayerMask: 1
   m_Lightmapping: 2
   m_LightShadowCasterMode: 0
@@ -31145,7 +31147,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2135289432}
   - component: {fileID: 2135289433}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: ShadowHead
   m_TagString: Untagged
   m_Icon: {fileID: 0}

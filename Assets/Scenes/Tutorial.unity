@@ -20,11 +20,11 @@ RenderSettings:
   m_FogDensity: 0.03
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientSkyColor: {r: 0.23921569, g: 0.23921569, b: 0.23921569, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 3
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
   m_HaloStrength: 0.5
@@ -339,6 +339,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: RightHandRing4
       objectReference: {fileID: 0}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
     - target: {fileID: -5561550452697079657, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
       propertyPath: m_Name
       value: RightToeBase
@@ -26755,6 +26767,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: RightHandRing4
       objectReference: {fileID: 0}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
     - target: {fileID: -5561550452697079657, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
       propertyPath: m_Name
       value: RightToeBase
@@ -40379,6 +40403,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: RightHandRing4
       objectReference: {fileID: 0}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
     - target: {fileID: -5561550452697079657, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
       propertyPath: m_Name
       value: RightToeBase
@@ -63945,6 +63981,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: RightHandRing4
       objectReference: {fileID: 0}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
+    - target: {fileID: -5818889320171079249, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
+      propertyPath: 'm_Materials.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f4919b06bc7f3ed4cbbc72b0eac160e7, type: 2}
     - target: {fileID: -5561550452697079657, guid: 9288ec075bddfb942b7ba35d60307e15, type: 3}
       propertyPath: m_Name
       value: RightToeBase
@@ -97590,7 +97638,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: 84efc31b7a616d44d9713981978884e1, type: 2}
   m_BuildHeightMesh: 0
 --- !u!23 &8262057004268397671
 MeshRenderer:
