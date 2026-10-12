@@ -23,7 +23,7 @@ public class PlayerAnimation : MonoBehaviour
 
     private void Update()
     {
-        HandleAttackInput();
+        //HandleAttackInput();
         CheckAnimation();
     }
 
@@ -36,7 +36,7 @@ public class PlayerAnimation : MonoBehaviour
         animator.CrossFade(animation, crossfade);
     }
 
-    private void HandleAttackInput()
+    /*private void HandleAttackInput()
     {
         if (PauseManager.Instance != null &&
             PauseManager.Instance.IsPaused)
@@ -58,7 +58,7 @@ public class PlayerAnimation : MonoBehaviour
         {
             Attack();
         }
-    }
+    }*/
 
     // Attack
     public void Attack()
@@ -479,7 +479,19 @@ public class PlayerAnimation : MonoBehaviour
         // Idle
         ChangeAnimation("HoldingIdle");
     }
+    public void ResetActionAfterQuiz()
+    {
+        StopAllCoroutines();
 
+        isPlayingAction = false;
+        currentAnimation = "";
+
+        if (animator == null)
+            animator = GetComponent<Animator>();
+
+        if (animator != null)
+            animator.enabled = true;
+    }
     // Two handed item animations
     private void CheckTwoHandAnimation()
     {

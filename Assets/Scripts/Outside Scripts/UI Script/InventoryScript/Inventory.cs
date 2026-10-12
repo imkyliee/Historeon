@@ -595,6 +595,15 @@ public class Inventory : MonoBehaviour
                 lookedAtItem.amount
             );
 
+            if (pickedUpItem == hatchetitem)
+            {
+                ObjectPrerequisite prerequisite =
+                    FindFirstObjectByType<ObjectPrerequisite>();
+
+                if (prerequisite != null)
+                    prerequisite.ObtainRequirement("Hatchet");
+            }
+
             if (TutorialManager.Instance != null)
             {
                 TutorialManager.Instance.CompletePickup(

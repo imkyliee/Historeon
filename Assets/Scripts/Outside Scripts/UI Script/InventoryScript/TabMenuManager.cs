@@ -9,6 +9,9 @@ public class TabMenuManager : MonoBehaviour
     [Header("Inventory")]
     public Inventory inventory;
 
+    [Header("Player")]
+    public Movement movement;
+
     public bool IsMenuOpen
     {
         get
@@ -16,6 +19,12 @@ public class TabMenuManager : MonoBehaviour
             return logbookObjectiveWindow != null &&
                    logbookObjectiveWindow.activeSelf;
         }
+    }
+
+    void Awake()
+    {
+        if (movement == null)
+            movement = Movement.Instance;
     }
 
     void Update()
@@ -36,6 +45,9 @@ public class TabMenuManager : MonoBehaviour
 
     private void ToggleMenu()
     {
+        if (logbookObjectiveWindow == null)
+            return;
+
         if (logbookObjectiveWindow.activeSelf)
             CloseMenu();
         else
@@ -50,19 +62,19 @@ public class TabMenuManager : MonoBehaviour
         logbookObjectiveWindow.SetActive(true);
 
         if (objectiveBook != null)
-        {
             objectiveBook.WriteQuests();
-        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        Movement.Instance.SetLookEnabled(false);
+        if (movement != null)
+        {
+            movement.SetLookEnabled(false);
+            movement.SetAttackEnabled(false);
+        }
 
         if (TutorialManager.Instance != null)
-        {
             TutorialManager.Instance.CompleteInventoryBG();
-        }
     }
 
     public void CloseMenu()
@@ -76,6 +88,10 @@ public class TabMenuManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        Movement.Instance.SetLookEnabled(true);
+        if (movement != null)
+        {
+            movement.SetLookEnabled(true);
+            movement.SetAttackEnabled(true);
+        }
     }
 }

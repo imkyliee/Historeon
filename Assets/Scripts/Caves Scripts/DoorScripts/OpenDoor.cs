@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class OpenDoor : MonoBehaviour
@@ -6,6 +7,10 @@ public class OpenDoor : MonoBehaviour
     public GameObject DoorUI;
     public GameObject OpenUI;
     public GameObject CloseUI;
+    public GameObject LockedUI;
+
+    [Header("Prerequisite")]
+    public ObjectPrerequisite doorPrerequisite;
 
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
@@ -21,25 +26,18 @@ public class OpenDoor : MonoBehaviour
 
     private void Start()
     {
-        // Find Animator on this object
         doorAnimator = GetComponent<Animator>();
 
-        // If not found, check parent
         if (doorAnimator == null)
             doorAnimator = GetComponentInParent<Animator>();
 
-        // If still not found, check children
         if (doorAnimator == null)
             doorAnimator = GetComponentInChildren<Animator>();
 
         playerCamera = Camera.main;
 
         HideAllUI();
-
-        if (doorAnimator == null)
-        {
-           // Debug.LogError( "OpenDoor: No Animator found on Door, its parent, or its children!");
-        }
+        UpdateUnlockState();
     }
 
     private void Update()
@@ -50,6 +48,8 @@ public class OpenDoor : MonoBehaviour
             return;
         }
 
+        UpdateUnlockState();
+
         isLookingAtDoor = false;
 
         Ray ray = new Ray(
@@ -59,35 +59,57 @@ public class OpenDoor : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactionRange))
         {
-            OpenDoor door =
-                hit.collider.GetComponentInParent<OpenDoor>();
+            OpenDoor door = hit.collider.GetComponentInParent<OpenDoor>();
 
             if (door == this)
-            {
                 isLookingAtDoor = true;
-            }
         }
 
-        // Door can only be used after the quiz is completed
-        if (isLookingAtDoor && isUnlocked)
+        if (isLookingAtDoor)
         {
+            if (currentDoor != null && currentDoor != this)
+                currentDoor.HideAllUI();
+
             currentDoor = this;
 
-            ShowDoorUI();
-
-            if (Input.GetKeyDown(KeyCode.E))
+            if (isUnlocked)
             {
-                ToggleDoor();
+                ShowDoorUI();
+
+                if (Input.GetKeyDown(KeyCode.E))
+                    ToggleDoor();
+            }
+            else
+            {
+                ShowLockedUI();
             }
         }
-        else
+        else if (currentDoor == this)
         {
-            // Only the currently displayed door is allowed
-            // to hide the shared UI.
-            if (currentDoor == this)
+            currentDoor = null;
+            HideAllUI();
+        }
+    }
+
+    private void UpdateUnlockState()
+    {
+        if (doorPrerequisite == null ||
+            doorPrerequisite.requirements == null ||
+            doorPrerequisite.requirements.Length == 0)
+        {
+            isUnlocked = false;
+            return;
+        }
+
+        isUnlocked = true;
+
+        foreach (ObjectPrerequisite.Requirement requirement
+                 in doorPrerequisite.requirements)
+        {
+            if (!requirement.isObtained)
             {
-                currentDoor = null;
-                HideAllUI();
+                isUnlocked = false;
+                break;
             }
         }
     }
@@ -95,59 +117,56 @@ public class OpenDoor : MonoBehaviour
     public void UnlockDoor()
     {
         isUnlocked = true;
-
-        //Debug.Log("Door unlocked!");
-
         HideAllUI();
     }
 
     private void ToggleDoor()
     {
         if (doorAnimator == null)
-        {
-            //Debug.LogError("OpenDoor: Animator is missing!");
             return;
-        }
 
         if (!isOpen)
         {
             doorAnimator.Play("Open", 0, 0f);
             isOpen = true;
-
-            Debug.Log("Door opened!");
         }
         else
         {
             doorAnimator.Play("Close", 0, 0f);
             isOpen = false;
-
-            Debug.Log("Door closed!");
         }
 
         ShowDoorUI();
     }
 
+    private void ShowLockedUI()
+    {
+        if (DoorUI != null)
+            DoorUI.SetActive(false);
+
+        if (OpenUI != null)
+            OpenUI.SetActive(false);
+
+        if (CloseUI != null)
+            CloseUI.SetActive(false);
+
+        if (LockedUI != null)
+            LockedUI.SetActive(true);
+    }
+
     private void ShowDoorUI()
     {
+        if (LockedUI != null)
+            LockedUI.SetActive(false);
+
         if (DoorUI != null)
             DoorUI.SetActive(true);
 
-        if (!isOpen)
-        {
-            if (OpenUI != null)
-                OpenUI.SetActive(true);
+        if (OpenUI != null)
+            OpenUI.SetActive(!isOpen);
 
-            if (CloseUI != null)
-                CloseUI.SetActive(false);
-        }
-        else
-        {
-            if (OpenUI != null)
-                OpenUI.SetActive(false);
-
-            if (CloseUI != null)
-                CloseUI.SetActive(true);
-        }
+        if (CloseUI != null)
+            CloseUI.SetActive(isOpen);
     }
 
     private void HideAllUI()
@@ -160,6 +179,9 @@ public class OpenDoor : MonoBehaviour
 
         if (CloseUI != null)
             CloseUI.SetActive(false);
+
+        if (LockedUI != null)
+            LockedUI.SetActive(false);
     }
 
     private void OnDestroy()

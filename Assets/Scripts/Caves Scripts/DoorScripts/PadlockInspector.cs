@@ -226,7 +226,10 @@ public class PadlockInspector : MonoBehaviour
 
         // Re-enable PlayerAnimation
         if (playerAnimation != null)
+        {
             playerAnimation.enabled = true;
+            playerAnimation.ResetActionAfterQuiz();
+        }
 
         // Re-enable Camera Bob
         if (mainCameraBob != null)

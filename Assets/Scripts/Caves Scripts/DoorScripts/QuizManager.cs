@@ -28,6 +28,9 @@ public class QuizManager : MonoBehaviour
     public TextMeshProUGUI CheckerText;
     public TextMeshProUGUI ScoreText;
 
+    [Header("Player Animation")]
+    public PlayerAnimation playerAnimation;
+
     [Header("Wrong Answer UI")]
     public GameObject WrongUI;
     public float wrongUIDuration = 1f;
@@ -52,6 +55,9 @@ public class QuizManager : MonoBehaviour
 
     public void StartQuiz()
     {
+        if (Movement.Instance != null)
+            Movement.Instance.SetAttackEnabled(false);
+
         IsQuizOpen = true;
 
         DisablePlayerMovement();
@@ -64,6 +70,9 @@ public class QuizManager : MonoBehaviour
     {
         Current = this;
         IsQuizOpen = true;
+
+        if (Movement.Instance != null)
+            Movement.Instance.SetAttackEnabled(false);
 
         DisablePlayerMovement();
 
@@ -309,7 +318,6 @@ public class QuizManager : MonoBehaviour
         // Close quiz
         CloseUI();
     }
-
     public void CloseUI()
     {
         IsQuizOpen = false;
@@ -319,9 +327,18 @@ public class QuizManager : MonoBehaviour
 
         // Re-enable player movement
         if (PlayerMovement != null)
-        {
             PlayerMovement.enabled = true;
+
+        // Re-enable player animation and reset the action
+        if (playerAnimation != null)
+        {
+            playerAnimation.enabled = true;
+            playerAnimation.ResetActionAfterQuiz();
         }
+
+        // Re-enable attacks
+        if (Movement.Instance != null)
+            Movement.Instance.SetAttackEnabled(true);
 
         // Hide quiz UI
         gameObject.SetActive(false);
@@ -330,4 +347,5 @@ public class QuizManager : MonoBehaviour
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
+
 }

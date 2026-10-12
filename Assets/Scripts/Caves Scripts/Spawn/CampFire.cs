@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class CampFire : MonoBehaviour
@@ -5,6 +6,9 @@ public class CampFire : MonoBehaviour
     [Header("Interaction")]
     public float interactionRange = 3f;
     public GameObject interactUI;
+
+    [Header("Prerequisite")]
+    public ObjectPrerequisite logbookPrerequisite;
 
     [Header("Fire")]
     public GameObject fireObject;
@@ -37,11 +41,14 @@ public class CampFire : MonoBehaviour
 
     private void Update()
     {
-        if (isLit)
+        if (isLit || !IsPrerequisiteCompleted())
         {
             HideInteractionUI();
             return;
         }
+
+        if (playerCamera == null)
+            playerCamera = Camera.main;
 
         if (playerCamera == null)
             return;
@@ -62,15 +69,29 @@ public class CampFire : MonoBehaviour
                 ShowInteractionUI();
 
                 if (Input.GetKeyDown(KeyCode.E))
-                {
                     LightCampfire();
-                }
 
                 return;
             }
         }
 
         HideInteractionUI();
+    }
+
+    private bool IsPrerequisiteCompleted()
+    {
+        if (logbookPrerequisite == null ||
+            logbookPrerequisite.requirements == null)
+            return false;
+
+        foreach (ObjectPrerequisite.Requirement requirement
+                 in logbookPrerequisite.requirements)
+        {
+            if (requirement.requirementName == "LogBook (1)")
+                return requirement.isObtained;
+        }
+
+        return false;
     }
 
     private void CheckIfThisIsSavedCampfire()
@@ -118,15 +139,11 @@ public class CampFire : MonoBehaviour
         if (SpawnPoint.Instance != null)
         {
             if (campfireSpawnPoint != null)
-            {
                 SpawnPoint.Instance.SetSpawnPoint(campfireSpawnPoint);
-            }
             else
-            {
                 Debug.LogWarning(
                     "CampFire: Campfire Spawn Point is not assigned."
                 );
-            }
         }
         else
         {
@@ -138,20 +155,14 @@ public class CampFire : MonoBehaviour
         HideInteractionUI();
 
         if (notification != null)
-        {
             notification.ShowNotification();
-        }
 
         if (PlayFabSaveManager.Instance != null)
-        {
             PlayFabSaveManager.Instance.SaveGame();
-        }
         else
-        {
             Debug.LogWarning(
                 "CampFire: PlayFabSaveManager was not found."
             );
-        }
 
         Debug.Log("Campfire lit and game saved!");
     }
