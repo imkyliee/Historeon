@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4549496914318682077}
   - component: {fileID: 7845420683553172024}
   - component: {fileID: 6615369244089813612}
+  - component: {fileID: -2697232056077049306}
   - component: {fileID: 8415254868508719292}
   m_Layer: 0
   m_Name: Bag
@@ -649,6 +650,19 @@ MonoBehaviour:
     - {x: 1, y: 0.00000016779197, z: 0.00000040270072}
     - {x: 0.70710665, y: 0.00000016502543, z: 0.7071069}
     - {x: 0.57735014, y: -0.57735026, z: 0.5773503}
+--- !u!114 &-2697232056077049306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6419018292356990526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ad877ea88cfe3b4abf8175ee4b7a30c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldID: world_bag
 --- !u!65 &8415254868508719292
 BoxCollider:
   m_ObjectHideFlags: 0

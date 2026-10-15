@@ -21,6 +21,7 @@ public class MainMenu : MonoBehaviour
     [Header("New Game Confirmation")]
     public GameObject startNewGameWindow;
     public Animator startNewGameAnimator;
+    private CanvasGroup mainMenuButtonsCanvasGroup;
 
     [Header("Volume Menu")]
     public GameObject volumeMenu;
@@ -57,6 +58,18 @@ public class MainMenu : MonoBehaviour
     {
         soundManager = FindFirstObjectByType<SoundManager>();
 
+        if (MainMenuButtons != null)
+        {
+            mainMenuButtonsCanvasGroup =
+                MainMenuButtons.GetComponent<CanvasGroup>();
+
+            if (mainMenuButtonsCanvasGroup == null)
+            {
+                mainMenuButtonsCanvasGroup =
+                    MainMenuButtons.AddComponent<CanvasGroup>();
+            }
+        }
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -65,27 +78,70 @@ public class MainMenu : MonoBehaviour
 
         RefreshSaveMenu();
 
-        bool tutorialCompleted =
-            PlayerPrefs.GetInt(TutorialCompletedKey, 0) == 1;
-
-        if (!tutorialCompleted)
-        {
-            tutorialWindow.SetActive(true);
-
-            if (tutorialWindowAnimator != null)
-            {
-                tutorialWindowAnimator.Play("TutorialMenu Open");
-            }
-
+        if (TitleScreen != null)
             TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
             MainMenuButtons.SetActive(false);
+
+        if (tutorialWindow != null)
+            tutorialWindow.SetActive(false);
+
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.GetTutorialCompleted(
+                completed =>
+                {
+                    if (this == null)
+                        return;
+
+                    ApplyTutorialState(completed);
+                }
+            );
         }
         else
         {
-            tutorialWindow.SetActive(false);
+            ApplyTutorialState(
+                PlayerPrefs.GetInt(TutorialCompletedKey, 0) == 1
+            );
+        }
 
-            TitleScreen.SetActive(true);
-            MainMenuButtons.SetActive(true);
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
+
+        if (quitMenu != null)
+            quitMenu.SetActive(false);
+
+        if (volumeMenu != null)
+            volumeMenu.SetActive(false);
+
+        if (leaderboardWindow != null)
+            leaderboardWindow.SetActive(false);
+
+        if (controlWindow != null)
+            controlWindow.SetActive(false);
+
+        isVolumeMenuOpen = false;
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
+
+    private void ApplyTutorialState(bool completed)
+    {
+        if (completed)
+        {
+            PlayerPrefs.SetInt(TutorialCompletedKey, 1);
+            PlayerPrefs.Save();
+
+            if (tutorialWindow != null)
+                tutorialWindow.SetActive(false);
+
+            if (TitleScreen != null)
+                TitleScreen.SetActive(true);
+
+            if (MainMenuButtons != null)
+                MainMenuButtons.SetActive(true);
 
             if (TitleScreenAnimator != null)
                 TitleScreenAnimator.Play("TitleScreen Open");
@@ -93,29 +149,14 @@ public class MainMenu : MonoBehaviour
             if (MainMenuButtonsAnimator != null)
                 MainMenuButtonsAnimator.Play("MainMenu Open");
         }
-
-        optionMenu.SetActive(false);
-        quitMenu.SetActive(false);
-
-        if (volumeMenu != null)
+        else
         {
-            volumeMenu.SetActive(false);
+            if (tutorialWindow != null)
+                tutorialWindow.SetActive(true);
+
+            if (tutorialWindowAnimator != null)
+                tutorialWindowAnimator.Play("TutorialMenu Open");
         }
-
-        if (leaderboardWindow != null)
-        {
-            leaderboardWindow.SetActive(false);
-        }
-
-        if (controlWindow != null)
-        {
-            controlWindow.SetActive(false);
-        }
-
-        isVolumeMenuOpen = false;
-
-        if (volumeSlider != null)
-            volumeSlider.interactable = false;
     }
 
     public void RefreshSaveMenu()
@@ -129,13 +170,9 @@ public class MainMenu : MonoBehaviour
         PlayFabSaveManager.Instance.HasSave(hasSave =>
         {
             if (hasSave)
-            {
                 SetSaveMenu();
-            }
             else
-            {
                 SetNoSaveMenu();
-            }
         });
     }
 
@@ -169,9 +206,7 @@ public class MainMenu : MonoBehaviour
     {
         if (PlayFabSaveManager.Instance == null)
         {
-            Debug.LogWarning(
-                "PlayFabSaveManager was not found."
-            );
+            Debug.LogWarning("PlayFabSaveManager was not found.");
             return;
         }
 
@@ -189,9 +224,7 @@ public class MainMenu : MonoBehaviour
         yield return new WaitForSeconds(transitionDuration);
 
         if (soundManager != null)
-        {
             soundManager.DestroySound();
-        }
 
         if (TitleScreen != null)
             TitleScreen.SetActive(false);
@@ -199,18 +232,23 @@ public class MainMenu : MonoBehaviour
         if (MainMenuButtons != null)
             MainMenuButtons.SetActive(false);
 
-        PlayFabSaveManager.Instance.StartNewGame(gameSceneName);
+        if (PlayFabSaveManager.Instance != null)
+        {
+            ObjectPrerequisite.ResetSavedRequirementsForNewGame();
+
+            PlayFabSaveManager.Instance.StartNewGame(
+                gameSceneName,
+                sceneTransition
+            );
+        }
     }
 
     // CONTINUE
-
     public void ContinueGame()
     {
         if (PlayFabSaveManager.Instance == null)
         {
-            Debug.LogWarning(
-                "PlayFabSaveManager was not found."
-            );
+            Debug.LogWarning("PlayFabSaveManager was not found.");
             return;
         }
 
@@ -228,9 +266,7 @@ public class MainMenu : MonoBehaviour
         yield return new WaitForSeconds(transitionDuration);
 
         if (soundManager != null)
-        {
             soundManager.DestroySound();
-        }
 
         if (TitleScreen != null)
             TitleScreen.SetActive(false);
@@ -238,7 +274,8 @@ public class MainMenu : MonoBehaviour
         if (MainMenuButtons != null)
             MainMenuButtons.SetActive(false);
 
-        PlayFabSaveManager.Instance.ContinueGame();
+        if (PlayFabSaveManager.Instance != null)
+            PlayFabSaveManager.Instance.ContinueGame(sceneTransition);
     }
 
     // NEW GAME
@@ -248,20 +285,22 @@ public class MainMenu : MonoBehaviour
         if (startNewGameWindow == null)
             return;
 
+        if (mainMenuButtonsCanvasGroup != null)
+        {
+            mainMenuButtonsCanvasGroup.interactable = false;
+            mainMenuButtonsCanvasGroup.blocksRaycasts = false;
+        }
+
         startNewGameWindow.SetActive(true);
 
         if (startNewGameAnimator != null)
-        {
             startNewGameAnimator.Play("Startnewgame Open");
-        }
     }
 
     public void ConfirmNewGame()
     {
         if (startNewGameAnimator != null)
-        {
             startNewGameAnimator.Play("Startnewgame Close");
-        }
 
         StartCoroutine(ConfirmNewGameRoutine());
     }
@@ -282,9 +321,7 @@ public class MainMenu : MonoBehaviour
         yield return new WaitForSeconds(transitionDuration);
 
         if (soundManager != null)
-        {
             soundManager.DestroySound();
-        }
 
         if (TitleScreen != null)
             TitleScreen.SetActive(false);
@@ -292,18 +329,18 @@ public class MainMenu : MonoBehaviour
         if (MainMenuButtons != null)
             MainMenuButtons.SetActive(false);
 
+        ObjectPrerequisite.ResetSavedRequirementsForNewGame();
+
         if (PlayFabSaveManager.Instance != null)
         {
-            PlayFabSaveManager.Instance.StartNewGame(gameSceneName);
+            PlayFabSaveManager.Instance.StartNewGame(gameSceneName, sceneTransition);
         }
     }
 
     public void CancelNewGame()
     {
         if (startNewGameAnimator != null)
-        {
             startNewGameAnimator.Play("Startnewgame Close");
-        }
 
         StartCoroutine(CancelNewGameRoutine());
     }
@@ -314,6 +351,12 @@ public class MainMenu : MonoBehaviour
 
         if (startNewGameWindow != null)
             startNewGameWindow.SetActive(false);
+
+        if (mainMenuButtonsCanvasGroup != null)
+        {
+            mainMenuButtonsCanvasGroup.interactable = true;
+            mainMenuButtonsCanvasGroup.blocksRaycasts = true;
+        }
     }
 
     // TUTORIAL - LET'S GO
@@ -323,29 +366,22 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(TutorialLetsGoRoutine());
     }
 
-    IEnumerator TutorialLetsGoRoutine()
+    private IEnumerator TutorialLetsGoRoutine()
     {
         if (soundManager != null)
-        {
             soundManager.DestroySound();
-        }
 
         if (tutorialWindowAnimator != null)
         {
             tutorialWindowAnimator.Play("TutorialMenu Close");
-
             yield return new WaitForSeconds(tutorialTransitionDuration);
         }
 
         if (tutorialWindow != null)
-        {
             Destroy(tutorialWindow);
-        }
 
         if (sceneTransition != null)
-        {
             sceneTransition.OnButtonPressed("Tutorial");
-        }
     }
 
     // TUTORIAL - SKIP
@@ -355,25 +391,25 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(TutorialSkipRoutine());
     }
 
-    IEnumerator TutorialSkipRoutine()
+    private IEnumerator TutorialSkipRoutine()
     {
         if (tutorialWindowAnimator != null)
         {
             tutorialWindowAnimator.Play("TutorialMenu Close");
-
             yield return new WaitForSeconds(tutorialTransitionDuration);
         }
 
         if (tutorialWindow != null)
-        {
             Destroy(tutorialWindow);
-        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        TitleScreen.SetActive(true);
-        MainMenuButtons.SetActive(true);
+        if (TitleScreen != null)
+            TitleScreen.SetActive(true);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(true);
 
         if (TitleScreenAnimator != null)
             TitleScreenAnimator.Play("TitleScreen Open");
@@ -392,25 +428,25 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(TutorialMainMenuRoutine());
     }
 
-    IEnumerator TutorialMainMenuRoutine()
+    private IEnumerator TutorialMainMenuRoutine()
     {
         if (tutorialWindowAnimator != null)
         {
             tutorialWindowAnimator.Play("TutorialMenu Close");
-
             yield return new WaitForSeconds(tutorialTransitionDuration);
         }
 
         if (tutorialWindow != null)
-        {
             Destroy(tutorialWindow);
-        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        TitleScreen.SetActive(true);
-        MainMenuButtons.SetActive(true);
+        if (TitleScreen != null)
+            TitleScreen.SetActive(true);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(true);
 
         if (TitleScreenAnimator != null)
             TitleScreenAnimator.Play("TitleScreen Open");
@@ -429,36 +465,38 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(OpenOptionsRoutine());
     }
 
-    IEnumerator OpenOptionsRoutine()
+    private IEnumerator OpenOptionsRoutine()
     {
-        TitleScreenAnimator.Play("TitleScreen Close");
-        MainMenuButtonsAnimator.Play("MainMenu Close");
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
 
         yield return new WaitForSeconds(transitionDuration);
 
-        TitleScreen.SetActive(false);
-        MainMenuButtons.SetActive(false);
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
 
-        optionMenu.SetActive(true);
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        if (optionMenu != null)
+            optionMenu.SetActive(true);
 
         if (volumeMenu != null)
-        {
             volumeMenu.SetActive(false);
-        }
 
         if (leaderboardWindow != null)
-        {
             leaderboardWindow.SetActive(false);
-        }
 
         if (controlWindow != null)
-        {
             controlWindow.SetActive(false);
-        }
 
         isVolumeMenuOpen = false;
 
-        optionMenuAnimator.Play("OptionMenu Open");
+        if (optionMenuAnimator != null)
+            optionMenuAnimator.Play("OptionMenu Open");
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;
@@ -471,33 +509,27 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(OpenVolumeRoutine());
     }
 
-    IEnumerator OpenVolumeRoutine()
+    private IEnumerator OpenVolumeRoutine()
     {
         if (optionMenuAnimator != null)
         {
             optionMenuAnimator.Play("OptionMenu Close");
-
             yield return new WaitForSeconds(transitionDuration);
         }
 
-        optionMenu.SetActive(false);
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
 
         if (volumeMenu != null)
-        {
             volumeMenu.SetActive(true);
-        }
 
         isVolumeMenuOpen = true;
 
         if (volumeMenuAnimator != null)
-        {
             volumeMenuAnimator.Play("Volume Open");
-        }
 
         if (volumeSlider != null)
-        {
             volumeSlider.interactable = true;
-        }
     }
 
     // QUIT MENU
@@ -507,15 +539,21 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(OpenQuitRoutine());
     }
 
-    IEnumerator OpenQuitRoutine()
+    private IEnumerator OpenQuitRoutine()
     {
-        TitleScreenAnimator.Play("TitleScreen Close");
-        MainMenuButtonsAnimator.Play("MainMenu Close");
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
 
         yield return new WaitForSeconds(transitionDuration);
 
-        TitleScreen.SetActive(false);
-        MainMenuButtons.SetActive(false);
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
 
         if (optionMenu != null)
             optionMenu.SetActive(false);
@@ -529,9 +567,11 @@ public class MainMenu : MonoBehaviour
         if (controlWindow != null)
             controlWindow.SetActive(false);
 
-        quitMenu.SetActive(true);
+        if (quitMenu != null)
+            quitMenu.SetActive(true);
 
-        quitMenuAnimator.Play("QuitMenu Open");
+        if (quitMenuAnimator != null)
+            quitMenuAnimator.Play("QuitMenu Open");
     }
 
     // LEADERBOARD
@@ -541,26 +581,22 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(OpenLeaderboardRoutine());
     }
 
-    IEnumerator OpenLeaderboardRoutine()
+    private IEnumerator OpenLeaderboardRoutine()
     {
         if (optionMenuAnimator != null)
         {
             optionMenuAnimator.Play("OptionMenu Close");
-
             yield return new WaitForSeconds(transitionDuration);
         }
 
-        optionMenu.SetActive(false);
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
 
         if (leaderboardWindow != null)
-        {
             leaderboardWindow.SetActive(true);
-        }
 
         if (leaderboardWindowAnimator != null)
-        {
             leaderboardWindowAnimator.Play("Leaderboard Open");
-        }
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;
@@ -573,26 +609,22 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(OpenControlRoutine());
     }
 
-    IEnumerator OpenControlRoutine()
+    private IEnumerator OpenControlRoutine()
     {
         if (optionMenuAnimator != null)
         {
             optionMenuAnimator.Play("OptionMenu Close");
-
             yield return new WaitForSeconds(transitionDuration);
         }
 
-        optionMenu.SetActive(false);
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
 
         if (controlWindow != null)
-        {
             controlWindow.SetActive(true);
-        }
 
         if (controlWindowAnimator != null)
-        {
             controlWindowAnimator.Play("Control Open");
-        }
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;
@@ -605,27 +637,26 @@ public class MainMenu : MonoBehaviour
         StartCoroutine(BackRoutine());
     }
 
-    IEnumerator BackRoutine()
+    private IEnumerator BackRoutine()
     {
         if (isVolumeMenuOpen)
         {
             if (volumeMenuAnimator != null)
             {
                 volumeMenuAnimator.Play("Volume Close");
-
                 yield return new WaitForSeconds(transitionDuration);
             }
 
             if (volumeMenu != null)
-            {
                 volumeMenu.SetActive(false);
-            }
 
             isVolumeMenuOpen = false;
 
-            optionMenu.SetActive(true);
+            if (optionMenu != null)
+                optionMenu.SetActive(true);
 
-            optionMenuAnimator.Play("OptionMenu Open");
+            if (optionMenuAnimator != null)
+                optionMenuAnimator.Play("OptionMenu Open");
 
             if (volumeSlider != null)
                 volumeSlider.interactable = false;
@@ -638,15 +669,16 @@ public class MainMenu : MonoBehaviour
             if (leaderboardWindowAnimator != null)
             {
                 leaderboardWindowAnimator.Play("Leaderboard Close");
-
                 yield return new WaitForSeconds(transitionDuration);
             }
 
             leaderboardWindow.SetActive(false);
 
-            optionMenu.SetActive(true);
+            if (optionMenu != null)
+                optionMenu.SetActive(true);
 
-            optionMenuAnimator.Play("OptionMenu Open");
+            if (optionMenuAnimator != null)
+                optionMenuAnimator.Play("OptionMenu Open");
 
             if (volumeSlider != null)
                 volumeSlider.interactable = false;
@@ -659,15 +691,16 @@ public class MainMenu : MonoBehaviour
             if (controlWindowAnimator != null)
             {
                 controlWindowAnimator.Play("Control Close");
-
                 yield return new WaitForSeconds(transitionDuration);
             }
 
             controlWindow.SetActive(false);
 
-            optionMenu.SetActive(true);
+            if (optionMenu != null)
+                optionMenu.SetActive(true);
 
-            optionMenuAnimator.Play("OptionMenu Open");
+            if (optionMenuAnimator != null)
+                optionMenuAnimator.Play("OptionMenu Open");
 
             if (volumeSlider != null)
                 volumeSlider.interactable = false;
@@ -675,20 +708,24 @@ public class MainMenu : MonoBehaviour
             yield break;
         }
 
-        if (optionMenu.activeSelf)
+        if (optionMenu != null && optionMenu.activeSelf)
         {
-            optionMenuAnimator.Play("OptionMenu Close");
-
-            yield return new WaitForSeconds(transitionDuration);
+            if (optionMenuAnimator != null)
+            {
+                optionMenuAnimator.Play("OptionMenu Close");
+                yield return new WaitForSeconds(transitionDuration);
+            }
 
             optionMenu.SetActive(false);
         }
 
-        if (quitMenu.activeSelf)
+        if (quitMenu != null && quitMenu.activeSelf)
         {
-            quitMenuAnimator.Play("QuitMenu Close");
-
-            yield return new WaitForSeconds(transitionDuration);
+            if (quitMenuAnimator != null)
+            {
+                quitMenuAnimator.Play("QuitMenu Close");
+                yield return new WaitForSeconds(transitionDuration);
+            }
 
             quitMenu.SetActive(false);
         }
@@ -696,11 +733,17 @@ public class MainMenu : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        TitleScreen.SetActive(true);
-        MainMenuButtons.SetActive(true);
+        if (TitleScreen != null)
+            TitleScreen.SetActive(true);
 
-        TitleScreenAnimator.Play("TitleScreen Open");
-        MainMenuButtonsAnimator.Play("MainMenu Open");
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(true);
+
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Open");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Open");
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;

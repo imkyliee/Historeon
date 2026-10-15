@@ -129,6 +129,17 @@ public class LogbookPickup : MonoBehaviour
             );
         }
 
+        PersistentWorldItem worldItem = GetComponentInParent<PersistentWorldItem>();
+
+        if (worldItem != null && PlayFabSaveManager.Instance != null)
+        {
+            Debug.Log("Registering collected logbook: " + worldItem.worldID);
+
+            PlayFabSaveManager.Instance.RegisterCollectedWorldObject(
+                worldItem.worldID
+            );
+        }
+
         Destroy(gameObject);
     }
 

@@ -10,12 +10,17 @@ public class Artifacts : MonoBehaviour
     public GameObject getTrophyUI;
     public GameObject killEnemiesUI;
 
+    [Header("Logbook")]
+    public LogbookEntry logbookEntry;
+    public Notification logbookNotification;
+
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
     [Header("Artifact")]
     public GameObject artifactObject;
     public GameObject barrierObject;
+    public string artifactWorldID = "TabonCaveArtifact";
 
     [Header("Enemy Prefabs")]
     public GameObject spiderPrefab;
@@ -86,9 +91,7 @@ public class Artifacts : MonoBehaviour
                 hit.collider.GetComponentInParent<Artifacts>();
 
             if (artifact == this)
-            {
                 isLookingAtTrophy = true;
-            }
         }
 
         if (isLookingAtTrophy && !trophyObtained && !encounterStarted)
@@ -97,9 +100,7 @@ public class Artifacts : MonoBehaviour
             ShowInteractUI();
 
             if (Input.GetKeyDown(KeyCode.E))
-            {
                 StartEncounter();
-            }
         }
         else if (isLookingAtTrophy && !trophyObtained && enemiesDefeated)
         {
@@ -107,16 +108,12 @@ public class Artifacts : MonoBehaviour
             ShowInteractUI();
 
             if (Input.GetKeyDown(KeyCode.E))
-            {
                 ObtainArtifact();
-            }
         }
         else
         {
             if (currentTrophy == this)
-            {
                 currentTrophy = null;
-            }
 
             HideInteractUI();
         }
@@ -144,6 +141,8 @@ public class Artifacts : MonoBehaviour
 
         SpawnSpiders();
         SpawnScorpions();
+
+        CheckEnemies();
     }
 
     private void SpawnSpiders()
@@ -168,7 +167,6 @@ public class Artifacts : MonoBehaviour
             );
 
             PlaceEnemyOnNavMesh(spider, spawnPoint);
-
             spawnedEnemies.Add(spider);
         }
     }
@@ -195,7 +193,6 @@ public class Artifacts : MonoBehaviour
             );
 
             PlaceEnemyOnNavMesh(scorpion, spawnPoint);
-
             spawnedEnemies.Add(scorpion);
         }
     }
@@ -225,9 +222,7 @@ public class Artifacts : MonoBehaviour
         NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
 
         if (agent != null)
-        {
             agent.enabled = false;
-        }
 
         NavMeshHit navHit;
 
@@ -261,15 +256,11 @@ public class Artifacts : MonoBehaviour
         for (int i = spawnedEnemies.Count - 1; i >= 0; i--)
         {
             if (spawnedEnemies[i] == null)
-            {
                 spawnedEnemies.RemoveAt(i);
-            }
         }
 
         if (spawnedEnemies.Count == 0)
-        {
             EnemiesDefeated();
-        }
     }
 
     private void EnemiesDefeated()
@@ -288,12 +279,52 @@ public class Artifacts : MonoBehaviour
 
     private void ObtainArtifact()
     {
+        if (trophyObtained)
+            return;
+
         trophyObtained = true;
 
         HideInteractUI();
 
         if (getTrophyUI != null)
             getTrophyUI.SetActive(false);
+
+        if (logbookEntry != null)
+        {
+            logbookEntry.AddToLogbook();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Artifacts: Logbook Entry is not assigned!"
+            );
+        }
+
+        if (logbookNotification != null)
+        {
+            logbookNotification.ShowNotification();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Artifacts: Logbook Notification is not assigned!"
+            );
+        }
+
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.RegisterCollectedWorldObject(
+                artifactWorldID
+            );
+
+            Debug.Log("Artifact collected and saved: " + artifactWorldID);
+        }
+        else
+        {
+            Debug.LogError(
+                "PlayFabSaveManager not found. Artifact collection was not saved."
+            );
+        }
 
         if (artifactObject != null)
             Destroy(artifactObject);
@@ -317,9 +348,7 @@ public class Artifacts : MonoBehaviour
     private void OnDestroy()
     {
         if (currentTrophy == this)
-        {
             currentTrophy = null;
-        }
 
         HideInteractUI();
     }

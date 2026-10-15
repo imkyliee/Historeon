@@ -7,13 +7,14 @@ public class MissionWaypoint : MonoBehaviour
     [Header("UI")]
     public Image img;
     public TMP_Text meter;
+    public GameObject objectiveUI;
 
     [Header("Target")]
     public Transform target;
     public Transform player;
 
     [Header("Objective")]
-    [SerializeField] private string requiredQuest = "Find the cave";
+    public GameObject flashlight;
 
     [Header("Settings")]
     public Vector3 offset;
@@ -22,36 +23,40 @@ public class MissionWaypoint : MonoBehaviour
 
     private RectTransform indicatorRect;
     private Canvas canvas;
+    private bool flashlightWasAssigned;
+    private bool waypointShown;
+
+    private void Awake()
+    {
+        flashlightWasAssigned = flashlight != null;
+    }
 
     private void Start()
     {
-        indicatorRect = img.GetComponent<RectTransform>();
-        canvas = img.GetComponentInParent<Canvas>();
-
         if (img != null)
+        {
+            indicatorRect = img.GetComponent<RectTransform>();
+            canvas = img.GetComponentInParent<Canvas>();
             img.gameObject.SetActive(false);
+        }
 
         if (meter != null)
             meter.gameObject.SetActive(false);
+
+        if (objectiveUI != null)
+            objectiveUI.SetActive(false);
     }
 
     private void Update()
     {
-        if (MainManager.mainManager == null)
-            return;
-
-        bool questActive = MainManager.mainManager.questNames.Contains(requiredQuest);
-
-        if (!questActive)
+        if (!waypointShown && flashlightWasAssigned)
         {
-            if (img != null)
-                img.gameObject.SetActive(false);
-
-            if (meter != null)
-                meter.gameObject.SetActive(false);
-
-            return;
+            if (flashlight == null || !flashlight.activeInHierarchy)
+                ShowWaypoint();
         }
+
+        if (!waypointShown)
+            return;
 
         if (target == null || player == null || img == null)
             return;
@@ -65,14 +70,12 @@ public class MissionWaypoint : MonoBehaviour
         if (meter != null && !meter.gameObject.activeSelf)
             meter.gameObject.SetActive(true);
 
-        // Target screen position
         Vector3 screenPos = Camera.main.WorldToScreenPoint(
             target.position + offset
         );
 
         bool targetInFront = screenPos.z > 0;
 
-        // Check if target is on screen
         bool targetOnScreen =
             targetInFront &&
             screenPos.x >= screenPadding &&
@@ -82,12 +85,10 @@ public class MissionWaypoint : MonoBehaviour
 
         if (targetOnScreen)
         {
-            // Keep indicator directly on the target
             indicatorRect.position = screenPos;
         }
         else
         {
-            // Target is outside the screen
             Vector2 screenCenter = new Vector2(
                 Screen.width / 2f,
                 Screen.height / 2f
@@ -111,9 +112,7 @@ public class MissionWaypoint : MonoBehaviour
             }
 
             if (direction.sqrMagnitude < 0.01f)
-            {
                 direction = Vector2.up;
-            }
 
             direction.Normalize();
 
@@ -133,25 +132,41 @@ public class MissionWaypoint : MonoBehaviour
                 ? halfHeight / Mathf.Abs(direction.y)
                 : Mathf.Infinity;
 
-            float distanceToEdge =
-                Mathf.Min(xDistance, yDistance);
+            float distanceToEdge = Mathf.Min(
+                xDistance,
+                yDistance
+            );
 
             Vector2 edgePosition =
                 screenCenter + direction * distanceToEdge;
 
-            // Move indicator to screen edge
             indicatorRect.position = edgePosition;
         }
 
-        // Distance
         int distance = Mathf.RoundToInt(
-            Vector3.Distance(
-                player.position,
-                target.position
-            )
+            Vector3.Distance(player.position, target.position)
         );
 
         if (meter != null)
             meter.text = distance + "m";
+    }
+
+    public void ShowWaypoint()
+    {
+        if (waypointShown)
+            return;
+
+        waypointShown = true;
+
+        if (objectiveUI != null)
+            objectiveUI.SetActive(true);
+    }
+
+    public void DestroyWaypoint()
+    {
+        if (objectiveUI != null)
+            Destroy(objectiveUI);
+
+        Destroy(gameObject);
     }
 }

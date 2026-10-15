@@ -11,4 +11,12 @@ public class MainMenuMusic : MonoBehaviour
             Instantiate(soundManagerPrefab);
         }
     }
+
+    public void DestroySoundManager()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.DestroySound();
+        }
+    }
 }

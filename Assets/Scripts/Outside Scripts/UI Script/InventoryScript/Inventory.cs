@@ -12,6 +12,9 @@ public class Inventory : MonoBehaviour
     public ItemSO bagitem;
     public ItemSO hatchetitem;
 
+    [Header("Save Data")]
+    public List<ItemSO> allItemTypes = new List<ItemSO>();
+
     [Header("UI References")]
     public GameObject hotbarObj;
     public GameObject inventorySlotParent;
@@ -577,7 +580,6 @@ public class Inventory : MonoBehaviour
                 Input.mousePosition;
         }
     }
-
     private void Pickup()
     {
         if (lookedAtItem != null && Input.GetKeyDown(KeyCode.E))
@@ -613,6 +615,31 @@ public class Inventory : MonoBehaviour
                 );
             }
 
+            PersistentWorldItem worldItem = lookedAtItem.GetComponentInParent<PersistentWorldItem>();
+
+            if (worldItem == null)
+            {
+                Debug.LogWarning(
+                    "Pickup failed to find PersistentWorldItem on: " +
+                    lookedAtItem.name
+                );
+            }
+            else if (PlayFabSaveManager.Instance == null)
+            {
+                Debug.LogWarning(
+                    "PlayFabSaveManager.Instance is NULL when picking up: " +
+                    worldItem.worldID
+                );
+            }
+            else
+            {
+                Debug.Log("Registering collected world object: " + worldItem.worldID);
+
+                PlayFabSaveManager.Instance.RegisterCollectedWorldObject(
+                    worldItem.worldID
+                );
+            }
+
             Destroy(lookedAtItem.gameObject);
             lookedAtItem = null;
 
@@ -636,7 +663,6 @@ public class Inventory : MonoBehaviour
             }
         }
     }
-
     private void DetectLookedAtItem()
     {
         if (Camera.main == null)
@@ -1399,5 +1425,125 @@ public class Inventory : MonoBehaviour
 
         // The attached bag no longer exists
         bagObject = null;
+    }
+
+    private void SaveInventoryChanges()
+    {
+        if (PlayFabSaveManager.Instance != null)
+            PlayFabSaveManager.Instance.SaveGame();
+    }
+    public int GetEquippedHotbarIndex()
+    {
+        return equippedHotbarIndex;
+    }
+
+    public List<PlayFabSaveManager.InventorySlotSaveData> GetInventorySaveData()
+    {
+        List<PlayFabSaveManager.InventorySlotSaveData> savedSlots =
+            new List<PlayFabSaveManager.InventorySlotSaveData>();
+
+        SaveSlots(hotbarSlots, true, savedSlots);
+        SaveSlots(inventorySlots, false, savedSlots);
+
+        return savedSlots;
+    }
+
+    private void SaveSlots(
+        List<Slot> slots,
+        bool isHotbar,
+        List<PlayFabSaveManager.InventorySlotSaveData> savedSlots)
+    {
+        for (int i = 0; i < slots.Count; i++)
+        {
+            Slot slot = slots[i];
+
+            if (slot == null || !slot.HasItem())
+                continue;
+
+            ItemSO item = slot.GetItem();
+
+            if (item == null || string.IsNullOrEmpty(item.itemID))
+            {
+                Debug.LogWarning("Cannot save an item without an Item ID.");
+                continue;
+            }
+
+            savedSlots.Add(new PlayFabSaveManager.InventorySlotSaveData
+            {
+                itemID = item.itemID,
+                amount = slot.GetAmount(),
+                isHotbar = isHotbar,
+                slotIndex = i
+            });
+        }
+    }
+
+    public void RestoreInventory(
+        List<PlayFabSaveManager.InventorySlotSaveData> savedSlots,
+        int savedEquippedIndex)
+    {
+        foreach (Slot slot in allSlots)
+        {
+            if (slot != null)
+                slot.ClearSlot();
+        }
+
+        if (bagObject != null)
+        {
+            Destroy(bagObject);
+            bagObject = null;
+        }
+
+        if (currentHandItem != null)
+        {
+            Destroy(currentHandItem);
+            currentHandItem = null;
+        }
+
+        if (savedSlots != null)
+        {
+            foreach (PlayFabSaveManager.InventorySlotSaveData saved in savedSlots)
+            {
+                if (saved == null || saved.amount <= 0)
+                    continue;
+
+                List<Slot> targetSlots =
+                    saved.isHotbar ? hotbarSlots : inventorySlots;
+
+                if (saved.slotIndex < 0 || saved.slotIndex >= targetSlots.Count)
+                    continue;
+
+                ItemSO item = allItemTypes.Find(
+                    candidate => candidate != null &&
+                                candidate.itemID == saved.itemID
+                );
+
+                if (item == null)
+                {
+                    Debug.LogWarning(
+                        "Could not restore inventory item ID: " + saved.itemID
+                    );
+                    continue;
+                }
+
+                targetSlots[saved.slotIndex].SetItem(item, saved.amount);
+            }
+        }
+
+        if (hotbarSlots.Count > 0)
+        {
+            equippedHotbarIndex = Mathf.Clamp(
+                savedEquippedIndex,
+                0,
+                hotbarSlots.Count - 1
+            );
+        }
+        else
+        {
+            equippedHotbarIndex = 0;
+        }
+
+        UpdateHotBarOpacity();
+        EquipHandItem();
     }
 }

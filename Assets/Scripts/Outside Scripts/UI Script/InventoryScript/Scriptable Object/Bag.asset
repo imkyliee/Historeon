@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c7ab1770789e4b40be88b167cfe89cd, type: 3}
   m_Name: Bag
   m_EditorClassIdentifier: 
+  itemID: bag
   itemName: Bagpack
   icon: {fileID: 21300000, guid: ff8ee490341e27b42ab6e2e593b3e2ee, type: 3}
   maxStackSize: 1

@@ -13,46 +13,58 @@ public class Notification : MonoBehaviour
     [TextArea(2, 3)]
     [SerializeField] private string message = "Logbook Updated";
 
+    [Header("Notification Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip notificationSound;
+
     private Animator animator;
+    private Coroutine notificationCoroutine;
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
 
         gameObject.SetActive(false);
     }
 
     public void ShowNotification()
     {
-        // Set notification text
         if (notificationText != null)
-        {
             notificationText.text = message;
-        }
+
+        if (audioSource != null && notificationSound != null)
+            audioSource.PlayOneShot(notificationSound);
+        else
+            Debug.LogWarning(
+                "Notification: AudioSource or Notification Sound is not assigned!"
+            );
 
         gameObject.SetActive(true);
 
-        StartCoroutine(PlayNotification());
+        if (notificationCoroutine != null)
+            StopCoroutine(notificationCoroutine);
+
+        notificationCoroutine = StartCoroutine(PlayNotification());
     }
 
     private IEnumerator PlayNotification()
     {
-        // Play Down animation
-        animator.Play("Down", 0, 0f);
+        if (animator != null)
+            animator.Play("Down", 0, 0f);
 
-        // Wait for Down animation
         yield return new WaitForSeconds(1f);
 
-        // Keep notification visible
         yield return new WaitForSeconds(notificationDuration);
 
-        // Play Up animation
-        animator.Play("Up", 0, 0f);
+        if (animator != null)
+            animator.Play("Up", 0, 0f);
 
-        // Wait for Up animation
         yield return new WaitForSeconds(1f);
 
-        // Hide notification
         gameObject.SetActive(false);
+        notificationCoroutine = null;
     }
 }

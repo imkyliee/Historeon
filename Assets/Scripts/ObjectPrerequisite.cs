@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ObjectPrerequisite : MonoBehaviour
@@ -23,29 +24,63 @@ public class ObjectPrerequisite : MonoBehaviour
     [Header("Scripts to Enable")]
     public MonoBehaviour[] scriptsToEnable;
 
+    [Header("Persistence")]
+    public string prerequisiteID;
+
     private bool isUnlocked;
+
+    public string GetRequirementSaveID(string requirementName)
+    {
+        string id = string.IsNullOrEmpty(prerequisiteID)
+            ? gameObject.name
+            : prerequisiteID;
+
+        return gameObject.scene.name + "|" + id + "|" + requirementName;
+    }
 
     private void Start()
     {
-        CheckRequirements();
+        if (PlayFabSaveManager.Instance != null)
+        {
+            RestoreRequirements(
+                PlayFabSaveManager.Instance.GetCompletedPrerequisites()
+            );
+        }
+        else
+        {
+            CheckRequirements();
+        }
     }
 
     public void ObtainRequirement(string requirementName)
     {
+        if (requirements == null)
+            return;
+
         foreach (Requirement requirement in requirements)
         {
-            if (requirement.requirementName == requirementName)
-            {
-                requirement.isObtained = true;
+            if (requirement.requirementName != requirementName)
+                continue;
 
-                Debug.Log(
-                    "Requirement obtained: " + requirementName +
-                    " on " + gameObject.name
-                );
-
-                CheckRequirements();
+            if (requirement.isObtained)
                 return;
+
+            requirement.isObtained = true;
+
+            string saveID = GetRequirementSaveID(requirementName);
+
+            Debug.Log("Requirement obtained: " + saveID);
+
+            if (PlayFabSaveManager.Instance != null)
+            {
+                PlayFabSaveManager.Instance.RegisterPrerequisite(
+                    saveID,
+                    true
+                );
             }
+
+            CheckRequirements();
+            return;
         }
 
         Debug.LogWarning(
@@ -54,30 +89,53 @@ public class ObjectPrerequisite : MonoBehaviour
         );
     }
 
+    public void RestoreRequirements(List<string> completedIDs)
+    {
+        if (requirements == null)
+            return;
+
+        foreach (Requirement requirement in requirements)
+        {
+            string saveID = GetRequirementSaveID(
+                requirement.requirementName
+            );
+
+            requirement.isObtained =
+                completedIDs != null &&
+                completedIDs.Contains(saveID);
+        }
+
+        isUnlocked = false;
+        CheckRequirements();
+    }
+
     private void CheckRequirements()
     {
+        if (requirements == null)
+            return;
+
         foreach (Requirement requirement in requirements)
         {
             if (!requirement.isObtained)
             {
                 isUnlocked = false;
 
-                foreach (GameObject obj in objectsToEnable)
+                if (objectsToEnable != null)
                 {
-                    if (obj != null)
-                        obj.SetActive(false);
+                    foreach (GameObject obj in objectsToEnable)
+                    {
+                        if (obj != null)
+                            obj.SetActive(false);
+                    }
                 }
 
-                foreach (MonoBehaviour script in scriptsToEnable)
+                if (scriptsToEnable != null)
                 {
-                    if (script != null)
-                        script.enabled = false;
-                }
-
-                if (nextPrerequisite != null &&
-                    !string.IsNullOrEmpty(requirementToNotify))
-                {
-                    nextPrerequisite.ObtainRequirement(requirementToNotify);
+                    foreach (MonoBehaviour script in scriptsToEnable)
+                    {
+                        if (script != null)
+                            script.enabled = false;
+                    }
                 }
 
                 return;
@@ -89,20 +147,55 @@ public class ObjectPrerequisite : MonoBehaviour
 
         isUnlocked = true;
 
-        foreach (GameObject obj in objectsToEnable)
+        if (objectsToEnable != null)
         {
-            if (obj != null)
-                obj.SetActive(true);
+            foreach (GameObject obj in objectsToEnable)
+            {
+                if (obj != null)
+                    obj.SetActive(true);
+            }
         }
 
-        foreach (MonoBehaviour script in scriptsToEnable)
+        if (scriptsToEnable != null)
         {
-            if (script != null)
-                script.enabled = true;
+            foreach (MonoBehaviour script in scriptsToEnable)
+            {
+                if (script != null)
+                    script.enabled = true;
+            }
+        }
+
+        if (nextPrerequisite != null &&
+            !string.IsNullOrEmpty(requirementToNotify))
+        {
+            nextPrerequisite.ObtainRequirement(requirementToNotify);
         }
 
         Debug.Log(
             "All prerequisites completed on " + gameObject.name
         );
+    }
+
+    public static void ResetSavedRequirementsForNewGame()
+    {
+        ObjectPrerequisite[] prerequisites =
+            FindObjectsOfType<ObjectPrerequisite>(true);
+
+        foreach (ObjectPrerequisite prerequisite in prerequisites)
+        {
+            if (prerequisite == null ||
+                prerequisite.requirements == null)
+                continue;
+
+            foreach (Requirement requirement in prerequisite.requirements)
+            {
+                requirement.isObtained = false;
+            }
+
+            prerequisite.isUnlocked = false;
+            prerequisite.CheckRequirements();
+        }
+
+        Debug.Log("Loaded prerequisite progress reset for New Game.");
     }
 }

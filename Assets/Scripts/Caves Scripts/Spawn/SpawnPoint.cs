@@ -71,6 +71,15 @@ public class SpawnPoint : MonoBehaviour
             newSpawnPoint.name
         );
     }
+    public static void ResetSavedSpawnPoint()
+    {
+        hasSavedSpawnPoint = false;
+        savedSpawnPosition = Vector3.zero;
+        savedSpawnRotation = Quaternion.identity;
+        savedSpawnScene = "";
+
+        Debug.Log("SpawnPoint: Saved checkpoint reset for New Game.");
+    }
 
     public Vector3 GetSpawnPosition()
     {

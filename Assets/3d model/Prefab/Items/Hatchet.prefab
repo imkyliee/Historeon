@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5163718476526913604}
   - component: {fileID: 2828737920457457140}
   - component: {fileID: 3537790175428030244}
+  - component: {fileID: -18124775577615377}
   m_Layer: 0
   m_Name: Hatchet
   m_TagString: Untagged
@@ -668,3 +669,16 @@ MonoBehaviour:
     - {x: 1, y: 0.00000016779197, z: 0.00000040270072}
     - {x: 0.70710665, y: 0.00000016502543, z: 0.7071069}
     - {x: 0.57735014, y: -0.57735026, z: 0.5773503}
+--- !u!114 &-18124775577615377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1543349313663598369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ad877ea88cfe3b4abf8175ee4b7a30c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldID: world_hatchet

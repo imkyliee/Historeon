@@ -54,6 +54,7 @@ public class TrophyInteraction : MonoBehaviour
     private bool encounterStarted = false;
     private bool enemiesDefeated = false;
     private bool trophyObtained = false;
+    private bool transitionStarted = false;
 
     private static TrophyInteraction currentTrophy;
 
@@ -99,9 +100,7 @@ public class TrophyInteraction : MonoBehaviour
                 hit.collider.GetComponentInParent<TrophyInteraction>();
 
             if (trophy == this)
-            {
                 isLookingAtTrophy = true;
-            }
         }
 
         if (isLookingAtTrophy && !trophyObtained && !encounterStarted)
@@ -110,9 +109,7 @@ public class TrophyInteraction : MonoBehaviour
             ShowInteractUI();
 
             if (Input.GetKeyDown(KeyCode.E))
-            {
                 StartEncounter();
-            }
         }
         else if (isLookingAtTrophy && !trophyObtained && enemiesDefeated)
         {
@@ -120,16 +117,12 @@ public class TrophyInteraction : MonoBehaviour
             ShowInteractUI();
 
             if (Input.GetKeyDown(KeyCode.E))
-            {
                 ObtainTrophy();
-            }
         }
         else
         {
             if (currentTrophy == this)
-            {
                 currentTrophy = null;
-            }
 
             HideInteractUI();
         }
@@ -154,6 +147,8 @@ public class TrophyInteraction : MonoBehaviour
 
         SpawnSpiders();
         SpawnScorpions();
+
+        CheckEnemies();
     }
 
     private void SpawnSpiders()
@@ -163,10 +158,7 @@ public class TrophyInteraction : MonoBehaviour
 
         for (int i = 0; i < spiderCount; i++)
         {
-            Transform spawnPoint = GetSpawnPoint(
-                spiderSpawnPoints,
-                i
-            );
+            Transform spawnPoint = GetSpawnPoint(spiderSpawnPoints, i);
 
             if (spawnPoint == null)
                 continue;
@@ -178,7 +170,6 @@ public class TrophyInteraction : MonoBehaviour
             );
 
             PlaceEnemyOnNavMesh(spider, spawnPoint);
-
             spawnedEnemies.Add(spider);
         }
     }
@@ -190,10 +181,7 @@ public class TrophyInteraction : MonoBehaviour
 
         for (int i = 0; i < scorpionCount; i++)
         {
-            Transform spawnPoint = GetSpawnPoint(
-                scorpionSpawnPoints,
-                i
-            );
+            Transform spawnPoint = GetSpawnPoint(scorpionSpawnPoints, i);
 
             if (spawnPoint == null)
                 continue;
@@ -205,7 +193,6 @@ public class TrophyInteraction : MonoBehaviour
             );
 
             PlaceEnemyOnNavMesh(scorpion, spawnPoint);
-
             spawnedEnemies.Add(scorpion);
         }
     }
@@ -235,9 +222,7 @@ public class TrophyInteraction : MonoBehaviour
         NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
 
         if (agent != null)
-        {
             agent.enabled = false;
-        }
 
         NavMeshHit navHit;
 
@@ -271,15 +256,11 @@ public class TrophyInteraction : MonoBehaviour
         for (int i = spawnedEnemies.Count - 1; i >= 0; i--)
         {
             if (spawnedEnemies[i] == null)
-            {
                 spawnedEnemies.RemoveAt(i);
-            }
         }
 
         if (spawnedEnemies.Count == 0)
-        {
             EnemiesDefeated();
-        }
     }
 
     private void EnemiesDefeated()
@@ -298,7 +279,13 @@ public class TrophyInteraction : MonoBehaviour
 
     private void ObtainTrophy()
     {
+        if (trophyObtained || !enemiesDefeated)
+            return;
+
         trophyObtained = true;
+
+        PlayerPrefs.SetInt("TutorialCompleted", 1);
+        PlayerPrefs.Save();
 
         HideInteractUI();
 
@@ -313,9 +300,40 @@ public class TrophyInteraction : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.SaveTutorialCompleted(
+                success =>
+                {
+                    StartSceneTransition();
+                }
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "PlayFabSaveManager was not found. " +
+                "Tutorial completion was saved locally."
+            );
+
+            StartSceneTransition();
+        }
+    }
+
+    private void StartSceneTransition()
+    {
+        if (transitionStarted)
+            return;
+
+        transitionStarted = true;
+
         if (sceneTransition != null)
         {
             sceneTransition.OnButtonPressed(nextSceneName);
+        }
+        else
+        {
+            Debug.LogWarning("SceneTransition reference is missing.");
         }
     }
 
@@ -379,9 +397,7 @@ public class TrophyInteraction : MonoBehaviour
     private void OnDestroy()
     {
         if (currentTrophy == this)
-        {
             currentTrophy = null;
-        }
 
         HideInteractUI();
     }

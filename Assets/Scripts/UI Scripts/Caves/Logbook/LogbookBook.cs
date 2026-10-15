@@ -16,11 +16,10 @@ public class LogbookBook : MonoBehaviour
     [SerializeField] private TMP_Text contextTextBox;
 
     private bool openBook;
-
     private List<LogbookData> logbookEntries = new List<LogbookData>();
 
     [System.Serializable]
-    private class LogbookData
+    public class LogbookData
     {
         public string subject;
         public string context;
@@ -37,78 +36,108 @@ public class LogbookBook : MonoBehaviour
         if (string.IsNullOrEmpty(subject))
             return;
 
-        // Prevent the same entry from being added twice
         foreach (LogbookData entry in logbookEntries)
         {
             if (entry.subject == subject)
                 return;
         }
 
-        LogbookData newEntry =
-            new LogbookData(subject, context);
-
+        LogbookData newEntry = new LogbookData(subject, context);
         logbookEntries.Add(newEntry);
 
         CreateSubjectButton(newEntry);
-
-        // Show the newly added entry
         SelectEntry(newEntry);
+
+        if (PlayFabSaveManager.Instance != null)
+            PlayFabSaveManager.Instance.SaveGame();
     }
 
     private void CreateSubjectButton(LogbookData entry)
     {
-        if (subjectContainer == null)
+        if (subjectContainer == null || subjectButtonTemplate == null)
         {
-            Debug.LogWarning(
-                "LogbookBook: Subject Container is not assigned!"
-            );
-
+            Debug.LogWarning("LogbookBook: Subject Container or Subject Button Template is not assigned!");
             return;
         }
 
-        if (subjectButtonTemplate == null)
+        foreach (Transform child in subjectContainer)
         {
-            Debug.LogWarning(
-                "LogbookBook: Subject Button Template is not assigned!"
-            );
+            TMP_Text existingText = child.GetComponentInChildren<TMP_Text>();
 
-            return;
+            if (existingText != null && existingText.text == entry.subject)
+                return;
         }
 
-        GameObject newButton =
-            Instantiate(
-                subjectButtonTemplate,
-                subjectContainer
-            );
-
+        GameObject newButton = Instantiate(subjectButtonTemplate, subjectContainer);
         newButton.SetActive(true);
 
-        TMP_Text buttonText =
-            newButton.GetComponentInChildren<TMP_Text>();
+        TMP_Text buttonText = newButton.GetComponentInChildren<TMP_Text>();
 
         if (buttonText != null)
-        {
             buttonText.text = entry.subject;
-        }
 
-        Button button =
-            newButton.GetComponent<Button>();
+        Button button = newButton.GetComponent<Button>();
 
         if (button != null)
-        {
-            button.onClick.AddListener(() =>
-            {
-                SelectEntry(entry);
-            });
-        }
+            button.onClick.AddListener(() => SelectEntry(entry));
     }
 
     private void SelectEntry(LogbookData entry)
     {
         if (contextTextBox != null)
-        {
             contextTextBox.text = entry.context;
+    }
+
+    public List<PlayFabSaveManager.LogbookSaveData> GetSavedEntries()
+    {
+        List<PlayFabSaveManager.LogbookSaveData> savedEntries =
+            new List<PlayFabSaveManager.LogbookSaveData>();
+
+        foreach (LogbookData entry in logbookEntries)
+        {
+            savedEntries.Add(
+                new PlayFabSaveManager.LogbookSaveData(
+                    entry.subject,
+                    entry.context
+                )
+            );
         }
+
+        return savedEntries;
+    }
+
+    public void RestoreEntries(List<PlayFabSaveManager.LogbookSaveData> savedEntries)
+    {
+        if (savedEntries == null)
+            return;
+
+        foreach (PlayFabSaveManager.LogbookSaveData savedEntry in savedEntries)
+        {
+            if (savedEntry == null || string.IsNullOrEmpty(savedEntry.subject))
+                continue;
+
+            bool alreadyExists = false;
+
+            foreach (LogbookData existingEntry in logbookEntries)
+            {
+                if (existingEntry.subject == savedEntry.subject)
+                {
+                    alreadyExists = true;
+                    break;
+                }
+            }
+
+            if (alreadyExists)
+                continue;
+
+            LogbookData newEntry =
+                new LogbookData(savedEntry.subject, savedEntry.context);
+
+            logbookEntries.Add(newEntry);
+            CreateSubjectButton(newEntry);
+        }
+
+        WriteLogbook();
     }
 
     public void OpenLogbook()
@@ -116,24 +145,17 @@ public class LogbookBook : MonoBehaviour
         openBook = !openBook;
 
         if (logbookUI != null)
-        {
             logbookUI.SetActive(openBook);
-        }
 
         if (openBook)
-        {
             WriteLogbook();
-        }
     }
 
     public void WriteLogbook()
     {
         if (contextTextBox == null)
         {
-            Debug.LogWarning(
-                "LogbookBook: Context Text Box is not assigned!"
-            );
-
+            Debug.LogWarning("LogbookBook: Context Text Box is not assigned!");
             return;
         }
 

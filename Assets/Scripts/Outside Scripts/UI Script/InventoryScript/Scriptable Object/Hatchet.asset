@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c7ab1770789e4b40be88b167cfe89cd, type: 3}
   m_Name: Hatchet
   m_EditorClassIdentifier: 
+  itemID: hatchet
   itemName: Hatchet
   icon: {fileID: 21300000, guid: 56e8caf9c3559ec4e80d94336a08409d, type: 3}
   maxStackSize: 1

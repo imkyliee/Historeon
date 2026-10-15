@@ -3125,6 +3125,7 @@ MonoBehaviour:
   logbookObjectiveWindow: {fileID: 669378740}
   objectiveBook: {fileID: 744611529}
   inventory: {fileID: 336550322}
+  movement: {fileID: 0}
 --- !u!114 &247374455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14070,6 +14071,7 @@ MonoBehaviour:
   flashlightitem: {fileID: 11400000, guid: 738e3fd22f986ad4a9deb7ac47f1edc2, type: 2}
   bagitem: {fileID: 11400000, guid: 5bb2f62689510a646bc1f51070c80ef8, type: 2}
   hatchetitem: {fileID: 11400000, guid: 433bf5d6ad87d10458cbac3a7640ab25, type: 2}
+  allItemTypes: []
   hotbarObj: {fileID: 2106675591}
   inventorySlotParent: {fileID: 220556289}
   dragIcon: {fileID: 1142456533}
@@ -25978,6 +25980,8 @@ MonoBehaviour:
   pickupRange: 3
   objectiveCatalyst: {fileID: 445748111}
   notification: {fileID: 368513795}
+  prerequisite: {fileID: 0}
+  requirementName: 
 --- !u!65 &445748113
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -82677,7 +82681,6 @@ GameObject:
   - component: {fileID: 1868738168}
   - component: {fileID: 1868738167}
   - component: {fileID: 1868738172}
-  - component: {fileID: 1868738173}
   - component: {fileID: 1868738164}
   - component: {fileID: 1868738166}
   - component: {fileID: 1868738165}
@@ -83059,20 +83062,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e895bbf7146ea374ebbb170b7a42fc57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1868738173
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1868738162}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f278e5bb81c1ba4080d6bab384f6e6e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerAnimation: {fileID: 1868738169}
-  inventory: {fileID: 336550322}
 --- !u!1 &1872702901
 GameObject:
   m_ObjectHideFlags: 0
@@ -96367,6 +96356,8 @@ MonoBehaviour:
   pickupRange: 3
   objectiveCatalyst: {fileID: 919132149053278249}
   notification: {fileID: 368513795}
+  prerequisite: {fileID: 0}
+  requirementName: 
 --- !u!1 &1096796673050302243
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class OpenDoor : MonoBehaviour
@@ -7,17 +6,15 @@ public class OpenDoor : MonoBehaviour
     public GameObject DoorUI;
     public GameObject OpenUI;
     public GameObject CloseUI;
-    public GameObject LockedUI;
 
-    [Header("Prerequisite")]
-    public ObjectPrerequisite doorPrerequisite;
+    [Header("Prerequisites")]
+    public ObjectPrerequisite artifactPrerequisite;
 
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
-    private bool isLookingAtDoor = false;
-    private bool isOpen = false;
-    private bool isUnlocked = false;
+    private bool isLookingAtDoor;
+    private bool isOpen;
 
     private Animator doorAnimator;
     private Camera playerCamera;
@@ -37,7 +34,6 @@ public class OpenDoor : MonoBehaviour
         playerCamera = Camera.main;
 
         HideAllUI();
-        UpdateUnlockState();
     }
 
     private void Update()
@@ -45,10 +41,10 @@ public class OpenDoor : MonoBehaviour
         if (playerCamera == null)
         {
             playerCamera = Camera.main;
-            return;
-        }
 
-        UpdateUnlockState();
+            if (playerCamera == null)
+                return;
+        }
 
         isLookingAtDoor = false;
 
@@ -65,65 +61,70 @@ public class OpenDoor : MonoBehaviour
                 isLookingAtDoor = true;
         }
 
-        if (isLookingAtDoor)
+        if (!isLookingAtDoor)
         {
-            if (currentDoor != null && currentDoor != this)
-                currentDoor.HideAllUI();
-
-            currentDoor = this;
-
-            if (isUnlocked)
+            if (currentDoor == this)
             {
-                ShowDoorUI();
-
-                if (Input.GetKeyDown(KeyCode.E))
-                    ToggleDoor();
+                currentDoor = null;
+                HideAllUI();
             }
-            else
-            {
-                ShowLockedUI();
-            }
-        }
-        else if (currentDoor == this)
-        {
-            currentDoor = null;
-            HideAllUI();
-        }
-    }
 
-    private void UpdateUnlockState()
-    {
-        if (doorPrerequisite == null ||
-            doorPrerequisite.requirements == null ||
-            doorPrerequisite.requirements.Length == 0)
-        {
-            isUnlocked = false;
             return;
         }
 
-        isUnlocked = true;
+        if (currentDoor != null && currentDoor != this)
+            currentDoor.HideAllUI();
 
-        foreach (ObjectPrerequisite.Requirement requirement
-                 in doorPrerequisite.requirements)
+        currentDoor = this;
+
+        if (!HasRequiredItems())
         {
-            if (!requirement.isObtained)
-            {
-                isUnlocked = false;
-                break;
-            }
+            HideAllUI();
+            return;
         }
+
+        ShowDoorUI();
+
+        if (Input.GetKeyDown(KeyCode.E))
+            ToggleDoor();
     }
 
     public void UnlockDoor()
     {
-        isUnlocked = true;
-        HideAllUI();
+        Debug.Log("OpenDoor: Quiz completed successfully.");
+    }
+
+    private bool HasRequiredItems()
+    {
+        if (artifactPrerequisite == null)
+            return false;
+
+        if (artifactPrerequisite.requirements == null)
+            return false;
+
+        bool hasHatchet = false;
+        bool hasRegretLogbook = false;
+
+        foreach (ObjectPrerequisite.Requirement requirement
+                 in artifactPrerequisite.requirements)
+        {
+            if (requirement.requirementName == "Hatchet")
+                hasHatchet = requirement.isObtained;
+
+            if (requirement.requirementName == "LogBook")
+                hasRegretLogbook = requirement.isObtained;
+        }
+
+        return hasHatchet && hasRegretLogbook;
     }
 
     private void ToggleDoor()
     {
         if (doorAnimator == null)
+        {
+            Debug.LogWarning("OpenDoor: Door Animator is not assigned.");
             return;
+        }
 
         if (!isOpen)
         {
@@ -139,26 +140,8 @@ public class OpenDoor : MonoBehaviour
         ShowDoorUI();
     }
 
-    private void ShowLockedUI()
-    {
-        if (DoorUI != null)
-            DoorUI.SetActive(false);
-
-        if (OpenUI != null)
-            OpenUI.SetActive(false);
-
-        if (CloseUI != null)
-            CloseUI.SetActive(false);
-
-        if (LockedUI != null)
-            LockedUI.SetActive(true);
-    }
-
     private void ShowDoorUI()
     {
-        if (LockedUI != null)
-            LockedUI.SetActive(false);
-
         if (DoorUI != null)
             DoorUI.SetActive(true);
 
@@ -179,9 +162,6 @@ public class OpenDoor : MonoBehaviour
 
         if (CloseUI != null)
             CloseUI.SetActive(false);
-
-        if (LockedUI != null)
-            LockedUI.SetActive(false);
     }
 
     private void OnDestroy()

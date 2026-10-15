@@ -33,6 +33,7 @@ public class CMCamera : MonoBehaviour
     public GameObject objectToDestroy;
     public GameObject triggerToDestroy;
 
+    private FlashlightScript flashlightScript;
     private bool isPlaying;
     private bool dialogueFinished;
 
@@ -113,8 +114,19 @@ public class CMCamera : MonoBehaviour
         dialogueFinished = true;
     }
 
+    private void SetFlashlightInput(bool enabled)
+    {
+        if (flashlightScript == null)
+            flashlightScript = FindFirstObjectByType<FlashlightScript>();
+
+        if (flashlightScript != null)
+            flashlightScript.enabled = enabled;
+    }
+
     public void DisablePlayer()
     {
+        SetFlashlightInput(false);
+
         if (pauseManager != null)
             pauseManager.enabled = false;
 
@@ -183,6 +195,8 @@ public class CMCamera : MonoBehaviour
 
         if (tabMenuManager != null)
             tabMenuManager.enabled = true;
+
+        SetFlashlightInput(true);
     }
 
     public void FinishCinematic()

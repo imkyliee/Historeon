@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c7ab1770789e4b40be88b167cfe89cd, type: 3}
   m_Name: FlashLight
   m_EditorClassIdentifier: 
+  itemID: flashlight
   itemName: Flashlight
   icon: {fileID: 21300000, guid: 6c214824ab89d424199e06b38b168710, type: 3}
   maxStackSize: 1

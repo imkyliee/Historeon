@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class EnterCave : MonoBehaviour
 {
@@ -8,6 +9,9 @@ public class EnterCave : MonoBehaviour
 
     [Header("Door UI")]
     public GameObject UI;
+
+    [Header("Inventory Transfer")]
+    public Inventory playerInventory;
 
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
@@ -132,6 +136,20 @@ public class EnterCave : MonoBehaviour
         }
 
         Debug.Log("Entering dungeon: " + sceneToLoad);
+
+        if (InventoryTransferManager.Instance != null)
+        {
+            InventoryTransferManager.Instance.CaptureInventory(playerInventory);
+        }
+        else
+        {
+            Debug.LogError(
+                "EnterCave: InventoryTransferManager is missing!"
+            );
+            return;
+        }
+
+        SceneEntrySpawn.SetPreviousScene(SceneManager.GetActiveScene().name);
 
         transition.OnButtonPressed(sceneToLoad);
     }
