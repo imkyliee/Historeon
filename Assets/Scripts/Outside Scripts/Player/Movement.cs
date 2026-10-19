@@ -12,6 +12,19 @@ public class Movement : MonoBehaviour
     public float jumpForce = 3f;
     public float airControl = 1f;
 
+    [Header("Crouch Collider")]
+    [SerializeField] private CapsuleCollider capsuleCollider;
+    [SerializeField] private float crouchHeight = 1f;
+
+    private float standingHeight;
+    private Vector3 standingCenter;
+
+    [Header("Footstep Audio")]
+    [SerializeField] private float walkFootstepInterval = 0.5f;
+    [SerializeField] private float runFootstepInterval = 0.32f;
+
+    private float footstepTimer;
+
     [Header("Look Settings")]
     public float sensitivity = 100f;
     public Vector2 move, look;
@@ -196,6 +209,15 @@ public class Movement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
+        if (capsuleCollider == null)
+            capsuleCollider = GetComponent<CapsuleCollider>();
+
+        if (capsuleCollider != null)
+        {
+            standingHeight = capsuleCollider.height;
+            standingCenter = capsuleCollider.center;
+        }
+
         currentStamina = maxStamina;
 
         if (staminaBar != null)
@@ -210,12 +232,10 @@ public class Movement : MonoBehaviour
         HandleStamina();
         JumpParticlesPlay();
         WalkRunParticles();
+        UpdateCrouchCollider();
+        HandleFootsteps();
 
-        if (isRunning &&
-            move.y > 0f &&
-            grounded &&
-            !isCrouching &&
-            currentStamina > 0f)
+        if (isRunning && move.y > 0f && grounded && !isCrouching && currentStamina > 0f)
         {
             if (TutorialManager.Instance != null)
             {
@@ -301,10 +321,37 @@ public class Movement : MonoBehaviour
             ForceMode.VelocityChange
         );
     }
+    void HandleFootsteps()
+    {
+        bool isMoving =
+            grounded &&
+            !isPaused &&
+            move.sqrMagnitude > 0.01f &&
+            !isCrouching;
+
+        if (!isMoving || !updatingRotation)
+        {
+            footstepTimer = 0f;
+            return;
+        }
+
+        float interval = IsRunning
+            ? runFootstepInterval
+            : walkFootstepInterval;
+
+        footstepTimer -= Time.deltaTime;
+
+        if (footstepTimer <= 0f)
+        {
+            if (PlayerSound.instance != null)
+                PlayerSound.instance.PlayFootstep();
+
+            footstepTimer = interval;
+        }
+    }
 
     void Jump()
     {
-        // Don't allow jumping while crouching
         if (isCrouching)
             return;
 
@@ -414,6 +461,34 @@ public class Movement : MonoBehaviour
             if (walkrunParticles.isPlaying)
                 walkrunParticles.Stop();
         }
+    }
+
+    private void UpdateCrouchCollider()
+    {
+        if (capsuleCollider == null)
+            return;
+
+        float targetHeight = isCrouching
+            ? Mathf.Min(crouchHeight, standingHeight)
+            : standingHeight;
+
+        float targetCenterY = standingCenter.y -
+            (standingHeight - targetHeight) / 2f;
+
+        capsuleCollider.height = Mathf.Lerp(
+            capsuleCollider.height,
+            targetHeight,
+            Time.deltaTime * 10f
+        );
+
+        Vector3 targetCenter = standingCenter;
+        targetCenter.y = targetCenterY;
+
+        capsuleCollider.center = Vector3.Lerp(
+            capsuleCollider.center,
+            targetCenter,
+            Time.deltaTime * 10f
+        );
     }
 
     public void SetGrounded(bool state)

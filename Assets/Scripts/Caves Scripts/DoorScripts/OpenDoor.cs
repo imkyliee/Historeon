@@ -7,17 +7,29 @@ public class OpenDoor : MonoBehaviour
     public GameObject OpenUI;
     public GameObject CloseUI;
 
+    [Header("Persistent Unlock")]
+    public string persistentDoorID;
+    public GameObject padlockObject;
+
     [Header("Prerequisites")]
     public ObjectPrerequisite artifactPrerequisite;
+    public string[] requiredRequirementNames = { "Hatchet", "regretLogBook" };
+
+    [Header("Door Sounds")]
+    public AudioClip openSound;
+    public AudioClip closeSound;
+    [Range(0f, 1f)] public float soundVolume = 1f;
 
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
     private bool isLookingAtDoor;
     private bool isOpen;
+    private bool isUnlocked = false;
 
     private Animator doorAnimator;
     private Camera playerCamera;
+    private AudioSource audioSource;
 
     private static OpenDoor currentDoor;
 
@@ -33,7 +45,30 @@ public class OpenDoor : MonoBehaviour
 
         playerCamera = Camera.main;
 
+        audioSource = GetComponent<AudioSource>();
+
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
+
         HideAllUI();
+        
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.IsDoorUnlocked(persistentDoorID, unlocked =>
+            {
+                if (unlocked)
+                {
+                    isUnlocked = true;
+
+                    if (padlockObject != null)
+                        padlockObject.SetActive(false);
+
+                    Debug.Log(name + ": Restored unlocked door state.");
+                }
+            });
+        }
     }
 
     private void Update()
@@ -77,7 +112,7 @@ public class OpenDoor : MonoBehaviour
 
         currentDoor = this;
 
-        if (!HasRequiredItems())
+        if (!isUnlocked && !HasRequiredItems())
         {
             HideAllUI();
             return;
@@ -89,33 +124,63 @@ public class OpenDoor : MonoBehaviour
             ToggleDoor();
     }
 
-    public void UnlockDoor()
+   public void UnlockDoor()
     {
-        Debug.Log("OpenDoor: Quiz completed successfully.");
+        if (isUnlocked) return;
+
+        isUnlocked = true;
+
+        if (padlockObject != null)
+            padlockObject.SetActive(false);
+
+        if (PlayFabSaveManager.Instance != null)
+            PlayFabSaveManager.Instance.SaveUnlockedDoor(persistentDoorID);
+        else
+            Debug.LogWarning("PlayFabSaveManager instance not found.");
+
+        Debug.Log(name + ": Door unlocked successfully.");
     }
 
     private bool HasRequiredItems()
     {
-        if (artifactPrerequisite == null)
-            return false;
-
-        if (artifactPrerequisite.requirements == null)
-            return false;
-
-        bool hasHatchet = false;
-        bool hasRegretLogbook = false;
-
-        foreach (ObjectPrerequisite.Requirement requirement
-                 in artifactPrerequisite.requirements)
+        if (artifactPrerequisite == null ||
+            artifactPrerequisite.requirements == null ||
+            requiredRequirementNames == null ||
+            requiredRequirementNames.Length == 0)
         {
-            if (requirement.requirementName == "Hatchet")
-                hasHatchet = requirement.isObtained;
-
-            if (requirement.requirementName == "LogBook")
-                hasRegretLogbook = requirement.isObtained;
+            return false;
         }
 
-        return hasHatchet && hasRegretLogbook;
+        foreach (string requiredName in requiredRequirementNames)
+        {
+            bool found = false;
+
+            foreach (ObjectPrerequisite.Requirement requirement
+                     in artifactPrerequisite.requirements)
+            {
+                if (requirement.requirementName == requiredName)
+                {
+                    found = true;
+
+                    if (!requirement.isObtained)
+                        return false;
+
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                Debug.LogWarning(
+                    "OpenDoor: Requirement '" + requiredName +
+                    "' was not found in " + artifactPrerequisite.name
+                );
+
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void ToggleDoor()
@@ -129,15 +194,29 @@ public class OpenDoor : MonoBehaviour
         if (!isOpen)
         {
             doorAnimator.Play("Open", 0, 0f);
+            PlayDoorSound(openSound);
             isOpen = true;
         }
         else
         {
             doorAnimator.Play("Close", 0, 0f);
+            PlayDoorSound(closeSound);
             isOpen = false;
         }
 
         ShowDoorUI();
+    }
+    
+    private void PlayDoorSound(AudioClip clip)
+    {
+        if (clip == null || audioSource == null)
+            return;
+
+        float sfxVolume = SFXManager.Instance != null
+            ? SFXManager.Instance.GetVolume()
+            : PlayerPrefs.GetFloat("SFXVolume", 1f);
+
+        audioSource.PlayOneShot(clip, soundVolume * sfxVolume);
     }
 
     private void ShowDoorUI()

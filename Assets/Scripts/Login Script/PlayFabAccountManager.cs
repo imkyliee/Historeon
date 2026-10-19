@@ -157,7 +157,8 @@ public class PlayFabAccountManager : MonoBehaviour
 
     public void Register()
     {
-        string username = registerUsernameInput.text.Trim();
+        string displayName = registerUsernameInput.text.Trim();
+        string username = displayName.Replace(" ", "");
         string email = registerEmailInput.text.Trim();
         string password = registerPasswordInput.text;
         string confirmPassword = registerConfirmPasswordInput.text;
@@ -205,7 +206,7 @@ public class PlayFabAccountManager : MonoBehaviour
             Username = username,
             Email = email,
             Password = password,
-            DisplayName = username,
+            DisplayName = displayName,
             RequireBothUsernameAndEmail = false
         };
 
@@ -221,7 +222,7 @@ public class PlayFabAccountManager : MonoBehaviour
         Debug.Log("PlayFab Registration Successful!");
         Debug.Log("PlayFab ID: " + result.PlayFabId);
 
-        loginUsernameInput.text = registerUsernameInput.text.Trim();
+        loginUsernameInput.text = registerUsernameInput.text.Trim().Replace(" ", "");
         loginPasswordInput.text = "";
 
         ShowLoginPanel();

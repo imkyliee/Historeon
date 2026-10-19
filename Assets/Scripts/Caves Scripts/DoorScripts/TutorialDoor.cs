@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class TutorialDoor : MonoBehaviour
@@ -10,6 +11,12 @@ public class TutorialDoor : MonoBehaviour
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
+    [Header("Door Sounds")]
+    [SerializeField] private AudioClip openSound;
+    [SerializeField] private AudioClip closeSound;
+    [SerializeField, Range(0f, 1f)] private float soundVolume = 1f;
+
+    private AudioSource audioSource;
     private bool isLookingAtDoor = false;
     private bool isOpen = false;
 
@@ -20,25 +27,22 @@ public class TutorialDoor : MonoBehaviour
 
     private void Start()
     {
-        // Find Animator on this object
         doorAnimator = GetComponent<Animator>();
 
-        // If not found, check parent
         if (doorAnimator == null)
             doorAnimator = GetComponentInParent<Animator>();
 
-        // If still not found, check children
         if (doorAnimator == null)
             doorAnimator = GetComponentInChildren<Animator>();
 
         playerCamera = Camera.main;
 
-        HideAllUI();
+        audioSource = GetComponent<AudioSource>();
 
-        if (doorAnimator == null)
-        {
-            // Debug.LogError("OpenDoor: No Animator found on Door, its parent, or its children!");
-        }
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        HideAllUI();
     }
 
     private void Update()
@@ -62,21 +66,16 @@ public class TutorialDoor : MonoBehaviour
                 hit.collider.GetComponentInParent<TutorialDoor>();
 
             if (door == this)
-            {
                 isLookingAtDoor = true;
-            }
         }
 
         if (isLookingAtDoor)
         {
             currentDoor = this;
-
             ShowDoorUI();
 
             if (Input.GetKeyDown(KeyCode.E))
-            {
                 ToggleDoor();
-            }
         }
         else
         {
@@ -91,14 +90,12 @@ public class TutorialDoor : MonoBehaviour
     private void ToggleDoor()
     {
         if (doorAnimator == null)
-        {
-            // Debug.LogError("OpenDoor: Animator is missing!");
             return;
-        }
 
         if (!isOpen)
         {
             doorAnimator.Play("Open", 0, 0f);
+            PlayDoorSound(openSound);
             isOpen = true;
 
             Debug.Log("Door opened!");
@@ -106,12 +103,19 @@ public class TutorialDoor : MonoBehaviour
         else
         {
             doorAnimator.Play("Close", 0, 0f);
+            PlayDoorSound(closeSound);
             isOpen = false;
 
             Debug.Log("Door closed!");
         }
 
         ShowDoorUI();
+    }
+
+    private void PlayDoorSound(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+            audioSource.PlayOneShot(clip, soundVolume);
     }
 
     private void ShowDoorUI()

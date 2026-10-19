@@ -27,6 +27,12 @@ public class PadlockInspector : MonoBehaviour
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
+    [Header("Padlock Audio")]
+    public AudioClip padlockInteractSound;
+    [Range(0f, 1f)] public float padlockSoundVolume = 1f;
+    public AudioClip quizCompletionSound;
+    [Range(0f, 1f)] public float completionSoundVolume = 1f;
+
     private Camera playerCamera;
     private bool isLookingAtPadlock = false;
     private bool quizIsOpen = false;
@@ -146,6 +152,8 @@ public class PadlockInspector : MonoBehaviour
         if (quizUI != null)
             quizUI.SetActive(true);
 
+        PlayPadlockInteractionSound();
+
         // Disable player movement
         if (playerMovement != null)
         {
@@ -187,6 +195,28 @@ public class PadlockInspector : MonoBehaviour
         // Unlock mouse
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+    }
+
+    public void PlayPadlockInteractionSound()
+    {
+        PlayPadlockSound(padlockInteractSound, padlockSoundVolume);
+    }
+
+    public void PlayQuizCompletionSound()
+    {
+        PlayPadlockSound(quizCompletionSound, completionSoundVolume);
+    }
+
+    private void PlayPadlockSound(AudioClip clip, float volume)
+    {
+        if (clip == null)
+            return;
+
+        float sfxVolume = SFXManager.Instance != null
+            ? SFXManager.Instance.GetVolume()
+            : PlayerPrefs.GetFloat("SFXVolume", 1f);
+
+        AudioSource.PlayClipAtPoint(clip, transform.position, volume * sfxVolume);
     }
 
     public void CloseQuiz()
@@ -251,46 +281,56 @@ public class PadlockInspector : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    private void OnDestroy()
+    
+   private void OnDestroy()
     {
         if (currentPadlock == this)
         {
             currentPadlock = null;
-
             HideInteractUI();
         }
-
-        // Safety: re-enable everything if padlock is destroyed
-        if (pauseManager != null)
-            pauseManager.enabled = true;
-
-        if (tabMenuManager != null)
-            tabMenuManager.enabled = true;
-
-        if (inventory != null)
-            inventory.enabled = true;
 
         if (playerMovement != null)
         {
             if (playerMovement.rb != null)
             {
                 playerMovement.rb.isKinematic = false;
+                playerMovement.rb.linearVelocity = Vector3.zero;
+                playerMovement.rb.angularVelocity = Vector3.zero;
             }
 
             playerMovement.enabled = true;
         }
 
+        if (inventory != null)
+            inventory.enabled = true;
+
         if (playerAnimator != null)
+        {
             playerAnimator.enabled = true;
+            playerAnimator.Rebind();
+            playerAnimator.Update(0f);
+        }
 
         if (playerAnimation != null)
+        {
             playerAnimation.enabled = true;
+            playerAnimation.ResetActionAfterQuiz();
+        }
 
-        // Re-enable Camera Bob
         if (mainCameraBob != null)
             mainCameraBob.enabled = true;
 
         if (itemCameraBob != null)
             itemCameraBob.enabled = true;
+
+        if (pauseManager != null)
+            pauseManager.enabled = true;
+
+        if (tabMenuManager != null)
+            tabMenuManager.enabled = true;
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 }

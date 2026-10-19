@@ -1,3 +1,4 @@
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +10,11 @@ public class MeleeDamage : MonoBehaviour
     [Header("Hitbox")]
     [SerializeField] private BoxCollider hitbox;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip swingSound;
+    [SerializeField] private AudioClip hitDamageSound;
+
     private HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
     private bool attackActive = false;
@@ -17,6 +23,12 @@ public class MeleeDamage : MonoBehaviour
     {
         if (hitbox == null)
             hitbox = GetComponent<BoxCollider>();
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
 
         if (hitbox == null)
         {
@@ -35,6 +47,9 @@ public class MeleeDamage : MonoBehaviour
     {
         attackActive = true;
         hitEnemies.Clear();
+
+        if (swingSound != null && audioSource != null)
+            audioSource.PlayOneShot(swingSound);
 
         if (hitbox != null)
         {
@@ -92,6 +107,9 @@ public class MeleeDamage : MonoBehaviour
         hitEnemies.Add(enemy);
 
         enemy.TakeDamage(damage);
+
+        if (hitDamageSound != null && audioSource != null)
+            audioSource.PlayOneShot(hitDamageSound);
     }
 
     private void OnDrawGizmosSelected()

@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using TMPro;
 using System.Collections;
@@ -44,7 +45,7 @@ public class QuizManager : MonoBehaviour
     [Header("Lock & Door References")]
     public GameObject padlockObject;
     public MonoBehaviour doorOpenerScript;
-    public MonoBehaviour PlayerMovement;
+    public PadlockInspector padlockInspector;
 
     private QuestionData currentQuestion;
     private List<string> shuffledAnswers = new List<string>();
@@ -60,8 +61,6 @@ public class QuizManager : MonoBehaviour
 
         IsQuizOpen = true;
 
-        DisablePlayerMovement();
-
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
@@ -73,8 +72,6 @@ public class QuizManager : MonoBehaviour
 
         if (Movement.Instance != null)
             Movement.Instance.SetAttackEnabled(false);
-
-        DisablePlayerMovement();
 
         if (WrongUI != null)
             WrongUI.SetActive(false);
@@ -95,9 +92,7 @@ public class QuizManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
 
         if (!hasQuestion)
-        {
             DisplayNextQuestion();
-        }
     }
 
     private void OnDisable()
@@ -111,26 +106,17 @@ public class QuizManager : MonoBehaviour
     private void Update()
     {
         if (IsQuizOpen && Input.GetKeyDown(KeyCode.X))
-        {
             CloseUI();
-        }
-    }
-
-    private void DisablePlayerMovement()
-    {
-        if (PlayerMovement != null)
-        {
-            PlayerMovement.enabled = false;
-        }
     }
 
     public void DisplayNextQuestion()
     {
         if (questionPool == null || questionPool.Count == 0)
         {
-            if (QuestionTextDisplay != null)
-                QuestionTextDisplay.text = "No questions remaining!";
+            hasQuestion = false;
+            currentQuestion = null;
 
+            FinishQuiz();
             return;
         }
 
@@ -173,8 +159,14 @@ public class QuizManager : MonoBehaviour
         }
 
         // Update buttons
+        if (AnswerButtons == null)
+            return;
+
         for (int i = 0; i < AnswerButtons.Length; i++)
         {
+            if (AnswerButtons[i] == null)
+                continue;
+
             if (i < shuffledAnswers.Count)
             {
                 AnswerButtons[i].SetActive(true);
@@ -184,9 +176,7 @@ public class QuizManager : MonoBehaviour
                     .GetComponentInChildren<TextMeshProUGUI>();
 
                 if (buttonText != null)
-                {
                     buttonText.text = shuffledAnswers[i];
-                }
             }
             else
             {
@@ -197,25 +187,22 @@ public class QuizManager : MonoBehaviour
 
     public void SelectAnswer(int buttonIndex)
     {
-        if (!IsQuizOpen)
-            return;
-
-        if (isCheckingAnswer)
-            return;
-
-        if (currentQuestion == null)
+        if (!IsQuizOpen || isCheckingAnswer || currentQuestion == null)
             return;
 
         if (buttonIndex < 0 ||
             buttonIndex >= shuffledAnswers.Count)
             return;
 
-        string selectedText =
-            shuffledAnswers[buttonIndex];
+        string selectedText = shuffledAnswers[buttonIndex];
+
+        // Remove the answered question so it cannot repeat
+        questionPool.Remove(currentQuestion);
 
         // Correct answer
         if (selectedText == currentQuestion.correctAnswer)
         {
+            isCheckingAnswer = true;
             correctAnswersCount++;
 
             if (CheckerText != null)
@@ -231,13 +218,9 @@ public class QuizManager : MonoBehaviour
             }
 
             if (correctAnswersCount >= requiredCorrectAnswers)
-            {
                 StartCoroutine(UnlockAfterFeedback());
-            }
             else
-            {
                 StartCoroutine(NextQuestionAfterFeedback());
-            }
         }
         else
         {
@@ -303,9 +286,7 @@ public class QuizManager : MonoBehaviour
                 doorOpenerScript as OpenDoor;
 
             if (door != null)
-            {
                 door.UnlockDoor();
-            }
         }
 
         // Destroy the padlock
@@ -315,19 +296,49 @@ public class QuizManager : MonoBehaviour
             padlockObject = null;
         }
 
-        // Close quiz
-        CloseUI();
+        FinishQuiz();
     }
+
+    
+    private void FinishQuiz()
+    {
+        IsQuizOpen = false;
+
+        if (padlockInspector != null)
+            padlockInspector.PlayQuizCompletionSound();
+
+        hasQuestion = false;
+        currentQuestion = null;
+
+        if (doorOpenerScript != null)
+        {
+            OpenDoor door = doorOpenerScript as OpenDoor;
+
+            if (door != null)
+                door.UnlockDoor();
+        }
+
+        if (padlockObject != null)
+        {
+            Destroy(padlockObject);
+            padlockObject = null;
+        }
+
+        if (padlockInspector != null)
+            padlockInspector.CloseQuiz();
+        else
+            CloseUI();
+
+        gameObject.SetActive(false);
+    }
+
+
     public void CloseUI()
     {
         IsQuizOpen = false;
 
         if (WrongUI != null)
             WrongUI.SetActive(false);
-
-        // Re-enable player movement
-        if (PlayerMovement != null)
-            PlayerMovement.enabled = true;
 
         // Re-enable player animation and reset the action
         if (playerAnimation != null)
@@ -347,5 +358,4 @@ public class QuizManager : MonoBehaviour
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
-
 }

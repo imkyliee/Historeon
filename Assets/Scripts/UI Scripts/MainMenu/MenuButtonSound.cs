@@ -28,7 +28,7 @@ public class MenuButtonSound : MonoBehaviour,
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        Debug.Log(name + ": Button hovered.");
+       //Debug.Log(name + ": Button hovered.");
 
         PlaySound(hoverSound, hoverVolume);
     }
@@ -38,7 +38,7 @@ public class MenuButtonSound : MonoBehaviour,
         if (eventData.button != PointerEventData.InputButton.Left)
             return;
 
-        Debug.Log(name + ": Button clicked.");
+        //Debug.Log(name + ": Button clicked.");
 
         PlaySound(clickSound, clickVolume);
     }

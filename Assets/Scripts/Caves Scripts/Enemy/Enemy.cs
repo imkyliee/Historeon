@@ -9,6 +9,13 @@ public class Enemy : MonoBehaviour
     [SerializeField] private EnemyAnimation enemyAnimation;
     [SerializeField] private EnemyHealth health;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip spawnSound;
+    [SerializeField] private AudioClip walkSound;
+    [SerializeField] private AudioClip dieSound;
+    [SerializeField] private AudioClip hitDamageSound;
+
     private PlayerHealth playerHealth;
 
     [Header("Layers")]
@@ -61,6 +68,18 @@ public class Enemy : MonoBehaviour
 
         if (health == null)
             health = GetComponent<EnemyHealth>();
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
+        audioSource.loop = false;
+
+        if (spawnSound != null)
+            audioSource.PlayOneShot(spawnSound);
 
         if (player == null)
         {
@@ -230,6 +249,8 @@ public class Enemy : MonoBehaviour
         {
             agent.isStopped = true;
 
+            StopWalkAudio();
+
             if (enemyAnimation != null)
                 enemyAnimation.PlayIdle();
 
@@ -250,6 +271,8 @@ public class Enemy : MonoBehaviour
 
             if (!walkPointSet)
             {
+                StopWalkAudio();
+
                 if (enemyAnimation != null)
                     enemyAnimation.PlayIdle();
 
@@ -261,6 +284,8 @@ public class Enemy : MonoBehaviour
 
         if (enemyAnimation != null)
             enemyAnimation.PlayWalk();
+
+        StartWalkAudio();
 
         if (!agent.pathPending &&
             agent.remainingDistance <=
@@ -275,6 +300,8 @@ public class Enemy : MonoBehaviour
                     patrolWaitMin,
                     patrolWaitMax
                 );
+
+            StopWalkAudio();
 
             if (enemyAnimation != null)
                 enemyAnimation.PlayIdle();
@@ -375,6 +402,7 @@ public class Enemy : MonoBehaviour
         if (enemyAnimation != null)
             enemyAnimation.PlayWalk();
 
+        StartWalkAudio();
         agent.SetDestination(player.position);
 
         Vector3 direction =
@@ -401,6 +429,8 @@ public class Enemy : MonoBehaviour
         if (waitingAtLastKnownPosition)
         {
             agent.isStopped = true;
+
+            StopWalkAudio();
 
             if (enemyAnimation != null)
                 enemyAnimation.PlayIdle();
@@ -455,6 +485,8 @@ public class Enemy : MonoBehaviour
         if (enemyAnimation != null)
             enemyAnimation.PlayWalk();
 
+        StartWalkAudio();
+
         // Enemy reached the last known position.
         if (!agent.pathPending &&
             agent.remainingDistance <=
@@ -464,6 +496,8 @@ public class Enemy : MonoBehaviour
             goingToLastKnownPosition = false;
             waitingAtLastKnownPosition = true;
             lastKnownWaitTimer = lastKnownWaitTime;
+
+            StopWalkAudio();
 
             if (enemyAnimation != null)
                 enemyAnimation.PlayIdle();
@@ -493,6 +527,7 @@ public class Enemy : MonoBehaviour
 
     private void AttackPlayer()
     {
+        StopWalkAudio();
         agent.isStopped = true;
         agent.ResetPath();
 
@@ -555,6 +590,9 @@ public class Enemy : MonoBehaviour
         if (playerHealth != null)
         {
             playerHealth.TakeDamage(attackDamage);
+
+            if (audioSource != null && hitDamageSound != null)
+                audioSource.PlayOneShot(hitDamageSound);
         }
     }
 
@@ -583,6 +621,10 @@ public class Enemy : MonoBehaviour
             return;
 
         dead = true;
+        StopWalkAudio();
+
+        if (audioSource != null && dieSound != null)
+            audioSource.PlayOneShot(dieSound);
 
         if (agent != null)
         {
@@ -594,6 +636,35 @@ public class Enemy : MonoBehaviour
 
         if (enemyAnimation != null)
             enemyAnimation.PlayDeath();
+    }
+
+    private void StartWalkAudio()
+    {
+        if (audioSource == null || walkSound == null || dead)
+            return;
+
+        if (audioSource.clip != walkSound || !audioSource.loop)
+        {
+            audioSource.Stop();
+            audioSource.clip = walkSound;
+            audioSource.loop = true;
+        }
+
+        if (!audioSource.isPlaying)
+            audioSource.Play();
+    }
+
+    private void StopWalkAudio()
+    {
+        if (audioSource == null)
+            return;
+
+        if (audioSource.loop && audioSource.clip == walkSound)
+        {
+            audioSource.Stop();
+            audioSource.clip = null;
+            audioSource.loop = false;
+        }
     }
 
     private void OnDrawGizmosSelected()

@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -14,6 +15,14 @@ public class FlashlightScript : MonoBehaviour, IUsableItem
     [SerializeField] private GameObject onPrompt;
     [SerializeField] private GameObject offPrompt;
 
+    [Header("Flashlight Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip flashlightOnSound;
+    [SerializeField] private AudioClip flashlightOffSound;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float soundVolume = 1f;
+
     private bool isOn;
     private Item itemData;
 
@@ -23,16 +32,31 @@ public class FlashlightScript : MonoBehaviour, IUsableItem
     {
         itemData = GetComponentInParent<Item>();
 
-        // Make sure flashlight starts OFF
         isOn = false;
 
         if (flashlightObject != null)
             flashlightObject.SetActive(false);
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+    }
+
+    private void Start()
+    {
+        UpdateControlUI();
     }
 
     private void Update()
     {
-        // RMB = flashlight ON/OFF
+        if (PauseManager.Instance != null &&
+            PauseManager.Instance.IsPaused)
+        {
+            return;
+        }
+
+        if (quizUI != null && quizUI.activeInHierarchy)
+            return;
+
         if (Mouse.current != null &&
             Mouse.current.rightButton.wasPressedThisFrame)
         {
@@ -54,6 +78,12 @@ public class FlashlightScript : MonoBehaviour, IUsableItem
 
     public void SetState(bool state)
     {
+        if (isOn == state)
+        {
+            UpdateControlUI();
+            return;
+        }
+
         isOn = state;
 
         if (flashlightObject != null)
@@ -62,37 +92,65 @@ public class FlashlightScript : MonoBehaviour, IUsableItem
         if (itemData != null)
             itemData.flashlightOn = isOn;
 
+        PlayFlashlightSound();
         UpdateControlUI();
     }
 
-    // LMB
     public void OnUsePrimary()
     {
-        // Flashlight doesn't use LMB
+        // Flashlight doesn't use LMB.
     }
 
-    // RMB
     public void OnUseSecondary()
     {
+        if (PauseManager.Instance != null &&
+            PauseManager.Instance.IsPaused)
+        {
+            return;
+        }
+
+        if (quizUI != null && quizUI.activeInHierarchy)
+            return;
+
         SetState(!isOn);
 
         if (TutorialManager.Instance != null)
-        {
             TutorialManager.Instance.CompleteRightClickBG();
+    }
+
+    private void PlayFlashlightSound()
+    {
+        if (audioSource == null)
+        {
+            Debug.LogWarning(
+                "FlashlightScript: AudioSource is not assigned.",
+                this
+            );
+
+            return;
         }
+
+        AudioClip clip = isOn
+            ? flashlightOnSound
+            : flashlightOffSound;
+
+        if (clip != null)
+            audioSource.PlayOneShot(clip, soundVolume);
+    }
+
+    public void RefreshControlUI()
+    {
+        UpdateControlUI();
     }
 
     private void UpdateControlUI()
     {
-        // RMB prompt
         if (rmbPrompt != null)
             rmbPrompt.SetActive(true);
 
-        // ON prompt when flashlight is OFF
         if (onPrompt != null)
             onPrompt.SetActive(!isOn);
 
-        // OFF prompt when flashlight is ON
         if (offPrompt != null)
             offPrompt.SetActive(isOn);
     }

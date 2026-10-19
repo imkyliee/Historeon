@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 
@@ -6,8 +7,8 @@ public class CMCamera : MonoBehaviour
     [Header("Cinematic Camera")]
     public Animator animator;
     public Camera cinematicCamera;
-    public string clip1 = "CM1Open";
-    public string clip2 = "CM1Close";
+    public string clip1;
+    public string clip2;
 
     [Header("Dialogue")]
     public CinematicDialogue dialogue;
@@ -42,12 +43,6 @@ public class CMCamera : MonoBehaviour
         if (isPlaying || animator == null || cinematicCamera == null)
             return;
 
-        if (dialogue == null)
-        {
-            Debug.LogError("CinematicDialogue is not assigned!", this);
-            return;
-        }
-
         isPlaying = true;
         dialogueFinished = false;
 
@@ -76,7 +71,6 @@ public class CMCamera : MonoBehaviour
     private IEnumerator PlayCinematicSequence()
     {
         animator.Play(clip1, 0, 0f);
-
         yield return null;
 
         while (!animator.GetCurrentAnimatorStateInfo(0).IsName(clip1))
@@ -88,22 +82,27 @@ public class CMCamera : MonoBehaviour
             yield return null;
         }
 
-        dialogue.OpenDialogue(OnDialogueClosed);
-
-        while (!dialogueFinished)
-            yield return null;
-
-        animator.Play(clip2, 0, 0f);
-
-        yield return null;
-
-        while (!animator.GetCurrentAnimatorStateInfo(0).IsName(clip2))
-            yield return null;
-
-        while (animator.GetCurrentAnimatorStateInfo(0).IsName(clip2) &&
-               animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+        if (dialogue != null)
         {
+            dialogue.OpenDialogue(OnDialogueClosed);
+
+            while (!dialogueFinished)
+                yield return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(clip2))
+        {
+            animator.Play(clip2, 0, 0f);
             yield return null;
+
+            while (!animator.GetCurrentAnimatorStateInfo(0).IsName(clip2))
+                yield return null;
+
+            while (animator.GetCurrentAnimatorStateInfo(0).IsName(clip2) &&
+                   animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+            {
+                yield return null;
+            }
         }
 
         FinishCinematic();
@@ -204,6 +203,9 @@ public class CMCamera : MonoBehaviour
         if (!isPlaying)
             return;
 
+        if (dialogue != null)
+            dialogue.CloseDialogue();
+
         if (cinematicCamera != null)
             cinematicCamera.enabled = false;
 
@@ -212,9 +214,6 @@ public class CMCamera : MonoBehaviour
 
         if (itemCamera != null)
             itemCamera.enabled = true;
-
-        if (dialogue != null)
-            dialogue.CloseDialogue();
 
         if (uiToDisable != null)
         {
@@ -226,7 +225,17 @@ public class CMCamera : MonoBehaviour
         }
 
         EnablePlayer();
+
         isPlaying = false;
+
+        if (triggerToDestroy != null)
+        {
+            CinematicTrigger trigger =
+                triggerToDestroy.GetComponent<CinematicTrigger>();
+
+            if (trigger != null)
+                trigger.OnCinematicFinished();
+        }
 
         if (objectToDestroy != null)
             Destroy(objectToDestroy);

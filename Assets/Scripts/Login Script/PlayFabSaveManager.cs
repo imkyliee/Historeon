@@ -137,6 +137,12 @@ public class PlayFabSaveManager : MonoBehaviour
     }
     public void SaveGame()
     {
+        if (SceneManager.GetActiveScene().name == "Tutorial")
+        {
+            Debug.Log("Tutorial scene: Skipping normal gameplay save.");
+            return;
+        }
+
         SaveData saveData = new SaveData();
 
         saveData.hasStarted = true;
@@ -644,9 +650,21 @@ public class PlayFabSaveManager : MonoBehaviour
             new GetUserDataRequest(),
             result =>
             {
-                bool hasSave =
-                    result.Data != null &&
-                    result.Data.ContainsKey(SaveKey);
+                bool hasSave = false;
+
+                if (result.Data != null &&
+                    result.Data.ContainsKey(SaveKey))
+                {
+                    string json = result.Data[SaveKey].Value;
+
+                    SaveData saveData =
+                        JsonUtility.FromJson<SaveData>(json);
+
+                    hasSave = saveData != null &&
+                            saveData.hasStarted &&
+                            !string.IsNullOrEmpty(saveData.currentScene) &&
+                            saveData.currentScene != "Tutorial";
+                }
 
                 callback?.Invoke(hasSave);
             },
@@ -803,6 +821,118 @@ public class PlayFabSaveManager : MonoBehaviour
             if (prerequisite != null)
                 prerequisite.RestoreRequirements(savedIDs);
         }
+    }
+    private const string UnlockedDoorsKey = "HistoreonUnlockedDoors";
+
+[System.Serializable]
+public class UnlockedDoorData
+{
+    public List<string> doorIDs = new List<string>();
+}
+
+public void SaveUnlockedDoor(string doorID)
+{
+    if (string.IsNullOrWhiteSpace(doorID))
+    {
+        Debug.LogWarning("Cannot save door: Door ID is empty.");
+        return;
+    }
+
+    PlayFabClientAPI.GetUserData(
+        new GetUserDataRequest(),
+        result =>
+        {
+            UnlockedDoorData savedDoors = new UnlockedDoorData();
+
+            if (result.Data != null &&
+                result.Data.ContainsKey(UnlockedDoorsKey))
+            {
+                UnlockedDoorData loaded =
+                    JsonUtility.FromJson<UnlockedDoorData>(
+                        result.Data[UnlockedDoorsKey].Value
+                    );
+
+                if (loaded != null && loaded.doorIDs != null)
+                    savedDoors = loaded;
+            }
+
+            if (!savedDoors.doorIDs.Contains(doorID))
+                savedDoors.doorIDs.Add(doorID);
+
+            string json = JsonUtility.ToJson(savedDoors);
+
+            PlayFabClientAPI.UpdateUserData(
+                new UpdateUserDataRequest
+                {
+                    Data = new Dictionary<string, string>
+                    {
+                        { UnlockedDoorsKey, json }
+                    }
+                },
+                saveResult =>
+                {
+                    Debug.Log("Unlocked door saved: " + doorID);
+                },
+                error =>
+                {
+                    Debug.LogError(
+                        "Failed to save unlocked door: " +
+                        error.GenerateErrorReport()
+                    );
+                }
+            );
+        },
+        error =>
+        {
+            Debug.LogError(
+                "Failed to retrieve unlocked doors: " +
+                error.GenerateErrorReport()
+            );
+        }
+    );
+}
+
+    public void IsDoorUnlocked(string doorID, Action<bool> callback)
+    {
+        if (string.IsNullOrWhiteSpace(doorID))
+        {
+            callback?.Invoke(false);
+            return;
+        }
+
+        PlayFabClientAPI.GetUserData(
+            new GetUserDataRequest(),
+            result =>
+            {
+                if (result.Data == null ||
+                    !result.Data.ContainsKey(UnlockedDoorsKey))
+                {
+                    callback?.Invoke(false);
+                    return;
+                }
+
+                UnlockedDoorData savedDoors =
+                    JsonUtility.FromJson<UnlockedDoorData>(
+                        result.Data[UnlockedDoorsKey].Value
+                    );
+
+                bool unlocked =
+                    savedDoors != null &&
+                    savedDoors.doorIDs != null &&
+                    savedDoors.doorIDs.Contains(doorID);
+
+                callback?.Invoke(unlocked);
+            },
+            error =>
+            {
+                Debug.LogError(
+                    "Failed to check door state: " +
+                    error.GenerateErrorReport()
+                );
+
+                callback?.Invoke(false);
+            }
+        );
     }
 
 }

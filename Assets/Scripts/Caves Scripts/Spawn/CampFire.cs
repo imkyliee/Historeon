@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 
@@ -9,10 +10,16 @@ public class CampFire : MonoBehaviour
 
     [Header("Prerequisite")]
     public ObjectPrerequisite logbookPrerequisite;
+    public string requiredRequirementName = "finalwillLogBook";
 
     [Header("Fire")]
     public GameObject fireObject;
     public Light fireLight;
+
+    [Header("First Light Sound")]
+    [SerializeField] private AudioClip firstLightSound;
+    [SerializeField, Range(0f, 1f)] private float soundVolume = 1f;
+    private AudioSource audioSource;
 
     [Header("Player References")]
     public Movement playerMovement;
@@ -51,6 +58,16 @@ public class CampFire : MonoBehaviour
     private void Start()
     {
         playerCamera = Camera.main;
+        audioSource = GetComponent<AudioSource>();
+
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.spatialBlend = 1f;
+        audioSource.minDistance = 2f;
+        audioSource.maxDistance = 10f;
+        audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+        audioSource.playOnAwake = false;
 
         if (interactUI != null)
             interactUI.SetActive(false);
@@ -108,7 +125,7 @@ public class CampFire : MonoBehaviour
             return;
         }
 
-        if (!IsPrerequisiteCompleted())
+        if (logbookPrerequisite != null && !IsPrerequisiteCompleted())
         {
             HideInteractionUI();
             return;
@@ -151,15 +168,23 @@ public class CampFire : MonoBehaviour
     private bool IsPrerequisiteCompleted()
     {
         if (logbookPrerequisite == null ||
-            logbookPrerequisite.requirements == null)
+            logbookPrerequisite.requirements == null ||
+            string.IsNullOrEmpty(requiredRequirementName))
+        {
             return false;
+        }
 
         foreach (ObjectPrerequisite.Requirement requirement
-                 in logbookPrerequisite.requirements)
+                in logbookPrerequisite.requirements)
         {
-            if (requirement.requirementName == "LogBook (1)")
+            if (requirement.requirementName == requiredRequirementName)
                 return requirement.isObtained;
         }
+
+        Debug.LogWarning(
+            "CampFire: Requirement '" + requiredRequirementName +
+            "' was not found in " + logbookPrerequisite.name
+        );
 
         return false;
     }
@@ -175,8 +200,7 @@ public class CampFire : MonoBehaviour
         if (campfireSpawnPoint == null)
             return;
 
-        if (SpawnPoint.GetSavedSpawnScene() !=
-            gameObject.scene.name)
+        if (SpawnPoint.GetSavedSpawnScene() != gameObject.scene.name)
             return;
 
         float distance = Vector3.Distance(
@@ -200,7 +224,27 @@ public class CampFire : MonoBehaviour
 
     private void LightCampfire()
     {
+        if (isLit)
+            return;
+
         isLit = true;
+
+        // Play the sound only when the campfire is first lit.
+        if (firstLightSound != null && audioSource != null)
+        {
+            float sfxVolume = SFXManager.Instance != null
+                ? SFXManager.Instance.GetVolume()
+                : PlayerPrefs.GetFloat("SFXVolume", 1f);
+
+            audioSource.clip = firstLightSound;
+            audioSource.volume = Mathf.Clamp01(soundVolume) * Mathf.Clamp01(sfxVolume);
+            audioSource.loop = true;
+
+            if (audioSource.volume > 0f)
+                audioSource.Play();
+            else
+                audioSource.Stop();
+        }
 
         if (fireObject != null)
             fireObject.SetActive(true);

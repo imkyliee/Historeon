@@ -14,6 +14,10 @@ public class Artifacts : MonoBehaviour
     public LogbookEntry logbookEntry;
     public Notification logbookNotification;
 
+    [Header("Artifact Prerequisite")]
+    public ObjectPrerequisite artifactPrerequisite;
+    public ObjectPrerequisite nextCavePrerequisite;
+    public string prerequisiteRequirementName = "ManunggulJar";
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
@@ -283,6 +287,33 @@ public class Artifacts : MonoBehaviour
             return;
 
         trophyObtained = true;
+
+        // Complete the artifact objective.
+        if (ObjectiveManager.Instance != null)
+        {
+            ObjectiveManager.Instance.CompleteObjective("Get the Artifact.");
+        }
+        else
+        {
+            Debug.LogWarning("Artifacts: ObjectiveManager not found!");
+        }
+
+        // Notify the prerequisite that the artifact was obtained.
+        if (artifactPrerequisite != null &&
+            !string.IsNullOrEmpty(prerequisiteRequirementName))
+        {
+            artifactPrerequisite.ObtainRequirement(
+                prerequisiteRequirementName
+            );
+        }
+
+        if (nextCavePrerequisite != null &&
+            !string.IsNullOrEmpty(prerequisiteRequirementName))
+        {
+            nextCavePrerequisite.ObtainRequirement(
+                prerequisiteRequirementName
+            );
+        }
 
         HideInteractUI();
 

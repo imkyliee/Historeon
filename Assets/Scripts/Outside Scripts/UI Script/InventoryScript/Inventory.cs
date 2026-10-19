@@ -15,6 +15,15 @@ public class Inventory : MonoBehaviour
     [Header("Save Data")]
     public List<ItemSO> allItemTypes = new List<ItemSO>();
 
+    [Header("Inventory Audio")]
+    public AudioSource inventoryAudioSource;
+    public AudioClip inventoryOpenSound;
+    public AudioClip inventoryCloseSound;
+
+    [Range(0f, 1f)]
+    public float inventorySoundVolume = 1f;
+
+
     [Header("UI References")]
     public GameObject hotbarObj;
     public GameObject inventorySlotParent;
@@ -597,13 +606,18 @@ public class Inventory : MonoBehaviour
                 lookedAtItem.amount
             );
 
-            if (pickedUpItem == hatchetitem)
-            {
-                ObjectPrerequisite prerequisite =
-                    FindFirstObjectByType<ObjectPrerequisite>();
+            ObjectPrerequisite[] prerequisites = FindObjectsByType<ObjectPrerequisite>(FindObjectsSortMode.None);
 
-                if (prerequisite != null)
+            foreach (ObjectPrerequisite prerequisite in prerequisites)
+            {
+                if (pickedUpItem == hatchetitem)
                     prerequisite.ObtainRequirement("Hatchet");
+
+                if (pickedUpItem == flashlightitem)
+                    prerequisite.ObtainRequirement("Flashlight");
+
+                if (pickedUpItem == bagitem)
+                    prerequisite.ObtainRequirement("Bag");
             }
 
             if (TutorialManager.Instance != null)
@@ -1139,14 +1153,33 @@ public class Inventory : MonoBehaviour
         Movement.Instance.SetLookEnabled(true);
     }
 
+    
     public void ToggleInventory()
     {
         if (IsOpen)
         {
+            if (inventoryAudioSource != null &&
+                inventoryCloseSound != null)
+            {
+                inventoryAudioSource.PlayOneShot(
+                    inventoryCloseSound,
+                    inventorySoundVolume
+                );
+            }
+
             CloseInventory();
         }
         else
         {
+            if (inventoryAudioSource != null &&
+                inventoryOpenSound != null)
+            {
+                inventoryAudioSource.PlayOneShot(
+                    inventoryOpenSound,
+                    inventorySoundVolume
+                );
+            }
+
             OpenInventory();
 
             if (TutorialManager.Instance != null)

@@ -20,9 +20,6 @@ public class LockedDoorCollider : MonoBehaviour
 
         if (lockedUI != null)
             lockedUI.SetActive(false);
-
-        if (artifactPrerequisite == null)
-            Debug.LogError("LockedDoorCollider: Prerequisite is missing.");
     }
 
     private void Update()
@@ -63,23 +60,20 @@ public class LockedDoorCollider : MonoBehaviour
     private bool HasRequiredItems()
     {
         if (artifactPrerequisite == null ||
-            artifactPrerequisite.requirements == null)
+            artifactPrerequisite.requirements == null ||
+            artifactPrerequisite.requirements.Length == 0)
+        {
             return false;
-
-        bool hasHatchet = false;
-        bool hasRegretLogbook = false;
+        }
 
         foreach (ObjectPrerequisite.Requirement requirement
                  in artifactPrerequisite.requirements)
         {
-            if (requirement.requirementName == "Hatchet")
-                hasHatchet = requirement.isObtained;
-
-            if (requirement.requirementName == "LogBook")
-                hasRegretLogbook = requirement.isObtained;
+            if (requirement == null || !requirement.isObtained)
+                return false;
         }
 
-        return hasHatchet && hasRegretLogbook;
+        return true;
     }
 
     private void OnDisable()

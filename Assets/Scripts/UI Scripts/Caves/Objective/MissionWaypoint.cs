@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -13,23 +14,21 @@ public class MissionWaypoint : MonoBehaviour
     public Transform target;
     public Transform player;
 
-    [Header("Objective")]
-    public GameObject flashlight;
+    [Header("Prerequisites")]
+    public ObjectPrerequisite cavePrerequisite;
+
+    [Header("Required Items")]
+    public string firstRequirement = "Flashlight";
+    public string secondRequirement = "Bag";
 
     [Header("Settings")]
     public Vector3 offset;
-
     [SerializeField] private float screenPadding = 60f;
 
     private RectTransform indicatorRect;
     private Canvas canvas;
-    private bool flashlightWasAssigned;
     private bool waypointShown;
-
-    private void Awake()
-    {
-        flashlightWasAssigned = flashlight != null;
-    }
+    private bool waypointDestroyed;
 
     private void Start()
     {
@@ -49,14 +48,22 @@ public class MissionWaypoint : MonoBehaviour
 
     private void Update()
     {
-        if (!waypointShown && flashlightWasAssigned)
+        if (waypointDestroyed)
+            return;
+
+        if (target == null || !target.gameObject.activeInHierarchy)
         {
-            if (flashlight == null || !flashlight.activeInHierarchy)
-                ShowWaypoint();
+            DestroyWaypoint();
+            return;
         }
 
         if (!waypointShown)
-            return;
+        {
+            if (HasRequiredItems())
+                ShowWaypoint();
+            else
+                return;
+        }
 
         if (target == null || player == null || img == null)
             return;
@@ -116,11 +123,8 @@ public class MissionWaypoint : MonoBehaviour
 
             direction.Normalize();
 
-            float halfWidth =
-                Screen.width / 2f - screenPadding;
-
-            float halfHeight =
-                Screen.height / 2f - screenPadding;
+            float halfWidth = Screen.width / 2f - screenPadding;
+            float halfHeight = Screen.height / 2f - screenPadding;
 
             float xDistance =
                 Mathf.Abs(direction.x) > 0.001f
@@ -151,19 +155,52 @@ public class MissionWaypoint : MonoBehaviour
             meter.text = distance + "m";
     }
 
+    private bool HasRequiredItems()
+    {
+        if (cavePrerequisite == null ||
+            cavePrerequisite.requirements == null)
+            return false;
+
+        bool hasFirstItem = false;
+        bool hasSecondItem = false;
+
+        foreach (ObjectPrerequisite.Requirement requirement
+                 in cavePrerequisite.requirements)
+        {
+            if (requirement.requirementName == firstRequirement)
+                hasFirstItem = requirement.isObtained;
+
+            if (requirement.requirementName == secondRequirement)
+                hasSecondItem = requirement.isObtained;
+        }
+
+        return hasFirstItem && hasSecondItem;
+    }
+
     public void ShowWaypoint()
     {
-        if (waypointShown)
+        if (waypointShown || waypointDestroyed)
             return;
 
         waypointShown = true;
 
         if (objectiveUI != null)
             objectiveUI.SetActive(true);
+
+        if (img != null)
+            img.gameObject.SetActive(true);
+
+        if (meter != null)
+            meter.gameObject.SetActive(true);
     }
 
     public void DestroyWaypoint()
     {
+        if (waypointDestroyed)
+            return;
+
+        waypointDestroyed = true;
+
         if (objectiveUI != null)
             Destroy(objectiveUI);
 

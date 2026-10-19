@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,40 +14,52 @@ public class EnterCave : MonoBehaviour
     [Header("Inventory Transfer")]
     public Inventory playerInventory;
 
+    [Header("Prerequisites")]
+    public ObjectPrerequisite cavePrerequisite;
+
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
     [Header("Door")]
     public Animator doorAnimator;
 
-    private bool isLookingAtDoor = false;
+    [Header("Door Sounds")]
+    public AudioClip openSound;
+    public AudioClip closeSound;
+    [Range(0f, 1f)] public float soundVolume = 1f;
+
+    private bool isLookingAtDoor;
+    private bool wasLookingAtDoor;
 
     private Camera playerCamera;
+    private AudioSource audioSource;
 
     private static EnterCave currentDoor;
 
     private void Start()
     {
-        // Find Animator on this object
         if (doorAnimator == null)
             doorAnimator = GetComponent<Animator>();
 
-        // If not found, check parent
         if (doorAnimator == null)
             doorAnimator = GetComponentInParent<Animator>();
 
-        // If still not found, check children
         if (doorAnimator == null)
             doorAnimator = GetComponentInChildren<Animator>();
 
         playerCamera = Camera.main;
 
+        audioSource = GetComponent<AudioSource>();
+
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
+
         HideUI();
 
         if (doorAnimator == null)
-        {
-            // Debug.LogError("EnterCave: No Animator found on Door, its parent, or its children!");
-        }
+            Debug.LogWarning("EnterCave: No Animator found.");
     }
 
     private void Update()
@@ -54,7 +67,9 @@ public class EnterCave : MonoBehaviour
         if (playerCamera == null)
         {
             playerCamera = Camera.main;
-            return;
+
+            if (playerCamera == null)
+                return;
         }
 
         isLookingAtDoor = false;
@@ -69,69 +84,111 @@ public class EnterCave : MonoBehaviour
             EnterCave cave =
                 hit.collider.GetComponentInParent<EnterCave>();
 
-            if (cave == this)
+            if (cave != null && cave == this)
             {
                 isLookingAtDoor = true;
             }
         }
 
-        // Player is looking at the cave door
         if (isLookingAtDoor)
         {
-            currentDoor = this;
+            if (currentDoor != this)
+            {
+                if (currentDoor != null)
+                    currentDoor.StopLookingAtDoor();
 
-            // Show E UI
+                currentDoor = this;
+                wasLookingAtDoor = false;
+            }
+
+            if (!wasLookingAtDoor)
+            {
+                if (doorAnimator != null)
+                    doorAnimator.Play("Open", 0, 0f);
+
+                PlayDoorSound(openSound);
+                wasLookingAtDoor = true;
+            }
+
             ShowUI();
 
-            // Open door animation
-            if (doorAnimator != null)
-            {
-                doorAnimator.Play("Open");
-            }
-
-            // Press E to enter the cave
             if (Input.GetKeyDown(KeyCode.E))
-            {
                 EnterDungeon();
-            }
         }
         else
         {
-            // Only the currently displayed door
-            // is allowed to hide the shared UI.
             if (currentDoor == this)
-            {
-                currentDoor = null;
-
-                // Hide E UI
+                StopLookingAtDoor();
+            else
                 HideUI();
-
-                // Close door animation
-                if (doorAnimator != null)
-                {
-                    doorAnimator.Play("Close");
-                }
-            }
         }
+    }
+
+    private bool HasRequiredItems()
+    {
+        if (cavePrerequisite == null ||
+            cavePrerequisite.requirements == null)
+        {
+            return false;
+        }
+
+        bool hasFlashlight = false;
+        bool hasBag = false;
+
+        foreach (ObjectPrerequisite.Requirement requirement
+                 in cavePrerequisite.requirements)
+        {
+            if (requirement.requirementName == "Flashlight")
+                hasFlashlight = requirement.isObtained;
+
+            if (requirement.requirementName == "Bag")
+                hasBag = requirement.isObtained;
+        }
+
+        return hasFlashlight && hasBag;
+    }
+
+    private void StopLookingAtDoor()
+    {
+        if (wasLookingAtDoor)
+        {
+            if (doorAnimator != null)
+                doorAnimator.Play("Close", 0, 0f);
+
+            PlayDoorSound(closeSound);
+        }
+
+        wasLookingAtDoor = false;
+
+        if (currentDoor == this)
+            currentDoor = null;
+
+        HideUI();
+    }
+
+   private void PlayDoorSound(AudioClip clip)
+    {
+        if (clip == null || audioSource == null)
+            return;
+
+        float sfxVolume = SFXManager.Instance != null
+            ? SFXManager.Instance.GetVolume()
+            : PlayerPrefs.GetFloat("SFXVolume", 1f);
+
+        audioSource.PlayOneShot(clip, soundVolume * sfxVolume);
     }
 
     private void EnterDungeon()
     {
         if (transition == null)
         {
-            Debug.LogError(
-                "EnterCave: SceneTransition is not assigned!"
-            );
-
+            Debug.LogError("EnterCave: SceneTransition is not assigned!");
             return;
         }
 
         if (string.IsNullOrEmpty(sceneToLoad))
         {
-            Debug.LogError(
-                "EnterCave: Scene To Load is empty!"
-            );
-
+            Debug.LogError("EnterCave: Scene To Load is empty!");
             return;
         }
 
@@ -139,7 +196,9 @@ public class EnterCave : MonoBehaviour
 
         if (InventoryTransferManager.Instance != null)
         {
-            InventoryTransferManager.Instance.CaptureInventory(playerInventory);
+            InventoryTransferManager.Instance.CaptureInventory(
+                playerInventory
+            );
         }
         else
         {
@@ -149,7 +208,9 @@ public class EnterCave : MonoBehaviour
             return;
         }
 
-        SceneEntrySpawn.SetPreviousScene(SceneManager.GetActiveScene().name);
+        SceneEntrySpawn.SetPreviousScene(
+            SceneManager.GetActiveScene().name
+        );
 
         transition.OnButtonPressed(sceneToLoad);
     }
@@ -157,17 +218,13 @@ public class EnterCave : MonoBehaviour
     private void ShowUI()
     {
         if (UI != null)
-        {
             UI.SetActive(true);
-        }
     }
 
     private void HideUI()
     {
         if (UI != null)
-        {
             UI.SetActive(false);
-        }
     }
 
     private void OnDestroy()
@@ -175,7 +232,6 @@ public class EnterCave : MonoBehaviour
         if (currentDoor == this)
         {
             currentDoor = null;
-
             HideUI();
         }
     }
