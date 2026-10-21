@@ -18,6 +18,10 @@ public class PauseManager : MonoBehaviour
     public SceneTransition transition;
     public Animator playerAnimator;
 
+    [Header("In-Game Music")]
+    public AudioSource[] musicSources;
+    private bool[] musicWasPlaying;
+
     [Header("UI")]
     public GameObject pauseMenuUI;
     public GameObject optionsMenuUI;
@@ -39,6 +43,7 @@ public class PauseManager : MonoBehaviour
             pauseMenuUI.SetActive(false);
 
         isPaused = false;
+        AudioListener.pause = false;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -112,6 +117,8 @@ public class PauseManager : MonoBehaviour
             playerAnimator.enabled = false;
 
         Time.timeScale = 0f;
+        AudioListener.pause = true;
+        PauseGameMusic();
 
         if (disableOnPause != null)
         {
@@ -170,6 +177,8 @@ public class PauseManager : MonoBehaviour
         }
 
         Time.timeScale = 1f;
+        AudioListener.pause = false;
+        ResumeGameMusic();
 
         if (disableOnPause != null)
         {
@@ -269,5 +278,44 @@ public class PauseManager : MonoBehaviour
         }
 
         RefreshFlashlightUI();
+    }
+    private void PauseGameMusic()
+{
+    if (musicSources == null)
+        return;
+
+    musicWasPlaying = new bool[musicSources.Length];
+
+    for (int i = 0; i < musicSources.Length; i++)
+    {
+        AudioSource source = musicSources[i];
+
+        if (source == null)
+            continue;
+
+        musicWasPlaying[i] = source.isPlaying;
+
+        if (source.isPlaying)
+            source.Pause();
+    }
+}
+
+    private void ResumeGameMusic()
+    {
+        if (musicSources == null || musicWasPlaying == null)
+            return;
+
+        for (int i = 0; i < musicSources.Length; i++)
+        {
+            AudioSource source = musicSources[i];
+
+            if (source == null)
+                continue;
+
+            if (i < musicWasPlaying.Length && musicWasPlaying[i])
+                source.UnPause();
+        }
+
+        musicWasPlaying = null;
     }
 }

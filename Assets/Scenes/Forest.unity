@@ -3019,6 +3019,7 @@ MonoBehaviour:
   tabMenuManager: {fileID: 1794250007}
   transition: {fileID: 162780697}
   playerAnimator: {fileID: 430449907}
+  musicSources: []
   pauseMenuUI: {fileID: 1474784562}
   optionsMenuUI: {fileID: 1986365431}
   HUD:
@@ -5535,6 +5536,8 @@ MonoBehaviour:
   player: {fileID: 430449908}
   forestSpawn: {fileID: 576780583}
   tabonCaveSpawn: {fileID: 0}
+  tabonCaveFromCallaoSpawn: {fileID: 0}
+  callaoCaveSpawn: {fileID: 0}
 --- !u!4 &481124069
 Transform:
   m_ObjectHideFlags: 0
@@ -5785,6 +5788,7 @@ MonoBehaviour:
   scriptsToEnable:
   - {fileID: 2096750064}
   prerequisiteID: EnterTabonCave
+  useGlobalSaveID: 0
 --- !u!4 &487384541
 Transform:
   m_ObjectHideFlags: 0
@@ -6504,8 +6508,11 @@ GameObject:
   m_Component:
   - component: {fileID: 540508566}
   - component: {fileID: 540508565}
+  - component: {fileID: 540508567}
+  - component: {fileID: 540508569}
+  - component: {fileID: 540508568}
   m_Layer: 0
-  m_Name: InventoryTransferManager
+  m_Name: TransferManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6538,6 +6545,42 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &540508567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540508564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e458b5ec5406273439cd996cbe79e765, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &540508568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540508564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad7ba09a4aa76c54698a75fff8cc2329, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &540508569
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540508564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd80cf145471b3d46b66a7cf9b719718, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &543014964
 GameObject:
   m_ObjectHideFlags: 0
@@ -32489,6 +32532,13 @@ MonoBehaviour:
   openSound: {fileID: 8300000, guid: 0795a94b3ce291b43abb0ad4a12e2d1c, type: 3}
   closeSound: {fileID: 8300000, guid: dad0e4fddc0af6f4586eecad4e9326cd, type: 3}
   soundVolume: 1
+  playerMovement: {fileID: 430449906}
+  playerAnimation: {fileID: 430449905}
+  playerAnimator: {fileID: 430449907}
+  mainCameraBob: {fileID: 1995119858}
+  itemCameraBob: {fileID: 984677740}
+  pauseManager: {fileID: 295572482}
+  tabMenuManager: {fileID: 1794250007}
 --- !u!114 &2096750065
 MonoBehaviour:
   m_ObjectHideFlags: 0

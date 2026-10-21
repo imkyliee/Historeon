@@ -104,4 +104,13 @@ public class PlayerHealth : MonoBehaviour
         if (ragdollController != null)
             ragdollController.RagdollOn();
     }
+    
+    private void OnDestroy()
+    {
+        if (HealthTransferManager.Instance != null && !isDead)
+        {
+            HealthTransferManager.SaveHealth(currentHealth);
+        }
+    }
+
 }

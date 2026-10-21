@@ -14,6 +14,8 @@ public class SceneEntrySpawn : MonoBehaviour
     [Header("Entry Spawn Points")]
     public Transform forestSpawn;
     public Transform tabonCaveSpawn;
+    public Transform tabonCaveFromCallaoSpawn;
+    public Transform callaoCaveSpawn;
 
     private void Start()
     {
@@ -31,9 +33,21 @@ public class SceneEntrySpawn : MonoBehaviour
         Transform targetSpawn = null;
 
         if (currentScene == "Forest" && previousScene == "Tabon Cave")
+        {
             targetSpawn = forestSpawn;
+        }
         else if (currentScene == "Tabon Cave" && previousScene == "Forest")
+        {
             targetSpawn = tabonCaveSpawn;
+        }
+        else if (currentScene == "Tabon Cave" && previousScene == "Callao Cave")
+        {
+            targetSpawn = tabonCaveFromCallaoSpawn;
+        }
+        else if (currentScene == "Callao Cave" && previousScene == "Tabon Cave")
+        {
+            targetSpawn = callaoCaveSpawn;
+        }
 
         if (targetSpawn != null && player != null)
         {
@@ -42,12 +56,16 @@ public class SceneEntrySpawn : MonoBehaviour
                 targetSpawn.rotation
             );
 
-            Debug.Log("SceneEntrySpawn: Spawned at " + targetSpawn.name);
+            Debug.Log(
+                "SceneEntrySpawn: Spawned at " + targetSpawn.name
+            );
         }
         else
         {
             Debug.LogWarning(
-                "SceneEntrySpawn: Entry spawn or player is missing."
+                "SceneEntrySpawn: Entry spawn or player is missing. " +
+                "Current Scene: " + currentScene +
+                ", Previous Scene: " + previousScene
             );
         }
 

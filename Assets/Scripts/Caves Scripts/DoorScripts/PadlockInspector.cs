@@ -6,6 +6,10 @@ public class PadlockInspector : MonoBehaviour
     public GameObject InteractUI;
     public GameObject quizUI;
 
+    [Header("Gameplay UI to Hide While Quiz Is Open")]
+    [Tooltip("Assign gameplay HUD objects such as Health/Stamina BG, Crosshair, ItemUI, Hotbar, and SlotNumber.")]
+    public GameObject[] uiToDisableWhileQuizIsOpen;
+
     [Header("Player References")]
     public Movement playerMovement;
     public PlayerAnimation playerAnimation;
@@ -130,71 +134,108 @@ public class PadlockInspector : MonoBehaviour
             InteractUI.SetActive(false);
     }
 
+    
     private void OpenQuiz()
     {
         quizIsOpen = true;
+        SetGameplayUIVisible(false);
 
         if (currentPadlock == this)
             currentPadlock = null;
 
-        // Disable PauseManager
         if (pauseManager != null)
             pauseManager.enabled = false;
 
-        // Disable Tab Menu
         if (tabMenuManager != null)
             tabMenuManager.enabled = false;
 
-        // Hide interaction UI
         HideInteractUI();
 
-        // Show quiz
         if (quizUI != null)
+        {
+            // Enable the quiz root first.
             quizUI.SetActive(true);
+
+            QuizManager quizManager = quizUI.GetComponent<QuizManager>();
+
+            if (quizManager == null)
+                quizManager = quizUI.GetComponentInChildren<QuizManager>(true);
+
+            // Keep the Forfeit panel hidden while restoring the other quiz UI.
+            GameObject forfeitPanel = quizManager != null
+                ? quizManager.ForfeitConfirmationUI
+                : null;
+
+            EnableQuizChildrenExceptForfeit(
+                quizUI.transform,
+                forfeitPanel != null ? forfeitPanel.transform : null
+            );
+
+            if (quizManager != null)
+            {
+                quizManager.StartQuiz();
+            }
+            else
+            {
+                Debug.LogError(
+                    "QuizManager was not found on the quiz UI or its children!",
+                    quizUI
+                );
+            }
+        }
 
         PlayPadlockInteractionSound();
 
-        // Disable player movement
         if (playerMovement != null)
         {
-            // Stop Rigidbody
             if (playerMovement.rb != null)
             {
                 playerMovement.rb.linearVelocity = Vector3.zero;
                 playerMovement.rb.angularVelocity = Vector3.zero;
-
-                // Freeze Rigidbody physics
                 playerMovement.rb.isKinematic = true;
             }
 
-            // Disable Movement script
             playerMovement.enabled = false;
         }
 
-        // Disable inventory / hotbar
         if (inventory != null)
             inventory.enabled = false;
 
-        // Disable PlayerAnimation
         if (playerAnimation != null)
             playerAnimation.enabled = false;
 
-        // Disable Animator
         if (playerAnimator != null)
-        {
             playerAnimator.enabled = false;
-        }
 
-        // Disable Camera Bob
         if (mainCameraBob != null)
             mainCameraBob.enabled = false;
 
         if (itemCameraBob != null)
             itemCameraBob.enabled = false;
 
-        // Unlock mouse
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+    }
+
+    private void EnableQuizChildrenExceptForfeit(
+        Transform parent,
+        Transform forfeitPanel)
+    {
+        foreach (Transform child in parent)
+        {
+            // Do not enable the Forfeit panel or any of its children.
+            if (forfeitPanel != null &&
+                (child == forfeitPanel ||
+                child.IsChildOf(forfeitPanel)))
+            {
+                continue;
+            }
+
+            child.gameObject.SetActive(true);
+
+            // Recursively restore nested UI objects too.
+            EnableQuizChildrenExceptForfeit(child, forfeitPanel);
+        }
     }
 
     public void PlayPadlockInteractionSound()
@@ -219,34 +260,57 @@ public class PadlockInspector : MonoBehaviour
         AudioSource.PlayClipAtPoint(clip, transform.position, volume * sfxVolume);
     }
 
-    public void CloseQuiz()
+   public void CloseQuiz()
     {
+        // If the forfeit confirmation is open, this CloseQuiz call
+        // came from the player's Yes button.
+        QuizManager quizManager = null;
+
+        if (quizUI != null)
+        {
+            quizManager = quizUI.GetComponent<QuizManager>();
+
+            if (quizManager == null)
+            {
+                quizManager =
+                    quizUI.GetComponentInChildren<QuizManager>(true);
+            }
+        }
+
+        bool isForfeiting =
+            quizManager != null &&
+            quizManager.ForfeitConfirmationUI != null &&
+            quizManager.ForfeitConfirmationUI.activeSelf;
+
+        // Record the forfeit before hiding the quiz.
+        if (isForfeiting)
+        {
+            quizManager.RegisterForfeitFromPadlock();
+        }
+
         quizIsOpen = false;
 
-        // Hide quiz
         if (quizUI != null)
             quizUI.SetActive(false);
 
-        // Re-enable Rigidbody
+        SetGameplayUIVisible(true);
+
+        // Restore player movement and physics.
         if (playerMovement != null)
         {
             if (playerMovement.rb != null)
             {
                 playerMovement.rb.isKinematic = false;
-
                 playerMovement.rb.linearVelocity = Vector3.zero;
                 playerMovement.rb.angularVelocity = Vector3.zero;
             }
 
-            // Re-enable Movement script
             playerMovement.enabled = true;
         }
 
-        // Re-enable inventory
         if (inventory != null)
             inventory.enabled = true;
 
-        // Re-enable Animator
         if (playerAnimator != null)
         {
             playerAnimator.enabled = true;
@@ -254,35 +318,43 @@ public class PadlockInspector : MonoBehaviour
             playerAnimator.Update(0f);
         }
 
-        // Re-enable PlayerAnimation
         if (playerAnimation != null)
         {
             playerAnimation.enabled = true;
             playerAnimation.ResetActionAfterQuiz();
         }
 
-        // Re-enable Camera Bob
         if (mainCameraBob != null)
             mainCameraBob.enabled = true;
 
         if (itemCameraBob != null)
             itemCameraBob.enabled = true;
 
-        // Re-enable PauseManager
         if (pauseManager != null)
             pauseManager.enabled = true;
 
-        // Re-enable Tab Menu
         if (tabMenuManager != null)
             tabMenuManager.enabled = true;
 
-        // Lock mouse
+        // Restore gameplay cursor.
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    
-   private void OnDestroy()
+
+    private void SetGameplayUIVisible(bool visible)
+    {
+        if (uiToDisableWhileQuizIsOpen == null)
+            return;
+
+        foreach (GameObject uiObject in uiToDisableWhileQuizIsOpen)
+        {
+            if (uiObject != null)
+                uiObject.SetActive(visible);
+        }
+    }
+
+    private void OnDestroy()
     {
         if (currentPadlock == this)
         {

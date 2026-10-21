@@ -1,6 +1,8 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using System.Text;
 
 public class MainMenu : MonoBehaviour
 {
@@ -11,6 +13,8 @@ public class MainMenu : MonoBehaviour
     public GameObject MainMenuButtons;
     public GameObject tutorialWindow;
     public GameObject leaderboardWindow;
+    [Tooltip("TextMeshPro text area used to display the global top 10 leaderboard.")]
+    public TextMeshProUGUI leaderboardText;
     public GameObject controlWindow;
 
     [Header("Save Menu")]
@@ -598,8 +602,63 @@ public class MainMenu : MonoBehaviour
         if (leaderboardWindowAnimator != null)
             leaderboardWindowAnimator.Play("Leaderboard Open");
 
+        RefreshLeaderboardDisplay();
+
         if (volumeSlider != null)
             volumeSlider.interactable = false;
+    }
+
+    private void RefreshLeaderboardDisplay()
+    {
+        if (leaderboardText == null)
+        {
+            Debug.LogWarning("MainMenu: Assign the Leaderboard Text field in the Inspector.");
+            return;
+        }
+
+        if (PlayFabSaveManager.Instance == null)
+        {
+            leaderboardText.text = "Leaderboard unavailable.";
+            return;
+        }
+
+        leaderboardText.text = "Loading leaderboard...";
+        PlayFabSaveManager.Instance.GetTopLeaderboard(entries =>
+        {
+            if (leaderboardText == null)
+                return;
+
+            if (entries == null)
+            {
+                leaderboardText.text = "Could not load leaderboard. Please try again.";
+                return;
+            }
+
+            if (entries.Count == 0)
+            {
+                leaderboardText.text = "No scores yet. Complete a quiz to appear here!";
+                return;
+            }
+
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("GLOBAL TOP 10");
+            builder.AppendLine();
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                string playerName = string.IsNullOrWhiteSpace(entries[i].DisplayName)
+                    ? "Player " + entries[i].PlayFabId.Substring(0, Mathf.Min(6, entries[i].PlayFabId.Length))
+                    : entries[i].DisplayName;
+
+                builder.Append(i + 1).Append(". ")
+                    .Append(playerName)
+                    .Append("  -  ")
+                    .Append(entries[i].StatValue)
+                    .AppendLine(" points");
+            }
+
+            leaderboardText.text = builder.ToString();
+        });
     }
 
     // CONTROL

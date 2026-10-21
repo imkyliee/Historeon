@@ -26,6 +26,7 @@ public class ObjectPrerequisite : MonoBehaviour
 
     [Header("Persistence")]
     public string prerequisiteID;
+    public bool useGlobalSaveID;
 
     private bool isUnlocked;
 
@@ -34,6 +35,9 @@ public class ObjectPrerequisite : MonoBehaviour
         string id = string.IsNullOrEmpty(prerequisiteID)
             ? gameObject.name
             : prerequisiteID;
+
+        if (useGlobalSaveID)
+            return "GLOBAL|" + id + "|" + requirementName;
 
         return gameObject.scene.name + "|" + id + "|" + requirementName;
     }
@@ -174,6 +178,26 @@ public class ObjectPrerequisite : MonoBehaviour
         Debug.Log(
             "All prerequisites completed on " + gameObject.name
         );
+    }
+
+    public static void RegisterGlobalRequirement(
+        string targetPrerequisiteID,
+        string requirementName)
+    {
+        if (PlayFabSaveManager.Instance == null)
+        {
+            Debug.LogWarning(
+                "PlayFabSaveManager not found. Global requirement was not saved."
+            );
+            return;
+        }
+
+        string saveID =
+            "GLOBAL|" + targetPrerequisiteID + "|" + requirementName;
+
+        PlayFabSaveManager.Instance.RegisterPrerequisite(saveID, true);
+
+        Debug.Log("Global requirement registered: " + saveID);
     }
 
     public static void ResetSavedRequirementsForNewGame()

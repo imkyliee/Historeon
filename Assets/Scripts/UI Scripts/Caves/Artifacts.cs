@@ -252,6 +252,7 @@ public class Artifacts : MonoBehaviour
         }
     }
 
+    
     private void CheckEnemies()
     {
         if (!encounterStarted || enemiesDefeated)
@@ -259,14 +260,29 @@ public class Artifacts : MonoBehaviour
 
         for (int i = spawnedEnemies.Count - 1; i >= 0; i--)
         {
-            if (spawnedEnemies[i] == null)
+            GameObject enemyObject = spawnedEnemies[i];
+
+            if (enemyObject == null)
+            {
                 spawnedEnemies.RemoveAt(i);
+                continue;
+            }
+
+            EnemyHealth enemyHealth = enemyObject.GetComponent<EnemyHealth>();
+
+            if (enemyHealth != null && enemyHealth.IsDead())
+            {
+                spawnedEnemies.RemoveAt(i);
+            }
         }
 
         if (spawnedEnemies.Count == 0)
+        {
             EnemiesDefeated();
+        }
     }
 
+    
     private void EnemiesDefeated()
     {
         enemiesDefeated = true;
@@ -287,6 +303,11 @@ public class Artifacts : MonoBehaviour
             return;
 
         trophyObtained = true;
+
+        ObjectPrerequisite.RegisterGlobalRequirement(
+        "NextCave3",
+        "Skull"
+    );
 
         // Complete the artifact objective.
         if (ObjectiveManager.Instance != null)

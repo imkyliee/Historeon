@@ -21,7 +21,6 @@ public class LogbookPickup : MonoBehaviour
     [SerializeField] private string requirementName;
 
     private Camera playerCamera;
-
     private static LogbookPickup currentLogbook;
 
     private void Start()
@@ -56,9 +55,7 @@ public class LogbookPickup : MonoBehaviour
                 logbookUI.SetActive(true);
 
             if (Input.GetKeyDown(KeyCode.E))
-            {
                 Pickup();
-            }
         }
         else
         {
@@ -83,9 +80,7 @@ public class LogbookPickup : MonoBehaviour
         );
 
         if (Physics.Raycast(ray, out RaycastHit hit, pickupRange))
-        {
             return hit.collider.GetComponentInParent<LogbookPickup>();
-        }
 
         return null;
     }
@@ -102,45 +97,74 @@ public class LogbookPickup : MonoBehaviour
             outline.enabled = false;
 
         if (TutorialManager.Instance != null)
-        {
             TutorialManager.Instance.CompleteLogbookBG();
-        }
 
         if (objectiveCatalyst != null)
-        {
             objectiveCatalyst.CreateQuest();
-        }
 
         if (notification != null)
-        {
             notification.ShowNotification();
-        }
 
-        if (prerequisite != null && !string.IsNullOrEmpty(requirementName))
+        UpdatePrerequisite();
+
+        PersistentWorldItem worldItem =
+            GetComponent<PersistentWorldItem>();
+
+        if (worldItem != null && PlayFabSaveManager.Instance != null)
         {
-            prerequisite.ObtainRequirement(requirementName);
-            Debug.Log("Logbook prerequisite obtained: " + requirementName);
+            PlayFabSaveManager.Instance.RegisterCollectedWorldObject(
+                worldItem.worldID
+            );
+
+            Debug.Log("Collected world ID registered: " + worldItem.worldID);
         }
         else
         {
             Debug.LogWarning(
-                "Logbook prerequisite or requirement name is missing on " +
-                gameObject.name
-            );
-        }
-
-        PersistentWorldItem worldItem = GetComponentInParent<PersistentWorldItem>();
-
-        if (worldItem != null && PlayFabSaveManager.Instance != null)
-        {
-            Debug.Log("Registering collected logbook: " + worldItem.worldID);
-
-            PlayFabSaveManager.Instance.RegisterCollectedWorldObject(
-                worldItem.worldID
+                "PersistentWorldItem or PlayFabSaveManager is missing!"
             );
         }
 
         Destroy(gameObject);
+    }
+
+    
+    private void UpdatePrerequisite()
+    {
+        // If no requirement name is provided, skip prerequisite processing.
+        if (string.IsNullOrEmpty(requirementName))
+            return;
+
+        ObjectPrerequisite targetPrerequisite = prerequisite;
+
+        // Search for CallaoCavePrerequisite only if one isn't assigned.
+        if (targetPrerequisite == null)
+        {
+            ObjectPrerequisite[] allPrerequisites =
+                FindObjectsByType<ObjectPrerequisite>(
+                    FindObjectsSortMode.None
+                );
+
+            foreach (ObjectPrerequisite candidate in allPrerequisites)
+            {
+                if (candidate.gameObject.name == "CallaoCavePrerequisite")
+                {
+                    targetPrerequisite = candidate;
+                    break;
+                }
+            }
+        }
+
+        // No prerequisite is okay; skip without a warning.
+        if (targetPrerequisite == null)
+            return;
+
+        Debug.Log(
+            "Updating prerequisite: " +
+            targetPrerequisite.gameObject.name
+        );
+
+        targetPrerequisite.ObtainRequirement(requirementName);
     }
 
     private void OnDestroy()

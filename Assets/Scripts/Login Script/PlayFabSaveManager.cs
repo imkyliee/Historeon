@@ -14,6 +14,7 @@ public class PlayFabSaveManager : MonoBehaviour
     private const string SaveKey = "HistoreonSave";
     private const string TutorialCompletedKey = "TutorialCompleted";
     private const string NewGameResetKey = "HistoreonNewGameResetPending";
+    public const string TotalPointsStatisticName = "TotalPoints";
 
     [Serializable]
     public class SaveData
@@ -30,6 +31,7 @@ public class PlayFabSaveManager : MonoBehaviour
         public List<string> collectedWorldIDs = new List<string>();
         public List<string> completedPrerequisites = new List<string>();
         public int points;
+        public List<string> forfeitedQuizIDs = new List<string>();
         public List<InventorySlotSaveData> inventory = new List<InventorySlotSaveData>();
         public int equippedHotbarIndex;
     }
@@ -124,6 +126,77 @@ public class PlayFabSaveManager : MonoBehaviour
         SceneManager.sceneLoaded += OnWorldSceneLoaded;
     }
 
+    private int quizPoints = 0;
+    private readonly HashSet<string> forfeitedQuizIDs = new HashSet<string>();
+
+    public int GetQuizPoints()
+    {
+        return quizPoints;
+    }
+
+    public void SetQuizPoints(int newPoints)
+    {
+        quizPoints = Mathf.Max(0, newPoints);
+        SaveGame();
+        SubmitLeaderboardScore();
+    }
+
+    /// <summary>Uploads the player's cumulative quiz points to the PlayFab leaderboard.</summary>
+    public void SubmitLeaderboardScore()
+    {
+        PlayFabClientAPI.UpdatePlayerStatistics(
+            new UpdatePlayerStatisticsRequest
+            {
+                Statistics = new List<StatisticUpdate>
+                {
+                    new StatisticUpdate
+                    {
+                        StatisticName = TotalPointsStatisticName,
+                        Value = quizPoints
+                    }
+                }
+            },
+            result => Debug.Log("Leaderboard score updated: " + quizPoints),
+            error => Debug.LogError("Failed to update leaderboard score: " + error.GenerateErrorReport())
+        );
+    }
+
+    /// <summary>Fetches the top 10 players ordered by TotalPoints.</summary>
+    public void GetTopLeaderboard(Action<List<PlayerLeaderboardEntry>> onLoaded)
+    {
+        PlayFabClientAPI.GetLeaderboard(
+            new GetLeaderboardRequest
+            {
+                StatisticName = TotalPointsStatisticName,
+                StartPosition = 0,
+                MaxResultsCount = 10
+            },
+            result => onLoaded?.Invoke(result.Leaderboard),
+            error =>
+            {
+                Debug.LogError("Failed to load leaderboard: " + error.GenerateErrorReport());
+                onLoaded?.Invoke(null);
+            }
+        );
+    }
+
+    public bool IsQuizForfeited(string quizID)
+    {
+        return !string.IsNullOrWhiteSpace(quizID) && forfeitedQuizIDs.Contains(quizID);
+    }
+
+    public void MarkQuizForfeited(string quizID)
+    {
+        if (string.IsNullOrWhiteSpace(quizID))
+        {
+            Debug.LogError("Cannot persist quiz forfeiture: quizID is empty.");
+            return;
+        }
+
+        if (forfeitedQuizIDs.Add(quizID))
+            SaveGame();
+    }
+
     private void OnDestroy()
     {
         if (Instance != this)
@@ -146,6 +219,8 @@ public class PlayFabSaveManager : MonoBehaviour
         SaveData saveData = new SaveData();
 
         saveData.hasStarted = true;
+        saveData.points = quizPoints;
+        saveData.forfeitedQuizIDs = new List<string>(forfeitedQuizIDs);
         saveData.currentScene = SceneManager.GetActiveScene().name;
 
         if (SpawnPoint.Instance != null)
@@ -325,6 +400,8 @@ public class PlayFabSaveManager : MonoBehaviour
         completedCinematicIDs.Clear();
         pendingContinueSave = null;
 
+        ClearUnlockedDoorsForNewGame();
+
         CampFire.ResetCampfireTutorial();
         SpawnPoint.ResetSavedSpawnPoint();
 
@@ -342,6 +419,9 @@ public class PlayFabSaveManager : MonoBehaviour
     {
         SceneManager.sceneLoaded -= OnNewGameSceneLoaded;
 
+        quizPoints = 0;
+        forfeitedQuizIDs.Clear();
+
         SaveData saveData = new SaveData
         {
             hasStarted = true,
@@ -354,6 +434,7 @@ public class PlayFabSaveManager : MonoBehaviour
             completedCinematicIDs = new List<string>(),
             logbook = new List<LogbookSaveData>(),
             points = 0,
+            forfeitedQuizIDs = new List<string>(),
             inventory = new List<InventorySlotSaveData>(),
             equippedHotbarIndex = 0,
             collectedWorldIDs = new List<string>(),
@@ -373,7 +454,8 @@ public class PlayFabSaveManager : MonoBehaviour
             OnSaveError
         );
 
-        RestorePrerequisitesInLoadedScene();
+       RestorePrerequisitesInLoadedScene();
+        ResetPadlocksForNewGame();
 
         Debug.Log("New Game: Fresh save created. Previous gameplay progress cleared.");
     }
@@ -387,6 +469,51 @@ public class PlayFabSaveManager : MonoBehaviour
         PlayerPrefs.Save();
 
         Debug.Log("New Game reset flag cleared.");
+    }
+
+    private void ClearUnlockedDoorsForNewGame()
+    {
+        PlayFabClientAPI.UpdateUserData(
+            new UpdateUserDataRequest
+            {
+                Data = new Dictionary<string, string>
+                {
+                    { UnlockedDoorsKey, JsonUtility.ToJson(new UnlockedDoorData()) }
+                }
+            },
+            result =>
+            {
+                Debug.Log("New Game: Unlocked door progress cleared.");
+            },
+            error =>
+            {
+                Debug.LogError(
+                    "Failed to reset unlocked doors: " +
+                    error.GenerateErrorReport()
+                );
+            }
+        );
+    }
+
+    private void ResetPadlocksForNewGame()
+    {
+        PadlockInspector[] padlocks =
+            FindObjectsOfType<PadlockInspector>(true);
+
+        foreach (PadlockInspector padlock in padlocks)
+        {
+            if (padlock == null)
+                continue;
+
+            // Restore padlocks that were disabled.
+            padlock.gameObject.SetActive(true);
+            padlock.enabled = true;
+
+            Debug.Log(
+                "New Game: Padlock restored: " +
+                padlock.gameObject.name
+            );
+        }
     }
 
     private void OnNewGameSaveSuccess(UpdateUserDataResult result)
@@ -437,6 +564,17 @@ public class PlayFabSaveManager : MonoBehaviour
 
         if (saveData == null)
             return;
+
+        quizPoints = Mathf.Max(0, saveData.points);
+        forfeitedQuizIDs.Clear();
+        if (saveData.forfeitedQuizIDs != null)
+        {
+            foreach (string id in saveData.forfeitedQuizIDs)
+            {
+                if (!string.IsNullOrWhiteSpace(id))
+                    forfeitedQuizIDs.Add(id);
+            }
+        }
 
         // Restore completed cinematics
         completedCinematicIDs.Clear();
@@ -596,6 +734,9 @@ public class PlayFabSaveManager : MonoBehaviour
 
                 if (saveData.completedCinematicIDs == null)
                     saveData.completedCinematicIDs = new List<string>();
+
+                if (saveData.forfeitedQuizIDs == null)
+                    saveData.forfeitedQuizIDs = new List<string>();
 
                 Debug.Log("Historeon save loaded.");
                 onLoaded?.Invoke(saveData);
