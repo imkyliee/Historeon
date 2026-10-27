@@ -1,89 +1,820 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
+using TMPro;
+using System.Text;
 
 public class MainMenu : MonoBehaviour
 {
-    public GameObject mainMenuUI;
-    public Animator cameraAnimator;
-    public Animator doorAnimator;
+    [Header("Menus")]
+    public GameObject TitleScreen;
+    public GameObject optionMenu;
+    public GameObject quitMenu;
+    public GameObject MainMenuButtons;
+    public GameObject tutorialWindow;
+    public GameObject leaderboardWindow;
+    [Tooltip("TextMeshPro text area used to display the global top 10 leaderboard.")]
+    public TextMeshProUGUI leaderboardText;
+    public GameObject controlWindow;
+
+    [Header("Save Menu")]
+    public GameObject startButton;
+    public GameObject continueButton;
+    public GameObject newGameButton;
+
+    [Header("New Game Confirmation")]
+    public GameObject startNewGameWindow;
+    public Animator startNewGameAnimator;
+    private CanvasGroup mainMenuButtonsCanvasGroup;
+
+    [Header("Volume Menu")]
+    public GameObject volumeMenu;
+    public Animator volumeMenuAnimator;
+
+    [Header("Animations")]
+    public Animator TitleScreenAnimator;
+    public Animator optionMenuAnimator;
+    public Animator quitMenuAnimator;
+    public Animator MainMenuButtonsAnimator;
+    public Animator tutorialWindowAnimator;
+    public Animator leaderboardWindowAnimator;
+    public Animator controlWindowAnimator;
+
+    [Header("Scene Transition")]
+    public SceneTransition sceneTransition;
+    public string gameSceneName = "Outside";
+
+    [Header("Settings")]
     public Slider volumeSlider;
-    
-    private Button[] menuButtons;
 
- void Awake()
-    {
-        // Get all buttons
-        menuButtons = mainMenuUI.GetComponentsInChildren<Button>();
-    }
+    [Header("Animation")]
+    public float transitionDuration = 0.5f;
+    public float tutorialTransitionDuration = 0.5f;
 
-    void SetButtonsInteractable(bool state)
+    [Header("Audio")]
+    private SoundManager soundManager;
+
+    private bool isVolumeMenuOpen = false;
+
+    private const string TutorialCompletedKey = "TutorialCompleted";
+
+    private void Start()
     {
-        foreach (var btn in menuButtons)
+        soundManager = FindFirstObjectByType<SoundManager>();
+
+        if (MainMenuButtons != null)
         {
-            btn.interactable = state;
-        }
-    }
+            mainMenuButtonsCanvasGroup =
+                MainMenuButtons.GetComponent<CanvasGroup>();
 
-    // Volume Disable
-    public void DisableVolume()
-    {
+            if (mainMenuButtonsCanvasGroup == null)
+            {
+                mainMenuButtonsCanvasGroup =
+                    MainMenuButtons.AddComponent<CanvasGroup>();
+            }
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        if (startNewGameWindow != null)
+            startNewGameWindow.SetActive(false);
+
+        RefreshSaveMenu();
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        if (tutorialWindow != null)
+            tutorialWindow.SetActive(false);
+
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.GetTutorialCompleted(
+                completed =>
+                {
+                    if (this == null)
+                        return;
+
+                    ApplyTutorialState(completed);
+                }
+            );
+        }
+        else
+        {
+            ApplyTutorialState(
+                PlayerPrefs.GetInt(TutorialCompletedKey, 0) == 1
+            );
+        }
+
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
+
+        if (quitMenu != null)
+            quitMenu.SetActive(false);
+
+        if (volumeMenu != null)
+            volumeMenu.SetActive(false);
+
+        if (leaderboardWindow != null)
+            leaderboardWindow.SetActive(false);
+
+        if (controlWindow != null)
+            controlWindow.SetActive(false);
+
+        isVolumeMenuOpen = false;
+
         if (volumeSlider != null)
             volumeSlider.interactable = false;
     }
 
-    // Volume Enable
-    public void EnableVolume()
+    private void ApplyTutorialState(bool completed)
     {
+        if (completed)
+        {
+            PlayerPrefs.SetInt(TutorialCompletedKey, 1);
+            PlayerPrefs.Save();
+
+            if (tutorialWindow != null)
+                tutorialWindow.SetActive(false);
+
+            if (TitleScreen != null)
+                TitleScreen.SetActive(true);
+
+            if (MainMenuButtons != null)
+                MainMenuButtons.SetActive(true);
+
+            if (TitleScreenAnimator != null)
+                TitleScreenAnimator.Play("TitleScreen Open");
+
+            if (MainMenuButtonsAnimator != null)
+                MainMenuButtonsAnimator.Play("MainMenu Open");
+        }
+        else
+        {
+            if (tutorialWindow != null)
+                tutorialWindow.SetActive(true);
+
+            if (tutorialWindowAnimator != null)
+                tutorialWindowAnimator.Play("TutorialMenu Open");
+        }
+    }
+
+    public void RefreshSaveMenu()
+    {
+        if (PlayFabSaveManager.Instance == null)
+        {
+            SetNoSaveMenu();
+            return;
+        }
+
+        PlayFabSaveManager.Instance.HasSave(hasSave =>
+        {
+            if (hasSave)
+                SetSaveMenu();
+            else
+                SetNoSaveMenu();
+        });
+    }
+
+    private void SetNoSaveMenu()
+    {
+        if (startButton != null)
+            startButton.SetActive(true);
+
+        if (continueButton != null)
+            continueButton.SetActive(false);
+
+        if (newGameButton != null)
+            newGameButton.SetActive(false);
+    }
+
+    private void SetSaveMenu()
+    {
+        if (startButton != null)
+            startButton.SetActive(false);
+
+        if (continueButton != null)
+            continueButton.SetActive(true);
+
+        if (newGameButton != null)
+            newGameButton.SetActive(true);
+    }
+
+    // START GAME
+
+    public void PlayGame()
+    {
+        if (PlayFabSaveManager.Instance == null)
+        {
+            Debug.LogWarning("PlayFabSaveManager was not found.");
+            return;
+        }
+
+        StartCoroutine(StartGameRoutine());
+    }
+
+    private IEnumerator StartGameRoutine()
+    {
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
+
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (soundManager != null)
+            soundManager.DestroySound();
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        if (PlayFabSaveManager.Instance != null)
+        {
+            ObjectPrerequisite.ResetSavedRequirementsForNewGame();
+
+            PlayFabSaveManager.Instance.StartNewGame(
+                gameSceneName,
+                sceneTransition
+            );
+        }
+    }
+
+    // CONTINUE
+    public void ContinueGame()
+    {
+        if (PlayFabSaveManager.Instance == null)
+        {
+            Debug.LogWarning("PlayFabSaveManager was not found.");
+            return;
+        }
+
+        StartCoroutine(ContinueGameRoutine());
+    }
+
+    private IEnumerator ContinueGameRoutine()
+    {
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
+
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (soundManager != null)
+            soundManager.DestroySound();
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        if (PlayFabSaveManager.Instance != null)
+            PlayFabSaveManager.Instance.ContinueGame(sceneTransition);
+    }
+
+    // NEW GAME
+
+    public void OpenNewGameConfirmation()
+    {
+        if (startNewGameWindow == null)
+            return;
+
+        if (mainMenuButtonsCanvasGroup != null)
+        {
+            mainMenuButtonsCanvasGroup.interactable = false;
+            mainMenuButtonsCanvasGroup.blocksRaycasts = false;
+        }
+
+        startNewGameWindow.SetActive(true);
+
+        if (startNewGameAnimator != null)
+            startNewGameAnimator.Play("Startnewgame Open");
+    }
+
+    public void ConfirmNewGame()
+    {
+        if (startNewGameAnimator != null)
+            startNewGameAnimator.Play("Startnewgame Close");
+
+        StartCoroutine(ConfirmNewGameRoutine());
+    }
+
+    private IEnumerator ConfirmNewGameRoutine()
+    {
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (startNewGameWindow != null)
+            startNewGameWindow.SetActive(false);
+
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
+
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (soundManager != null)
+            soundManager.DestroySound();
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+       ObjectPrerequisite.ResetSavedRequirementsForNewGame();
+
+        HealthTransferManager.ResetSavedHealth();
+
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.StartNewGame(gameSceneName, sceneTransition);
+        }
+    }
+
+    public void CancelNewGame()
+    {
+        if (startNewGameAnimator != null)
+            startNewGameAnimator.Play("Startnewgame Close");
+
+        StartCoroutine(CancelNewGameRoutine());
+    }
+
+    private IEnumerator CancelNewGameRoutine()
+    {
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (startNewGameWindow != null)
+            startNewGameWindow.SetActive(false);
+
+        if (mainMenuButtonsCanvasGroup != null)
+        {
+            mainMenuButtonsCanvasGroup.interactable = true;
+            mainMenuButtonsCanvasGroup.blocksRaycasts = true;
+        }
+    }
+
+    // TUTORIAL - LET'S GO
+
+    public void TutorialLetsGo()
+    {
+        StartCoroutine(TutorialLetsGoRoutine());
+    }
+
+    private IEnumerator TutorialLetsGoRoutine()
+    {
+        if (soundManager != null)
+            soundManager.DestroySound();
+
+        if (tutorialWindowAnimator != null)
+        {
+            tutorialWindowAnimator.Play("TutorialMenu Close");
+            yield return new WaitForSeconds(tutorialTransitionDuration);
+        }
+
+        if (tutorialWindow != null)
+            Destroy(tutorialWindow);
+
+        if (sceneTransition != null)
+            sceneTransition.OnButtonPressed("Tutorial");
+    }
+
+    // TUTORIAL - SKIP
+
+    public void TutorialSkip()
+    {
+        StartCoroutine(TutorialSkipRoutine());
+    }
+
+    private IEnumerator TutorialSkipRoutine()
+    {
+        if (tutorialWindowAnimator != null)
+        {
+            tutorialWindowAnimator.Play("TutorialMenu Close");
+            yield return new WaitForSeconds(tutorialTransitionDuration);
+        }
+
+        if (tutorialWindow != null)
+            Destroy(tutorialWindow);
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(true);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(true);
+
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Open");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Open");
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
+
+    // TUTORIAL - MAIN MENU
+
+    public void TutorialMainMenu()
+    {
+        StartCoroutine(TutorialMainMenuRoutine());
+    }
+
+    private IEnumerator TutorialMainMenuRoutine()
+    {
+        if (tutorialWindowAnimator != null)
+        {
+            tutorialWindowAnimator.Play("TutorialMenu Close");
+            yield return new WaitForSeconds(tutorialTransitionDuration);
+        }
+
+        if (tutorialWindow != null)
+            Destroy(tutorialWindow);
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(true);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(true);
+
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Open");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Open");
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
+
+    // OPTIONS
+
+    public void OpenOptions()
+    {
+        StartCoroutine(OpenOptionsRoutine());
+    }
+
+    private IEnumerator OpenOptionsRoutine()
+    {
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
+
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        if (optionMenu != null)
+            optionMenu.SetActive(true);
+
+        if (volumeMenu != null)
+            volumeMenu.SetActive(false);
+
+        if (leaderboardWindow != null)
+            leaderboardWindow.SetActive(false);
+
+        if (controlWindow != null)
+            controlWindow.SetActive(false);
+
+        isVolumeMenuOpen = false;
+
+        if (optionMenuAnimator != null)
+            optionMenuAnimator.Play("OptionMenu Open");
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
+
+    // VOLUME
+
+    public void OpenVolume()
+    {
+        StartCoroutine(OpenVolumeRoutine());
+    }
+
+    private IEnumerator OpenVolumeRoutine()
+    {
+        if (optionMenuAnimator != null)
+        {
+            optionMenuAnimator.Play("OptionMenu Close");
+            yield return new WaitForSeconds(transitionDuration);
+        }
+
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
+
+        if (volumeMenu != null)
+            volumeMenu.SetActive(true);
+
+        isVolumeMenuOpen = true;
+
+        if (volumeMenuAnimator != null)
+            volumeMenuAnimator.Play("Volume Open");
+
         if (volumeSlider != null)
             volumeSlider.interactable = true;
     }
 
-     public void EnableButtons()
+    // QUIT MENU
+
+    public void OpenQuit()
     {
-        SetButtonsInteractable(true);
+        StartCoroutine(OpenQuitRoutine());
     }
-    public void PlayGame()
+
+    private IEnumerator OpenQuitRoutine()
     {
-    // Disable all buttons
-     SetButtonsInteractable(false);
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Close");
 
-    // Trigger animations
-    cameraAnimator.SetTrigger("Play");
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Close");
 
-        if (doorAnimator != null)
+        yield return new WaitForSeconds(transitionDuration);
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(false);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(false);
+
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
+
+        if (volumeMenu != null)
+            volumeMenu.SetActive(false);
+
+        if (leaderboardWindow != null)
+            leaderboardWindow.SetActive(false);
+
+        if (controlWindow != null)
+            controlWindow.SetActive(false);
+
+        if (quitMenu != null)
+            quitMenu.SetActive(true);
+
+        if (quitMenuAnimator != null)
+            quitMenuAnimator.Play("QuitMenu Open");
+    }
+
+    // LEADERBOARD
+
+    public void OpenLeaderboard()
+    {
+        StartCoroutine(OpenLeaderboardRoutine());
+    }
+
+    private IEnumerator OpenLeaderboardRoutine()
+    {
+        if (optionMenuAnimator != null)
         {
-            doorAnimator.SetTrigger("Open");
+            optionMenuAnimator.Play("OptionMenu Close");
+            yield return new WaitForSeconds(transitionDuration);
         }
-        DisableVolume();
 
-}
-    public void Option()
-    {
-        SetButtonsInteractable(false);
-        cameraAnimator.SetTrigger("Option");
-        EnableVolume();
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
+
+        if (leaderboardWindow != null)
+            leaderboardWindow.SetActive(true);
+
+        if (leaderboardWindowAnimator != null)
+            leaderboardWindowAnimator.Play("Leaderboard Open");
+
+        RefreshLeaderboardDisplay();
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
     }
 
-    public void YesOrNo()
+    private void RefreshLeaderboardDisplay()
     {
-        SetButtonsInteractable(false);
-        cameraAnimator.SetTrigger("Quit");
-        DisableVolume();
+        if (leaderboardText == null)
+        {
+            Debug.LogWarning("MainMenu: Assign the Leaderboard Text field in the Inspector.");
+            return;
+        }
+
+        if (PlayFabSaveManager.Instance == null)
+        {
+            leaderboardText.text = "Leaderboard unavailable.";
+            return;
+        }
+
+        leaderboardText.text = "Loading leaderboard...";
+        PlayFabSaveManager.Instance.GetTopLeaderboard(entries =>
+        {
+            if (leaderboardText == null)
+                return;
+
+            if (entries == null)
+            {
+                leaderboardText.text = "Could not load leaderboard. Please try again.";
+                return;
+            }
+
+            if (entries.Count == 0)
+            {
+                leaderboardText.text = "No scores yet. Complete a quiz to appear here!";
+                return;
+            }
+
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("GLOBAL TOP 10");
+            builder.AppendLine();
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                string playerName = string.IsNullOrWhiteSpace(entries[i].DisplayName)
+                    ? "Player " + entries[i].PlayFabId.Substring(0, Mathf.Min(6, entries[i].PlayFabId.Length))
+                    : entries[i].DisplayName;
+
+                builder.Append(i + 1).Append(". ")
+                    .Append(playerName)
+                    .Append("  -  ")
+                    .Append(entries[i].StatValue)
+                    .AppendLine(" points");
+            }
+
+            leaderboardText.text = builder.ToString();
+        });
     }
+
+    // CONTROL
+
+    public void OpenControl()
+    {
+        StartCoroutine(OpenControlRoutine());
+    }
+
+    private IEnumerator OpenControlRoutine()
+    {
+        if (optionMenuAnimator != null)
+        {
+            optionMenuAnimator.Play("OptionMenu Close");
+            yield return new WaitForSeconds(transitionDuration);
+        }
+
+        if (optionMenu != null)
+            optionMenu.SetActive(false);
+
+        if (controlWindow != null)
+            controlWindow.SetActive(true);
+
+        if (controlWindowAnimator != null)
+            controlWindowAnimator.Play("Control Open");
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
+
+    // BACK BUTTON
 
     public void Back()
     {
-        SetButtonsInteractable(false);
-        cameraAnimator.SetTrigger("Back");
-        cameraAnimator.SetTrigger("Idle");
-        DisableVolume();
+        StartCoroutine(BackRoutine());
     }
+
+    private IEnumerator BackRoutine()
+    {
+        if (isVolumeMenuOpen)
+        {
+            if (volumeMenuAnimator != null)
+            {
+                volumeMenuAnimator.Play("Volume Close");
+                yield return new WaitForSeconds(transitionDuration);
+            }
+
+            if (volumeMenu != null)
+                volumeMenu.SetActive(false);
+
+            isVolumeMenuOpen = false;
+
+            if (optionMenu != null)
+                optionMenu.SetActive(true);
+
+            if (optionMenuAnimator != null)
+                optionMenuAnimator.Play("OptionMenu Open");
+
+            if (volumeSlider != null)
+                volumeSlider.interactable = false;
+
+            yield break;
+        }
+
+        if (leaderboardWindow != null && leaderboardWindow.activeSelf)
+        {
+            if (leaderboardWindowAnimator != null)
+            {
+                leaderboardWindowAnimator.Play("Leaderboard Close");
+                yield return new WaitForSeconds(transitionDuration);
+            }
+
+            leaderboardWindow.SetActive(false);
+
+            if (optionMenu != null)
+                optionMenu.SetActive(true);
+
+            if (optionMenuAnimator != null)
+                optionMenuAnimator.Play("OptionMenu Open");
+
+            if (volumeSlider != null)
+                volumeSlider.interactable = false;
+
+            yield break;
+        }
+
+        if (controlWindow != null && controlWindow.activeSelf)
+        {
+            if (controlWindowAnimator != null)
+            {
+                controlWindowAnimator.Play("Control Close");
+                yield return new WaitForSeconds(transitionDuration);
+            }
+
+            controlWindow.SetActive(false);
+
+            if (optionMenu != null)
+                optionMenu.SetActive(true);
+
+            if (optionMenuAnimator != null)
+                optionMenuAnimator.Play("OptionMenu Open");
+
+            if (volumeSlider != null)
+                volumeSlider.interactable = false;
+
+            yield break;
+        }
+
+        if (optionMenu != null && optionMenu.activeSelf)
+        {
+            if (optionMenuAnimator != null)
+            {
+                optionMenuAnimator.Play("OptionMenu Close");
+                yield return new WaitForSeconds(transitionDuration);
+            }
+
+            optionMenu.SetActive(false);
+        }
+
+        if (quitMenu != null && quitMenu.activeSelf)
+        {
+            if (quitMenuAnimator != null)
+            {
+                quitMenuAnimator.Play("QuitMenu Close");
+                yield return new WaitForSeconds(transitionDuration);
+            }
+
+            quitMenu.SetActive(false);
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        if (TitleScreen != null)
+            TitleScreen.SetActive(true);
+
+        if (MainMenuButtons != null)
+            MainMenuButtons.SetActive(true);
+
+        if (TitleScreenAnimator != null)
+            TitleScreenAnimator.Play("TitleScreen Open");
+
+        if (MainMenuButtonsAnimator != null)
+            MainMenuButtonsAnimator.Play("MainMenu Open");
+
+        if (volumeSlider != null)
+            volumeSlider.interactable = false;
+    }
+
+    // QUIT GAME
 
     public void QuitGame()
     {
+        Debug.Log("Quit Game");
         Application.Quit();
-        Debug.Log("Game Quit");
     }
-    
 }
