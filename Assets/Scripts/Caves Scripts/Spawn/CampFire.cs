@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class CampFire : MonoBehaviour
 {
+    [Header("Save Progress")]
+    public string campfireID;
+
     [Header("Interaction")]
     public float interactionRange = 3f;
     public GameObject interactUI;
@@ -229,6 +232,11 @@ public class CampFire : MonoBehaviour
 
         isLit = true;
 
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.RegisterLitCampfire(campfireID);
+        }
+
         // Play the sound only when the campfire is first lit.
         if (firstLightSound != null && audioSource != null)
         {
@@ -280,6 +288,16 @@ public class CampFire : MonoBehaviour
         ShowTutorialIfFirstTime();
 
         Debug.Log("Campfire lit and checkpoint saved!");
+    }
+    public void RestoreLitState()
+    {
+        isLit = true;
+
+        if (fireObject != null)
+            fireObject.SetActive(true);
+
+        if (fireLight != null)
+            fireLight.enabled = true;
     }
 
     private void HealPlayer()

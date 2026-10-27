@@ -34,6 +34,9 @@ public class CMCamera : MonoBehaviour
     public GameObject objectToDestroy;
     public GameObject triggerToDestroy;
 
+    [Header("Cinematic Timing")]
+    public float delayBeforeFinish = 1.5f;
+
     private FlashlightScript flashlightScript;
     private bool isPlaying;
     private bool dialogueFinished;
@@ -104,6 +107,9 @@ public class CMCamera : MonoBehaviour
                 yield return null;
             }
         }
+
+        if (delayBeforeFinish > 0f)
+            yield return new WaitForSeconds(delayBeforeFinish);
 
         FinishCinematic();
     }

@@ -66,6 +66,13 @@ public class HealthTransferManager : MonoBehaviour
 
         hasSavedHealth = false;
     }
+    public static void ResetSavedHealth()
+    {
+        savedHealth = 0;
+        hasSavedHealth = false;
+
+        Debug.Log("Saved health cleared for New Game.");
+    }
 
     private void OnDestroy()
     {

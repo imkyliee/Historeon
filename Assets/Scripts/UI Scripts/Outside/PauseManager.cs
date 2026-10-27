@@ -43,7 +43,6 @@ public class PauseManager : MonoBehaviour
             pauseMenuUI.SetActive(false);
 
         isPaused = false;
-        AudioListener.pause = false;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -117,8 +116,8 @@ public class PauseManager : MonoBehaviour
             playerAnimator.enabled = false;
 
         Time.timeScale = 0f;
-        AudioListener.pause = true;
         PauseGameMusic();
+        PauseEnemyAudio();
 
         if (disableOnPause != null)
         {
@@ -177,8 +176,8 @@ public class PauseManager : MonoBehaviour
         }
 
         Time.timeScale = 1f;
-        AudioListener.pause = false;
         ResumeGameMusic();
+        ResumeEnemyAudio();
 
         if (disableOnPause != null)
         {
@@ -234,6 +233,7 @@ public class PauseManager : MonoBehaviour
         isPaused = false;
 
         Time.timeScale = 1f;
+        ResumeEnemyAudio();
 
         if (playerAnimator != null)
             playerAnimator.speed = 1f;
@@ -279,6 +279,32 @@ public class PauseManager : MonoBehaviour
 
         RefreshFlashlightUI();
     }
+    private void PauseEnemyAudio()
+    {
+        Enemy[] enemies = FindObjectsByType<Enemy>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy != null)
+                enemy.PauseEnemyAudio();
+        }
+    }
+
+    private void ResumeEnemyAudio()
+    {
+        Enemy[] enemies = FindObjectsByType<Enemy>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy != null)
+                enemy.ResumeEnemyAudio();
+        }
+    }
+
     private void PauseGameMusic()
 {
     if (musicSources == null)

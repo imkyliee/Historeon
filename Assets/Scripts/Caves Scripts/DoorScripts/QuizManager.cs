@@ -32,19 +32,13 @@ public class QuizManager : MonoBehaviour
     [Header("Timer Settings")]
     public float quizDuration = 45f;
     public TextMeshProUGUI TimerText;
-
-    [Tooltip("Seconds removed from the timer for each wrong answer.")]
-    [Min(0f)]
     public float wrongAnswerTimePenalty = 5f;
 
     [Header("Quiz Points Settings")]
     public int maxPointsPerQuiz = 1000;
-    [Tooltip("Text shown after the quiz is completed, displaying this quiz's score and the overall total.")]
     public TextMeshProUGUI CompletionSummaryText;
     [Min(0f)]
-    [Tooltip("How long the score summary stays visible before the quiz closes and the padlock unlocks.")]
     public float completionSummaryDuration = 3f;
-    [Tooltip("Unique ID for this quiz, e.g. TabonCave_Quiz1. Do not reuse across quizzes.")]
     public string quizID = "Quiz1";
 
     [Header("Forfeit Confirmation")]
@@ -302,8 +296,9 @@ public class QuizManager : MonoBehaviour
 
                 // Reaching zero forfeits points, but the player can keep answering
                 // to progress and unlock the padlock.
-                if (timeRemaining <= 0f)
-                    ForfeitQuiz();
+                
+            if (timeRemaining <= 0f)
+                RegisterForfeitFromPadlock();
             }
 
             StartCoroutine(WrongAnswerFeedback());
@@ -526,7 +521,11 @@ public class QuizManager : MonoBehaviour
 
     private void UnlockAndDestroyLock()
     {
-        // Unlock the assigned door after the score summary.
+        // Save the padlock before unlocking the door.
+        if (padlockInspector != null)
+            padlockInspector.SavePadlockUnlocked();
+
+        // Unlock the assigned door.
         if (doorOpenerScript is OpenDoor openDoor)
         {
             openDoor.UnlockDoor();
@@ -543,6 +542,25 @@ public class QuizManager : MonoBehaviour
         }
 
         FinishQuiz();
+    }
+    public void RestoreUnlockedDoorFromSave()
+    {
+        // Restore the door's unlocked state when returning to this scene.
+        if (doorOpenerScript is OpenDoor openDoor)
+        {
+            openDoor.UnlockDoor();
+        }
+        else if (doorOpenerScript is EnterCave enterCave)
+        {
+            enterCave.UnlockDoor();
+        }
+
+        // Remove the padlock because it has already been unlocked.
+        if (padlockObject != null)
+        {
+            Destroy(padlockObject);
+            padlockObject = null;
+        }
     }
     
     private void FinishQuiz()

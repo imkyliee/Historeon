@@ -24,6 +24,9 @@ public class ObjectPrerequisite : MonoBehaviour
     [Header("Scripts to Enable")]
     public MonoBehaviour[] scriptsToEnable;
 
+    [Header("Colliders to Enable When Unlocked")]
+    public Collider[] collidersToEnable;
+
     [Header("Persistence")]
     public string prerequisiteID;
     public bool useGlobalSaveID;
@@ -95,8 +98,12 @@ public class ObjectPrerequisite : MonoBehaviour
 
     public void RestoreRequirements(List<string> completedIDs)
     {
-        if (requirements == null)
+        if (requirements == null || requirements.Length == 0)
+        {
+            isUnlocked = false;
+            CheckRequirements();
             return;
+        }
 
         foreach (Requirement requirement in requirements)
         {
@@ -115,8 +122,15 @@ public class ObjectPrerequisite : MonoBehaviour
 
     private void CheckRequirements()
     {
-        if (requirements == null)
+        if (requirements == null || requirements.Length == 0)
+        {
+            if (isUnlocked)
+                return;
+
+            isUnlocked = true;
+            SetUnlockedColliders(true);
             return;
+        }
 
         foreach (Requirement requirement in requirements)
         {
@@ -141,6 +155,8 @@ public class ObjectPrerequisite : MonoBehaviour
                             script.enabled = false;
                     }
                 }
+
+                SetUnlockedColliders(false);
 
                 return;
             }
@@ -169,6 +185,8 @@ public class ObjectPrerequisite : MonoBehaviour
             }
         }
 
+        SetUnlockedColliders(true);
+
         if (nextPrerequisite != null &&
             !string.IsNullOrEmpty(requirementToNotify))
         {
@@ -178,6 +196,19 @@ public class ObjectPrerequisite : MonoBehaviour
         Debug.Log(
             "All prerequisites completed on " + gameObject.name
         );
+    }
+
+
+    private void SetUnlockedColliders(bool enabled)
+    {
+        if (collidersToEnable == null)
+            return;
+
+        foreach (Collider col in collidersToEnable)
+        {
+            if (col != null)
+                col.enabled = enabled;
+        }
     }
 
     public static void RegisterGlobalRequirement(

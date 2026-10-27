@@ -333,7 +333,9 @@ public class MainMenu : MonoBehaviour
         if (MainMenuButtons != null)
             MainMenuButtons.SetActive(false);
 
-        ObjectPrerequisite.ResetSavedRequirementsForNewGame();
+       ObjectPrerequisite.ResetSavedRequirementsForNewGame();
+
+        HealthTransferManager.ResetSavedHealth();
 
         if (PlayFabSaveManager.Instance != null)
         {

@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,11 +23,14 @@ public class PlayFabSaveManager : MonoBehaviour
         public string checkpointScene;
         public Vector3Data checkpointPosition;
         public QuaternionData checkpointRotation;
+        public List<string> completedInteractions = new List<string>();
+        public List<string> litCampfireIDs = new List<string>();
         public List<string> currentObjectives = new List<string>();
         public List<string> artifactDiscoveries = new List<string>();
         public List<string> completedCinematicIDs = new List<string>();
         public List<LogbookSaveData> logbook = new List<LogbookSaveData>();
         public List<string> collectedWorldIDs = new List<string>();
+        public List<string> destroyedPlatformTriggerIDs = new List<string>();
         public List<string> completedPrerequisites = new List<string>();
         public int points;
         public List<string> forfeitedQuizIDs = new List<string>();
@@ -101,8 +103,13 @@ public class PlayFabSaveManager : MonoBehaviour
     }
 
     private SaveData pendingContinueSave;
-
+    private readonly HashSet<string> completedInteractions =
+    new HashSet<string>();
+    private readonly HashSet<string> litCampfireIDs =
+    new HashSet<string>();
     private readonly HashSet<string> collectedWorldIDs =
+        new HashSet<string>();
+    private readonly HashSet<string> destroyedPlatformTriggerIDs =
         new HashSet<string>();
     private readonly HashSet<string> completedCinematicIDs =
         new HashSet<string>();
@@ -258,9 +265,14 @@ public class PlayFabSaveManager : MonoBehaviour
 
         saveData.collectedWorldIDs =
             new List<string>(collectedWorldIDs);
-
+        saveData.destroyedPlatformTriggerIDs =
+            new List<string>(destroyedPlatformTriggerIDs);
         saveData.completedPrerequisites =
             new List<string>(completedPrerequisites);
+        saveData.completedInteractions =
+            new List<string>(completedInteractions);
+        saveData.litCampfireIDs =
+            new List<string>(litCampfireIDs);
 
         string json = JsonUtility.ToJson(saveData);
 
@@ -276,7 +288,36 @@ public class PlayFabSaveManager : MonoBehaviour
             OnSaveError
         );
     }
-    
+
+    public bool IsInteractionCompleted(string interactionID)
+    {
+        return !string.IsNullOrEmpty(interactionID) &&
+            completedInteractions.Contains(interactionID);
+    }
+
+    public void RegisterCompletedInteraction(string interactionID)
+    {
+        if (string.IsNullOrEmpty(interactionID))
+            return;
+
+        if (completedInteractions.Add(interactionID))
+            SaveGame();
+    }
+
+    public bool IsCampfireLit(string campfireID)
+    {
+        return !string.IsNullOrEmpty(campfireID) &&
+            litCampfireIDs.Contains(campfireID);
+    }
+
+    public void RegisterLitCampfire(string campfireID)
+    {
+        if (string.IsNullOrEmpty(campfireID))
+            return;
+
+        if (litCampfireIDs.Add(campfireID))
+            SaveGame();
+    }
     private void OnWorldSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (pendingContinueSave != null)
@@ -286,6 +327,7 @@ public class PlayFabSaveManager : MonoBehaviour
             new List<string>(collectedWorldIDs)
         );
 
+        RestoreDestroyedPlatformTriggers();
         RestorePrerequisitesInLoadedScene();
     }
     public bool HasCompletedCinematic(string cinematicID)
@@ -394,8 +436,11 @@ public class PlayFabSaveManager : MonoBehaviour
             return;
         }
 
+        completedInteractions.Clear();
+        litCampfireIDs.Clear();
         discoveredLogbooks.Clear();
         collectedWorldIDs.Clear();
+        destroyedPlatformTriggerIDs.Clear();
         completedPrerequisites.Clear();
         completedCinematicIDs.Clear();
         pendingContinueSave = null;
@@ -429,6 +474,8 @@ public class PlayFabSaveManager : MonoBehaviour
             checkpointScene = "",
             checkpointPosition = null,
             checkpointRotation = null,
+            completedInteractions = new List<string>(),
+            litCampfireIDs = new List<string>(),
             currentObjectives = new List<string>(),
             artifactDiscoveries = new List<string>(),
             completedCinematicIDs = new List<string>(),
@@ -438,6 +485,7 @@ public class PlayFabSaveManager : MonoBehaviour
             inventory = new List<InventorySlotSaveData>(),
             equippedHotbarIndex = 0,
             collectedWorldIDs = new List<string>(),
+            destroyedPlatformTriggerIDs = new List<string>(),
             completedPrerequisites = new List<string>()
         };
 
@@ -587,6 +635,23 @@ public class PlayFabSaveManager : MonoBehaviour
                     completedCinematicIDs.Add(id);
             }
         }
+        // Restore current objectives
+        if (MainManager.mainManager != null)
+        {
+            MainManager.mainManager.questNames.Clear();
+
+            if (saveData.currentObjectives != null)
+            {
+                MainManager.mainManager.questNames.AddRange(
+                    saveData.currentObjectives
+                );
+            }
+
+            Debug.Log(
+                "Restored objectives: " +
+                MainManager.mainManager.questNames.Count
+            );
+        }
 
         // Restore checkpoint
         if (SpawnPoint.Instance != null &&
@@ -647,6 +712,18 @@ public class PlayFabSaveManager : MonoBehaviour
         // Restore collected world objects
         RestoreCollectedWorldObjects(saveData.collectedWorldIDs);
 
+        destroyedPlatformTriggerIDs.Clear();
+        if (saveData.destroyedPlatformTriggerIDs != null)
+        {
+            foreach (string id in saveData.destroyedPlatformTriggerIDs)
+            {
+                if (!string.IsNullOrEmpty(id))
+                    destroyedPlatformTriggerIDs.Add(id);
+            }
+        }
+
+        RestoreDestroyedPlatformTriggers();
+
         Debug.Log(
             "Collected world IDs loaded: " +
             string.Join(", ", saveData.collectedWorldIDs)
@@ -681,6 +758,30 @@ public class PlayFabSaveManager : MonoBehaviour
                 );
             }
         }
+
+        completedInteractions.Clear();
+
+            if (saveData.completedInteractions != null)
+            {
+                foreach (string id in saveData.completedInteractions)
+                {
+                    if (!string.IsNullOrEmpty(id))
+                        completedInteractions.Add(id);
+                }
+            }
+
+            litCampfireIDs.Clear();
+
+            if (saveData.litCampfireIDs != null)
+            {
+                foreach (string id in saveData.litCampfireIDs)
+                {
+                    if (!string.IsNullOrEmpty(id))
+                        litCampfireIDs.Add(id);
+                }
+            }
+
+            RestoreSavedInteractionsInLoadedScene();
     }
 
     private void OnSaveSuccess(UpdateUserDataResult result)
@@ -694,6 +795,31 @@ public class PlayFabSaveManager : MonoBehaviour
             "Failed to save Historeon: " +
             error.GenerateErrorReport()
         );
+    }
+    private void RestoreSavedInteractionsInLoadedScene()
+    {
+        EnableOnInteract[] interactions =
+            FindObjectsOfType<EnableOnInteract>(true);
+
+        foreach (EnableOnInteract interaction in interactions)
+        {
+            if (interaction != null &&
+                IsInteractionCompleted(interaction.interactionID))
+            {
+                interaction.RestoreInteractionState();
+            }
+        }
+
+        CampFire[] campfires = FindObjectsOfType<CampFire>(true);
+
+        foreach (CampFire campfire in campfires)
+        {
+            if (campfire != null &&
+                IsCampfireLit(campfire.campfireID))
+            {
+                campfire.RestoreLitState();
+            }
+        }
     }
 
     public void LoadGame(Action<SaveData> onLoaded)
@@ -725,6 +851,9 @@ public class PlayFabSaveManager : MonoBehaviour
 
                 if (saveData.collectedWorldIDs == null)
                     saveData.collectedWorldIDs = new List<string>();
+
+                if (saveData.destroyedPlatformTriggerIDs == null)
+                    saveData.destroyedPlatformTriggerIDs = new List<string>();
 
                 if (saveData.inventory == null)
                     saveData.inventory = new List<InventorySlotSaveData>();
@@ -882,6 +1011,39 @@ public class PlayFabSaveManager : MonoBehaviour
                 );
             }
         );
+    }
+
+    public bool IsPlatformTriggerDestroyed(string triggerID)
+    {
+        return !string.IsNullOrEmpty(triggerID) &&
+               destroyedPlatformTriggerIDs.Contains(triggerID);
+    }
+
+    public void RegisterDestroyedPlatformTrigger(string triggerID)
+    {
+        if (string.IsNullOrEmpty(triggerID))
+        {
+            Debug.LogWarning("Cannot save platform trigger: Trigger ID is empty.");
+            return;
+        }
+
+        if (destroyedPlatformTriggerIDs.Add(triggerID))
+            SaveGame();
+    }
+
+    private void RestoreDestroyedPlatformTriggers()
+    {
+        PlatformStopTrigger[] triggers =
+            FindObjectsOfType<PlatformStopTrigger>(true);
+
+        foreach (PlatformStopTrigger trigger in triggers)
+        {
+            if (trigger != null &&
+                IsPlatformTriggerDestroyed(trigger.triggerID))
+            {
+                trigger.ApplyDestroyedState();
+            }
+        }
     }
 
     public void RegisterCollectedWorldObject(string worldID)
@@ -1075,5 +1237,9 @@ public void SaveUnlockedDoor(string doorID)
             }
         );
     }
-
+    public bool IsWorldObjectCollected(string worldID)
+    {
+        return !string.IsNullOrEmpty(worldID) &&
+            collectedWorldIDs.Contains(worldID);
+    }
 }

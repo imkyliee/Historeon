@@ -32,10 +32,34 @@ public class LogbookPickup : MonoBehaviour
 
         if (logbookUI != null)
             logbookUI.SetActive(false);
+
+        PersistentWorldItem worldItem =
+            GetComponent<PersistentWorldItem>();
+
+        if (worldItem != null &&
+            PlayFabSaveManager.Instance != null &&
+            PlayFabSaveManager.Instance.IsWorldObjectCollected(worldItem.worldID))
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void Update()
     {
+        PersistentWorldItem worldItem = GetComponent<PersistentWorldItem>();
+
+        if (worldItem != null &&
+            PlayFabSaveManager.Instance != null &&
+            PlayFabSaveManager.Instance.IsWorldObjectCollected(worldItem.worldID))
+        {
+            if (logbookUI != null)
+                logbookUI.SetActive(false);
+
+            if (outline != null)
+                outline.enabled = false;
+
+            return;
+        }
         if (playerCamera == null)
         {
             playerCamera = Camera.main;

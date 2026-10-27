@@ -2,12 +2,14 @@ using UnityEngine;
 
 public class PadlockInspector : MonoBehaviour
 {
+    [Header("Padlock Save")]
+    public string padlockID;
+
     [Header("UI & Player References")]
     public GameObject InteractUI;
     public GameObject quizUI;
 
     [Header("Gameplay UI to Hide While Quiz Is Open")]
-    [Tooltip("Assign gameplay HUD objects such as Health/Stamina BG, Crosshair, ItemUI, Hotbar, and SlotNumber.")]
     public GameObject[] uiToDisableWhileQuizIsOpen;
 
     [Header("Player References")]
@@ -38,8 +40,9 @@ public class PadlockInspector : MonoBehaviour
     [Range(0f, 1f)] public float completionSoundVolume = 1f;
 
     private Camera playerCamera;
-    private bool isLookingAtPadlock = false;
-    private bool quizIsOpen = false;
+    private bool isLookingAtPadlock;
+    private bool quizIsOpen;
+    private bool isUnlocked;
 
     private static PadlockInspector currentPadlock;
 
@@ -52,19 +55,104 @@ public class PadlockInspector : MonoBehaviour
 
         if (quizUI != null)
             quizUI.SetActive(false);
+
+        CheckSavedPadlock();
+    }
+
+    private void CheckSavedPadlock()
+    {
+        if (string.IsNullOrWhiteSpace(padlockID))
+        {
+            Debug.LogWarning("Padlock ID is empty.", this);
+            return;
+        }
+
+        if (PlayFabSaveManager.Instance == null)
+        {
+            Debug.LogWarning(
+                "PlayFabSaveManager was not available when checking padlock: " +
+                padlockID,
+                this
+            );
+            return;
+        }
+
+        PlayFabSaveManager.Instance.IsDoorUnlocked(padlockID, unlocked =>
+        {
+            if (!unlocked || this == null)
+                return;
+
+            isUnlocked = true;
+
+            QuizManager quizManager = GetQuizManager();
+
+            if (quizManager != null)
+            {
+                quizManager.RestoreUnlockedDoorFromSave();
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "QuizManager was not found while restoring padlock: " +
+                    padlockID,
+                    this
+                );
+
+                gameObject.SetActive(false);
+            }
+        });
+    }
+
+    public void SavePadlockUnlocked()
+    {
+        if (isUnlocked)
+            return;
+
+        if (string.IsNullOrWhiteSpace(padlockID))
+        {
+            Debug.LogWarning("Cannot save padlock because its ID is empty.", this);
+            return;
+        }
+
+        if (PlayFabSaveManager.Instance == null)
+        {
+            Debug.LogError(
+                "PlayFabSaveManager is unavailable. Padlock was not saved: " +
+                padlockID,
+                this
+            );
+            return;
+        }
+
+        isUnlocked = true;
+        PlayFabSaveManager.Instance.SaveUnlockedDoor(padlockID);
+
+        Debug.Log("Saving unlocked padlock: " + padlockID, this);
+    }
+
+    private QuizManager GetQuizManager()
+    {
+        if (quizUI == null)
+            return null;
+
+        QuizManager manager = quizUI.GetComponent<QuizManager>();
+
+        if (manager == null)
+            manager = quizUI.GetComponentInChildren<QuizManager>(true);
+
+        return manager;
     }
 
     private void Update()
     {
+        if (isUnlocked || quizIsOpen)
+            return;
+
         if (playerCamera == null)
         {
             playerCamera = Camera.main;
             return;
         }
-
-        // Don't check the padlock while the quiz is open
-        if (quizIsOpen)
-            return;
 
         isLookingAtPadlock = false;
 
@@ -73,52 +161,35 @@ public class PadlockInspector : MonoBehaviour
             playerCamera.transform.forward
         );
 
-        if (Physics.Raycast(
-            ray,
-            out RaycastHit hit,
-            interactionRange))
+        if (Physics.Raycast(ray, out RaycastHit hit, interactionRange))
         {
             PadlockInspector padlock =
                 hit.collider.GetComponentInParent<PadlockInspector>();
 
             if (padlock == this)
-            {
                 isLookingAtPadlock = true;
-            }
         }
 
         if (isLookingAtPadlock)
         {
-            // Hide the UI from another padlock
-            // if we switched to this one.
-            if (currentPadlock != null &&
-                currentPadlock != this)
-            {
+            if (currentPadlock != null && currentPadlock != this)
                 currentPadlock.HideInteractUI();
-            }
 
             currentPadlock = this;
-
             ShowInteractUI();
 
             if (Input.GetKeyDown(KeyCode.E))
             {
                 if (TutorialManager.Instance != null)
-                {
                     TutorialManager.Instance.CompletePadlock();
-                }
 
                 OpenQuiz();
             }
         }
-        else
+        else if (currentPadlock == this)
         {
-            if (currentPadlock == this)
-            {
-                currentPadlock = null;
-
-                HideInteractUI();
-            }
+            currentPadlock = null;
+            HideInteractUI();
         }
     }
 
@@ -134,9 +205,11 @@ public class PadlockInspector : MonoBehaviour
             InteractUI.SetActive(false);
     }
 
-    
     private void OpenQuiz()
     {
+        if (isUnlocked)
+            return;
+
         quizIsOpen = true;
         SetGameplayUIVisible(false);
 
@@ -153,15 +226,10 @@ public class PadlockInspector : MonoBehaviour
 
         if (quizUI != null)
         {
-            // Enable the quiz root first.
             quizUI.SetActive(true);
 
-            QuizManager quizManager = quizUI.GetComponent<QuizManager>();
+            QuizManager quizManager = GetQuizManager();
 
-            if (quizManager == null)
-                quizManager = quizUI.GetComponentInChildren<QuizManager>(true);
-
-            // Keep the Forfeit panel hidden while restoring the other quiz UI.
             GameObject forfeitPanel = quizManager != null
                 ? quizManager.ForfeitConfirmationUI
                 : null;
@@ -223,17 +291,13 @@ public class PadlockInspector : MonoBehaviour
     {
         foreach (Transform child in parent)
         {
-            // Do not enable the Forfeit panel or any of its children.
             if (forfeitPanel != null &&
-                (child == forfeitPanel ||
-                child.IsChildOf(forfeitPanel)))
+                (child == forfeitPanel || child.IsChildOf(forfeitPanel)))
             {
                 continue;
             }
 
             child.gameObject.SetActive(true);
-
-            // Recursively restore nested UI objects too.
             EnableQuizChildrenExceptForfeit(child, forfeitPanel);
         }
     }
@@ -257,36 +321,24 @@ public class PadlockInspector : MonoBehaviour
             ? SFXManager.Instance.GetVolume()
             : PlayerPrefs.GetFloat("SFXVolume", 1f);
 
-        AudioSource.PlayClipAtPoint(clip, transform.position, volume * sfxVolume);
+        AudioSource.PlayClipAtPoint(
+            clip,
+            transform.position,
+            volume * sfxVolume
+        );
     }
 
-   public void CloseQuiz()
+    public void CloseQuiz()
     {
-        // If the forfeit confirmation is open, this CloseQuiz call
-        // came from the player's Yes button.
-        QuizManager quizManager = null;
-
-        if (quizUI != null)
-        {
-            quizManager = quizUI.GetComponent<QuizManager>();
-
-            if (quizManager == null)
-            {
-                quizManager =
-                    quizUI.GetComponentInChildren<QuizManager>(true);
-            }
-        }
+        QuizManager quizManager = GetQuizManager();
 
         bool isForfeiting =
             quizManager != null &&
             quizManager.ForfeitConfirmationUI != null &&
             quizManager.ForfeitConfirmationUI.activeSelf;
 
-        // Record the forfeit before hiding the quiz.
         if (isForfeiting)
-        {
             quizManager.RegisterForfeitFromPadlock();
-        }
 
         quizIsOpen = false;
 
@@ -295,7 +347,6 @@ public class PadlockInspector : MonoBehaviour
 
         SetGameplayUIVisible(true);
 
-        // Restore player movement and physics.
         if (playerMovement != null)
         {
             if (playerMovement.rb != null)
@@ -336,11 +387,9 @@ public class PadlockInspector : MonoBehaviour
         if (tabMenuManager != null)
             tabMenuManager.enabled = true;
 
-        // Restore gameplay cursor.
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
-
 
     private void SetGameplayUIVisible(bool visible)
     {

@@ -16,6 +16,16 @@ public class SceneEntrySpawn : MonoBehaviour
     public Transform tabonCaveSpawn;
     public Transform tabonCaveFromCallaoSpawn;
     public Transform callaoCaveSpawn;
+    public Transform balobokCaveFromTabonSpawn;
+    public Transform tabonCaveFromBalobokSpawn;
+
+    [Header("Guyangan Cave Spawn Points")]
+    public Transform guyanganCaveFromBalobokSpawn;
+    public Transform balobokCaveFromGuyanganSpawn;
+
+    [Header("Huluga Cave Spawn Points")]
+    public Transform hulugaCaveFromGuyanganSpawn;
+    public Transform guyanganCaveFromHulugaSpawn;
 
     private void Start()
     {
@@ -47,6 +57,30 @@ public class SceneEntrySpawn : MonoBehaviour
         else if (currentScene == "Callao Cave" && previousScene == "Tabon Cave")
         {
             targetSpawn = callaoCaveSpawn;
+        }
+        else if (currentScene == "Balobok Cave" && previousScene == "Tabon Cave")
+        {
+            targetSpawn = balobokCaveFromTabonSpawn;
+        }
+        else if (currentScene == "Tabon Cave" && previousScene == "Balobok Cave")
+        {
+            targetSpawn = tabonCaveFromBalobokSpawn;
+        }
+        else if (currentScene == "Guyangan Cave" && previousScene == "Balobok Cave")
+        {
+            targetSpawn = guyanganCaveFromBalobokSpawn;
+        }
+        else if (currentScene == "Balobok Cave" && previousScene == "Guyangan Cave")
+        {
+            targetSpawn = balobokCaveFromGuyanganSpawn;
+        }
+        else if (currentScene == "Huluga Cave" && previousScene == "Guyangan Cave")
+        {
+            targetSpawn = hulugaCaveFromGuyanganSpawn;
+        }
+        else if (currentScene == "Guyangan Cave" && previousScene == "Huluga Cave")
+        {
+            targetSpawn = guyanganCaveFromHulugaSpawn;
         }
 
         if (targetSpawn != null && player != null)

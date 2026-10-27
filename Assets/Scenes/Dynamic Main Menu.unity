@@ -3193,7 +3193,6 @@ RectTransform:
   m_Children:
   - {fileID: 607868149}
   - {fileID: 1741384839}
-  - {fileID: 2062793414}
   m_Father: {fileID: 1105543755}
   m_LocalEulerAnglesHint: {x: -13.078, y: 102.872, z: -2.668}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -4741,6 +4740,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 92c0e3aef53650e42a641285f17d2d5a, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 9f35041bc1815824ea9a2e7b0c2063df, type: 2}
     - target: {fileID: 919132149155446097, guid: 92c0e3aef53650e42a641285f17d2d5a, type: 3}
       propertyPath: m_Name
       value: Stalactite (1)
@@ -8720,7 +8723,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0.002}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2062793414}
   m_Father: {fileID: 721271460}
   m_LocalEulerAnglesHint: {x: -0.5, y: 15.08, z: 8.05}
   m_AnchorMin: {x: 0, y: 0}
@@ -15840,6 +15844,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 92c0e3aef53650e42a641285f17d2d5a, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 9f35041bc1815824ea9a2e7b0c2063df, type: 2}
     - target: {fileID: 919132149155446097, guid: 92c0e3aef53650e42a641285f17d2d5a, type: 3}
       propertyPath: m_Name
       value: Stalactite
@@ -15998,6 +16006,7 @@ GameObject:
   - component: {fileID: 2062793417}
   - component: {fileID: 2062793416}
   - component: {fileID: 2062793415}
+  - component: {fileID: 2062793418}
   m_Layer: 5
   m_Name: LogoutButton
   m_TagString: Untagged
@@ -16012,17 +16021,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2062793413}
-  m_LocalRotation: {x: -0.00875603, y: 0.08099693, z: 0.09359434, w: 0.99227166}
-  m_LocalPosition: {x: 0, y: 0, z: 0.15002668}
-  m_LocalScale: {x: 0.6041594, y: 0.82101375, z: 0.82101375}
+  m_LocalRotation: {x: 0.013402168, y: 0.08897435, z: -0.0133401975, w: 0.99585444}
+  m_LocalPosition: {x: 0, y: 0, z: -0.106195055}
+  m_LocalScale: {x: 0.00090909214, y: 0.00090909185, z: 0.000909092}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 721271460}
-  m_LocalEulerAnglesHint: {x: -1.865, y: 9.16, z: 10.627}
+  m_Father: {fileID: 1741384839}
+  m_LocalEulerAnglesHint: {x: -0.262, y: 25.402, z: 6.446}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.67999375, y: -1.1199944}
-  m_SizeDelta: {x: 1.26, y: 0.3}
+  m_AnchoredPosition: {x: 0.55489755, y: -1.664452}
+  m_SizeDelta: {x: 256, y: 256}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2062793415
 MonoBehaviour:
@@ -16067,7 +16076,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2062793416}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2062793418}
+        m_TargetAssemblyTypeName: LogoutButton, Assembly-CSharp
+        m_MethodName: Logout
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2062793416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16081,14 +16102,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.8, g: 0.8, b: 0.8, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 6eb10db89a88d3e418bf3bbb7cfedd6d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1163c535c6e5a8443be5aea609822186, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -16106,6 +16127,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2062793413}
   m_CullTransparentMesh: 1
+--- !u!114 &2062793418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062793413}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd235a7d8241f7b4e8d1be5c63f83c61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loginSceneName: Login
 --- !u!1 &2127052854
 GameObject:
   m_ObjectHideFlags: 0

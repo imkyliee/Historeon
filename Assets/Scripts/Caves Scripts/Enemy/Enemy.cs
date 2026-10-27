@@ -57,6 +57,7 @@ public class Enemy : MonoBehaviour
     private float lastKnownWaitTimer;
 
     private bool dead;
+    private bool enemyAudioWasPlaying;
 
     private void Awake()
     {
@@ -113,6 +114,10 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
+        // Do not restart enemy audio or update AI while the pause menu is open.
+        if (PauseManager.Instance != null && PauseManager.Instance.IsPaused)
+            return;
+
         if (dead)
             return;
 
@@ -636,6 +641,28 @@ public class Enemy : MonoBehaviour
 
         if (enemyAnimation != null)
             enemyAnimation.PlayDeath();
+    }
+
+    public void PauseEnemyAudio()
+    {
+        if (audioSource == null)
+            return;
+
+        enemyAudioWasPlaying = audioSource.isPlaying;
+
+        if (enemyAudioWasPlaying)
+            audioSource.Pause();
+    }
+
+    public void ResumeEnemyAudio()
+    {
+        if (audioSource == null)
+            return;
+
+        if (enemyAudioWasPlaying)
+            audioSource.UnPause();
+
+        enemyAudioWasPlaying = false;
     }
 
     private void StartWalkAudio()
