@@ -1579,4 +1579,165 @@ public class Inventory : MonoBehaviour
         UpdateHotBarOpacity();
         EquipHandItem();
     }
+
+
+      // TUTORIAL CHECKPOINT SNAPSHOT
+  
+
+    [System.Serializable]
+    public class SlotSnapshot
+    {
+        public ItemSO item;
+        public int amount;
+    }
+
+    [System.Serializable]
+    public class TutorialInventorySnapshot
+    {
+        public List<SlotSnapshot> hotbar = new List<SlotSnapshot>();
+        public List<SlotSnapshot> inventory = new List<SlotSnapshot>();
+        public int equippedHotbarIndex;
+        public bool flashlightOn;
+    }
+
+    public TutorialInventorySnapshot CaptureTutorialSnapshot()
+    {
+        TutorialInventorySnapshot snapshot = new TutorialInventorySnapshot();
+        snapshot.equippedHotbarIndex = equippedHotbarIndex;
+
+        foreach (Slot slot in hotbarSlots)
+        {
+            snapshot.hotbar.Add(new SlotSnapshot
+            {
+                item = slot != null ? slot.GetItem() : null,
+                amount = slot != null ? slot.GetAmount() : 0
+            });
+        }
+
+        foreach (Slot slot in inventorySlots)
+        {
+            snapshot.inventory.Add(new SlotSnapshot
+            {
+                item = slot != null ? slot.GetItem() : null,
+                amount = slot != null ? slot.GetAmount() : 0
+            });
+        }
+
+        // The flashlight only has a live on/off state while equipped.
+        if (currentHandItem != null)
+        {
+            FlashlightScript flashlight =
+                currentHandItem.GetComponentInChildren<FlashlightScript>(true);
+
+            if (flashlight != null)
+                snapshot.flashlightOn = flashlight.IsOn;
+        }
+
+        return snapshot;
+    }
+
+    public void RestoreTutorialSnapshot(TutorialInventorySnapshot snapshot)
+    {
+        if (snapshot == null)
+        {
+            Debug.LogWarning("Tutorial inventory snapshot is missing.");
+            return;
+        }
+
+        // Close the inventory before rebuilding equipment/UI state.
+        if (container != null && container.activeSelf)
+            CloseInventory();
+
+        // Destroy the current held model and normal bag visual.
+        if (currentHandItem != null)
+        {
+            Destroy(currentHandItem);
+            currentHandItem = null;
+        }
+
+        if (bagObject != null)
+        {
+            Destroy(bagObject);
+            bagObject = null;
+        }
+
+        // RagdollDropBag detaches its visual and clears bagObject.
+        // Remove those detached bag visuals too, but leave actual world
+        // pickups alone (they have PersistentWorldItem components).
+        Item[] sceneItems = FindObjectsByType<Item>(FindObjectsSortMode.None);
+        foreach (Item sceneItem in sceneItems)
+        {
+            if (sceneItem == null || sceneItem.item != bagitem)
+                continue;
+
+            if (sceneItem.GetComponentInParent<PersistentWorldItem>() != null)
+                continue;
+
+            // Do not remove a bag item asset from another scene.
+            if (sceneItem.gameObject.scene != gameObject.scene)
+                continue;
+
+            Destroy(sceneItem.gameObject);
+        }
+
+        // Clear all slots without invoking any PlayFab operations.
+        foreach (Slot slot in allSlots)
+        {
+            if (slot != null)
+                slot.ClearSlot();
+        }
+
+        // Restore hotbar slot contents and quantities.
+        int hotbarCount = Mathf.Min(hotbarSlots.Count, snapshot.hotbar.Count);
+        for (int i = 0; i < hotbarCount; i++)
+        {
+            SlotSnapshot saved = snapshot.hotbar[i];
+            if (saved != null && saved.item != null && saved.amount > 0)
+                hotbarSlots[i].SetItem(saved.item, saved.amount);
+        }
+
+        // Restore regular inventory slot contents and quantities.
+        int inventoryCount = Mathf.Min(inventorySlots.Count, snapshot.inventory.Count);
+        for (int i = 0; i < inventoryCount; i++)
+        {
+            SlotSnapshot saved = snapshot.inventory[i];
+            if (saved != null && saved.item != null && saved.amount > 0)
+                inventorySlots[i].SetItem(saved.item, saved.amount);
+        }
+
+        // Restore selected hotbar slot.
+        equippedHotbarIndex = hotbarSlots.Count > 0
+            ? Mathf.Clamp(snapshot.equippedHotbarIndex, 0, hotbarSlots.Count - 1)
+            : 0;
+
+        // Cancel any drag operation that may have been active at death.
+        draggedSlot = null;
+        isDragging = false;
+        if (dragIcon != null)
+            dragIcon.enabled = false;
+
+        // Rebuild the bag-on-back visual if the restored inventory contains it.
+        if (HasItem(bagitem) && bagHolder != null)
+            AttachBagToHolder();
+
+        // Recreate the equipped hand model from the restored hotbar.
+        EquipHandItem();
+
+        // Restore flashlight state after the held flashlight is recreated.
+        if (currentHandItem != null)
+        {
+            FlashlightScript flashlight =
+                currentHandItem.GetComponentInChildren<FlashlightScript>(true);
+
+            if (flashlight != null)
+                flashlight.SetState(snapshot.flashlightOn);
+        }
+
+        UpdateHotBarOpacity();
+        UpdateHatchetPrompt();
+        UpdatePickupDropPrompts();
+
+        Debug.Log("Tutorial inventory snapshot restored.");
+    }
+
 }
