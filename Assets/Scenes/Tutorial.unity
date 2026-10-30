@@ -14241,6 +14241,8 @@ MonoBehaviour:
   ePrompt: {fileID: 628110822}
   tabPrompt: {fileID: 1256391652}
   pickupRange: 3
+  tutorialLogbookPrerequisite: {fileID: 0}
+  hatchetLogbookPrerequisite: {fileID: 0}
   equipOpacity: 0.9
   normalOpacity: 0.58
   flashlightHand: {fileID: 962220439}
@@ -19418,7 +19420,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 9171952328373019990, guid: f4a93401cfd7553498da003ded060708, type: 3}
+  - {fileID: 2100000, guid: e49826c6e8e2f844a96075a948a07c88, type: 2}
   - {fileID: 2100000, guid: af3422851a66f2347b5b8a5b8cb98854, type: 2}
   - {fileID: 2100000, guid: d9cc3dc9b70d37647b748dbd6a12c827, type: 2}
   - {fileID: 2100000, guid: 5ec02677e56b51a4ba759fd69c36c769, type: 2}
@@ -25591,7 +25593,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &420179723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31326,6 +31328,7 @@ MonoBehaviour:
   notification: {fileID: 368513795}
   prerequisite: {fileID: 297896309}
   requirementName: tutorialLogBook
+  tutorialPrerequisite: {fileID: 0}
 --- !u!65 &445748113
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -48353,7 +48356,7 @@ SkinnedMeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: e49826c6e8e2f844a96075a948a07c88, type: 2}
-  - {fileID: -2316586686640757316, guid: f4a93401cfd7553498da003ded060708, type: 3}
+  - {fileID: 2100000, guid: d9cc3dc9b70d37647b748dbd6a12c827, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -49591,6 +49594,9 @@ MonoBehaviour:
   tutorialDoor1: {fileID: 926260475}
   tutorialDoor2: {fileID: 1616059568}
   tutorialDoor3: {fileID: 263027273}
+  lockedDoorCollider1: {fileID: 0}
+  lockedDoorCollider2: {fileID: 0}
+  lockedDoorCollider3: {fileID: 0}
   cinematicCamera: {fileID: 482713020}
   inventory: {fileID: 336550322}
   tabMenuManager: {fileID: 247374454}
@@ -103374,6 +103380,7 @@ MonoBehaviour:
   notification: {fileID: 368513795}
   prerequisite: {fileID: 0}
   requirementName: 
+  tutorialPrerequisite: {fileID: 0}
 --- !u!1 &1096796673050302243
 GameObject:
   m_ObjectHideFlags: 0

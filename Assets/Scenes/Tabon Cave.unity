@@ -1921,7 +1921,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &91404893
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -107040,8 +107040,6 @@ MonoBehaviour:
   inventory: {fileID: 336550322}
   pauseManager: {fileID: 1640310533}
   deathScreen: {fileID: 1698084542}
-  audioToFadeOut: {fileID: 241257563}
-  deathAudioFadeDuration: 2
 --- !u!114 &1868738169
 MonoBehaviour:
   m_ObjectHideFlags: 0

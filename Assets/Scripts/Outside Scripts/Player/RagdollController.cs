@@ -222,6 +222,7 @@ public class RagdollController : MonoBehaviour
             pauseManager.enabled = true;
     }
 
+    
     public void RecoverFromRespawn()
     {
         // Stop ragdoll physics.
@@ -237,6 +238,9 @@ public class RagdollController : MonoBehaviour
                 }
             }
         }
+
+        // Restore original rig transforms.
+        RestoreOriginalRigPose();
 
         // Restore normal player components.
         RagdollOff();
@@ -261,22 +265,18 @@ public class RagdollController : MonoBehaviour
             animator.enabled = true;
             animator.Rebind();
             animator.Update(0f);
-
-            // Prevent animation from overwriting the restored pose.
-            animator.enabled = false;
         }
 
-        // Restore original rig transforms.
-        RestoreOriginalRigPose();
+        // Reset player animation actions.
+        PlayerAnimation playerAnimation =
+            animator != null ? animator.GetComponent<PlayerAnimation>() : null;
 
-        // Resume animation.
-        if (animator != null)
-            animator.enabled = true;
+        if (playerAnimation != null)
+            playerAnimation.ResetActionAfterQuiz();
 
         Physics.SyncTransforms();
 
-        Debug.Log(
-            "RagdollController: Player recovered from respawn."
-        );
+        Debug.Log("RagdollController: Player recovered from respawn.");
     }
+
 }

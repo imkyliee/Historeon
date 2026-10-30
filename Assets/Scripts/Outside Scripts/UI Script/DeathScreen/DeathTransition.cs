@@ -145,7 +145,12 @@ public class DeathTransition : MonoBehaviour
 
         if (trophy != null)
         {
+            Debug.Log("DeathTransition: Trophy found. Resetting encounter.");
             trophy.ResetEncounterAfterDeath();
+        }
+        else
+        {
+            Debug.LogError("DeathTransition: TrophyInteraction was not found!");
         }
 
         // Ensure the Tutorial campfire remains lit.
