@@ -1,3 +1,5 @@
+
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
@@ -10,6 +12,24 @@ public class PlayFabAccountManager : MonoBehaviour
     public GameObject loginPanel;
     public GameObject registerPanel;
     public GameObject forgotPasswordPanel;
+    public GameObject quitPanel;
+    public GameObject quitButton;
+
+    [Header("Panel Animators")]
+    public Animator loginAnimator;
+    public Animator registerAnimator;
+    public Animator forgotPasswordAnimator;
+    public Animator quitAnimator;
+
+    [Header("Animation Names")]
+    public string loginOpen = "Login Open";
+    public string loginClose = "Login Close";
+    public string registerOpen = "Register Open";
+    public string registerClose = "Register Close";
+    public string forgotOpen = "ForgotPassword Open";
+    public string forgotClose = "ForgotPassword Close";
+    public string quitOpen = "Quit Open";
+    public string quitClose = "Quit Close";
 
     [Header("Login")]
     public TMP_InputField loginUsernameInput;
@@ -31,48 +51,244 @@ public class PlayFabAccountManager : MonoBehaviour
     [Header("Scene")]
     public string mainMenuSceneName = "Dynamic Main Menu";
 
+    private GameObject currentPanel;
+    private GameObject previousPanelBeforeQuit;
+    private Coroutine panelTransition;
+
     private void Start()
     {
-        ShowLoginPanel();
+        if (loginPanel != null)
+            loginPanel.SetActive(false);
 
-        if (loginErrorText != null)
-            loginErrorText.gameObject.SetActive(false);
+        if (registerPanel != null)
+            registerPanel.SetActive(false);
 
-        if (registerErrorText != null)
-            registerErrorText.gameObject.SetActive(false);
+        if (forgotPasswordPanel != null)
+            forgotPasswordPanel.SetActive(false);
 
-        if (emailSentText != null)
-            emailSentText.gameObject.SetActive(false);
+        if (quitPanel != null)
+            quitPanel.SetActive(false);
 
-        if (forgotErrorText != null)
-            forgotErrorText.gameObject.SetActive(false);
+        if (quitButton != null)
+            quitButton.SetActive(false);
+
+        currentPanel = null;
+        previousPanelBeforeQuit = null;
+
+        HideMessages();
     }
 
     public void ShowLoginPanel()
     {
-        loginPanel.SetActive(true);
-        registerPanel.SetActive(false);
-        forgotPasswordPanel.SetActive(false);
-
-        HideMessages();
+        SwitchPanel(loginPanel, loginAnimator, loginOpen);
     }
 
     public void ShowRegisterPanel()
     {
-        loginPanel.SetActive(false);
-        registerPanel.SetActive(true);
-        forgotPasswordPanel.SetActive(false);
-
-        HideMessages();
+        SwitchPanel(registerPanel, registerAnimator, registerOpen);
     }
 
     public void ShowForgotPasswordPanel()
     {
-        loginPanel.SetActive(false);
-        registerPanel.SetActive(false);
-        forgotPasswordPanel.SetActive(true);
+        SwitchPanel(forgotPasswordPanel, forgotPasswordAnimator, forgotOpen);
+    }
+
+    public void ShowQuitPanel()
+    {
+        if (currentPanel == quitPanel)
+            return;
+
+        if (panelTransition != null)
+            return;
+
+        previousPanelBeforeQuit = currentPanel;
+
+        SwitchPanel(quitPanel, quitAnimator, quitOpen);
+    }
+
+    public void CloseQuitPanel()
+    {
+        if (panelTransition != null)
+            return;
+
+        GameObject targetPanel = previousPanelBeforeQuit;
+
+        if (targetPanel == null)
+            targetPanel = loginPanel;
+
+        Animator targetAnimator = GetPanelAnimator(targetPanel);
+        string openAnimation = GetOpenAnimation(targetPanel);
+
+        SwitchPanel(targetPanel, targetAnimator, openAnimation);
+
+        previousPanelBeforeQuit = null;
+    }
+
+    public void ConfirmQuit()
+    {
+        Debug.Log("Quitting Historeon...");
+        Application.Quit();
+    }
+
+    public void ShowLoginPanelInstant()
+    {
+        if (panelTransition != null)
+        {
+            StopCoroutine(panelTransition);
+            panelTransition = null;
+        }
+
+        if (loginPanel != null)
+            loginPanel.SetActive(true);
+
+        if (registerPanel != null)
+            registerPanel.SetActive(false);
+
+        if (forgotPasswordPanel != null)
+            forgotPasswordPanel.SetActive(false);
+
+        if (quitPanel != null)
+            quitPanel.SetActive(false);
+
+        if (quitButton != null)
+            quitButton.SetActive(true);
+
+        currentPanel = loginPanel;
+        previousPanelBeforeQuit = null;
 
         HideMessages();
+    }
+
+    private void SwitchPanel(
+        GameObject targetPanel,
+        Animator targetAnimator,
+        string openAnimation)
+    {
+        if (targetPanel == null)
+            return;
+
+        if (currentPanel == targetPanel && panelTransition == null)
+            return;
+
+        if (panelTransition != null)
+            StopCoroutine(panelTransition);
+
+        panelTransition = StartCoroutine(
+            SwitchPanelSequence(targetPanel, targetAnimator, openAnimation)
+        );
+    }
+
+    private IEnumerator SwitchPanelSequence(
+        GameObject targetPanel,
+        Animator targetAnimator,
+        string openAnimation)
+    {
+        GameObject previous = currentPanel;
+
+        Animator previousAnimator = GetPanelAnimator(previous);
+        string closeAnimation = GetCloseAnimation(previous);
+
+        if (previous != null && previous != targetPanel)
+        {
+            if (previousAnimator != null &&
+                !string.IsNullOrEmpty(closeAnimation))
+            {
+                previousAnimator.Play(closeAnimation, 0, 0f);
+
+                yield return null;
+
+                yield return new WaitUntil(() =>
+                    previousAnimator.GetCurrentAnimatorStateInfo(0)
+                    .IsName(closeAnimation));
+
+                yield return new WaitUntil(() =>
+                    previousAnimator.GetCurrentAnimatorStateInfo(0)
+                    .normalizedTime >= 1f);
+            }
+
+            previous.SetActive(false);
+        }
+
+        if (loginPanel != null && loginPanel != targetPanel)
+            loginPanel.SetActive(false);
+
+        if (registerPanel != null && registerPanel != targetPanel)
+            registerPanel.SetActive(false);
+
+        if (forgotPasswordPanel != null &&
+            forgotPasswordPanel != targetPanel)
+            forgotPasswordPanel.SetActive(false);
+
+        if (quitPanel != null && quitPanel != targetPanel)
+            quitPanel.SetActive(false);
+
+        targetPanel.SetActive(true);
+
+        currentPanel = targetPanel;
+
+        if (quitButton != null)
+            quitButton.SetActive(targetPanel != quitPanel);
+
+        HideMessages();
+
+        if (targetAnimator != null &&
+            !string.IsNullOrEmpty(openAnimation))
+        {
+            targetAnimator.Play(openAnimation, 0, 0f);
+        }
+
+        panelTransition = null;
+    }
+
+    private Animator GetPanelAnimator(GameObject panel)
+    {
+        if (panel == loginPanel)
+            return loginAnimator;
+
+        if (panel == registerPanel)
+            return registerAnimator;
+
+        if (panel == forgotPasswordPanel)
+            return forgotPasswordAnimator;
+
+        if (panel == quitPanel)
+            return quitAnimator;
+
+        return null;
+    }
+
+    private string GetCloseAnimation(GameObject panel)
+    {
+        if (panel == loginPanel)
+            return loginClose;
+
+        if (panel == registerPanel)
+            return registerClose;
+
+        if (panel == forgotPasswordPanel)
+            return forgotClose;
+
+        if (panel == quitPanel)
+            return quitClose;
+
+        return null;
+    }
+
+    private string GetOpenAnimation(GameObject panel)
+    {
+        if (panel == loginPanel)
+            return loginOpen;
+
+        if (panel == registerPanel)
+            return registerOpen;
+
+        if (panel == forgotPasswordPanel)
+            return forgotOpen;
+
+        if (panel == quitPanel)
+            return quitOpen;
+
+        return null;
     }
 
     public void Login()
@@ -80,7 +296,8 @@ public class PlayFabAccountManager : MonoBehaviour
         string username = loginUsernameInput.text.Trim();
         string password = loginPasswordInput.text;
 
-        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        if (string.IsNullOrEmpty(username) ||
+            string.IsNullOrEmpty(password))
         {
             ShowLoginError("Please enter your username and password.");
             return;
@@ -129,8 +346,6 @@ public class PlayFabAccountManager : MonoBehaviour
 
     private void OnLoginFailure(PlayFabError error)
     {
-        //Debug.LogError(error.GenerateErrorReport());
-
         switch (error.Error)
         {
             case PlayFabErrorCode.InvalidUsernameOrPassword:
@@ -222,7 +437,9 @@ public class PlayFabAccountManager : MonoBehaviour
         Debug.Log("PlayFab Registration Successful!");
         Debug.Log("PlayFab ID: " + result.PlayFabId);
 
-        loginUsernameInput.text = registerUsernameInput.text.Trim().Replace(" ", "");
+        loginUsernameInput.text =
+            registerUsernameInput.text.Trim().Replace(" ", "");
+
         loginPasswordInput.text = "";
 
         ShowLoginPanel();
@@ -232,8 +449,6 @@ public class PlayFabAccountManager : MonoBehaviour
 
     private void OnRegisterFailure(PlayFabError error)
     {
-        //Debug.LogError(error.GenerateErrorReport());
-
         ShowRegisterError(GetFriendlyRegisterError(error));
     }
 
@@ -249,11 +464,12 @@ public class PlayFabAccountManager : MonoBehaviour
 
         HideMessages();
 
-        SendAccountRecoveryEmailRequest request = new SendAccountRecoveryEmailRequest
-        {
-            Email = email,
-            TitleId = PlayFabSettings.staticSettings.TitleId
-        };
+        SendAccountRecoveryEmailRequest request =
+            new SendAccountRecoveryEmailRequest
+            {
+                Email = email,
+                TitleId = PlayFabSettings.staticSettings.TitleId
+            };
 
         PlayFabClientAPI.SendAccountRecoveryEmail(
             request,
@@ -262,28 +478,31 @@ public class PlayFabAccountManager : MonoBehaviour
         );
     }
 
-    private void OnPasswordResetSuccess(SendAccountRecoveryEmailResult result)
+    private void OnPasswordResetSuccess(
+        SendAccountRecoveryEmailResult result)
     {
         Debug.Log("Password recovery email sent.");
 
         if (emailSentText != null)
         {
-            emailSentText.text = "Email sent. Please check your inbox.";
+            emailSentText.text =
+                "Email sent. Please check your inbox.";
+
             emailSentText.gameObject.SetActive(true);
         }
     }
 
     private void OnPasswordResetFailure(PlayFabError error)
     {
-        //Debug.LogError(error.GenerateErrorReport());
-
         if (error.Error == PlayFabErrorCode.InvalidEmailAddress)
         {
             ShowForgotError("Please enter a valid email address.");
         }
         else
         {
-            ShowForgotError("Unable to send email. Please check your email address.");
+            ShowForgotError(
+                "Unable to send email. Please check your email address."
+            );
         }
     }
 

@@ -10,6 +10,9 @@ public class Artifacts : MonoBehaviour
     public GameObject getTrophyUI;
     public GameObject killEnemiesUI;
 
+    [Header("Encounter Audio")]
+    public ArtifactAudioFade artifactAudioFade;
+
     [Header("Logbook")]
     public LogbookEntry logbookEntry;
     public Notification logbookNotification;
@@ -125,7 +128,10 @@ public class Artifacts : MonoBehaviour
 
     private void StartEncounter()
     {
-        encounterStarted = true;
+       encounterStarted = true;
+
+        if (artifactAudioFade != null)
+            artifactAudioFade.StartArtifactEncounter();
 
         HideInteractUI();
 
@@ -286,6 +292,9 @@ public class Artifacts : MonoBehaviour
     private void EnemiesDefeated()
     {
         enemiesDefeated = true;
+
+        if (artifactAudioFade != null)
+            artifactAudioFade.FinishArtifactEncounter();
 
         if (blocker != null)
             blocker.SetActive(false);

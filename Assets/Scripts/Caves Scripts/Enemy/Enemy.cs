@@ -57,6 +57,7 @@ public class Enemy : MonoBehaviour
     private float lastKnownWaitTimer;
 
     private bool dead;
+    public bool IsDead => dead;
     private bool enemyAudioWasPlaying;
 
     private void Awake()

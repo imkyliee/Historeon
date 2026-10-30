@@ -187,6 +187,40 @@ public class PlayFabSaveManager : MonoBehaviour
         );
     }
 
+    /// <summary>Fetches the logged-in player's own rank and score, even outside the Top 10.</summary>
+    public void GetPlayerLeaderboardEntry(Action<PlayerLeaderboardEntry> onLoaded)
+    {
+        string playFabId = PlayerPrefs.GetString("PlayFabId", "");
+
+        if (string.IsNullOrWhiteSpace(playFabId))
+        {
+            Debug.LogWarning("Cannot load personal leaderboard entry: PlayFabId is missing.");
+            onLoaded?.Invoke(null);
+            return;
+        }
+
+        PlayFabClientAPI.GetLeaderboardAroundPlayer(
+            new GetLeaderboardAroundPlayerRequest
+            {
+                StatisticName = TotalPointsStatisticName,
+                MaxResultsCount = 1,
+                PlayFabId = playFabId
+            },
+            result =>
+            {
+                if (result.Leaderboard == null || result.Leaderboard.Count == 0)
+                    onLoaded?.Invoke(null);
+                else
+                    onLoaded?.Invoke(result.Leaderboard[0]);
+            },
+            error =>
+            {
+                Debug.LogError("Failed to load personal leaderboard entry: " + error.GenerateErrorReport());
+                onLoaded?.Invoke(null);
+            }
+        );
+    }
+
     public bool IsQuizForfeited(string quizID)
     {
         return !string.IsNullOrWhiteSpace(quizID) && forfeitedQuizIDs.Contains(quizID);
@@ -1077,6 +1111,7 @@ public class PlayFabSaveManager : MonoBehaviour
         foreach (PersistentWorldItem worldItem in worldItems)
         {
             if (worldItem != null &&
+                !worldItem.ignoreCollectedStateInTutorial &&
                 !string.IsNullOrEmpty(worldItem.worldID) &&
                 collectedWorldIDs.Contains(worldItem.worldID))
             {
