@@ -8,13 +8,12 @@ TagManager:
   - Ground
   - BarGate
   - ChestGate
-  - Window1
-  - Window2
-  - Window3
-  - Window4
-  - Window5
   - Door1
   - DungeonDoor
+  - Flashlight
+  - RolledSleepingbag
+  - Backpack
+  - Enemy
   layers:
   - Default
   - TransparentFX
@@ -22,11 +21,11 @@ TagManager:
   - Doors
   - Water
   - UI
-  - Lamp
+  - Assets
   - Cloud
   - Player
   - Ground
-  - Sun
+  - Head
   - Padlock1
   - Ceiling
   - Padlock2
@@ -35,13 +34,13 @@ TagManager:
   - Padlock5
   - Chest
   - Book
-  - IgnoreFlashlight
+  - Mountain
   - void
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Item
+  - Effects
+  - Enemy
+  - Backpack
+  - Obstacles
   - 
   - 
   - 
