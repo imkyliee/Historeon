@@ -37,6 +37,11 @@ public class TutorialManager : MonoBehaviour
     public TutorialDoor tutorialDoor2;
     public TutorialDoor tutorialDoor3;
 
+    [Header("Locked Door Colliders")]
+    public LockedDoorCollider lockedDoorCollider1;
+    public LockedDoorCollider lockedDoorCollider2;
+    public LockedDoorCollider lockedDoorCollider3;
+
     [Header("References")]
     public CinematicCamera cinematicCamera;
     public Inventory inventory;
@@ -179,6 +184,8 @@ public class TutorialManager : MonoBehaviour
         if (blockDoor1 != null)
             Destroy(blockDoor1);
 
+        RemoveLockedDoor(lockedDoorCollider1);
+
         if (tutorialDoor1 != null)
             tutorialDoor1.enabled = true;
     }
@@ -192,6 +199,9 @@ public class TutorialManager : MonoBehaviour
 
         if (blockDoor1 != null)
             Destroy(blockDoor1);
+
+        RemoveLockedDoor(lockedDoorCollider1);
+
 
         if (tutorialDoor1 != null)
             tutorialDoor1.enabled = true;
@@ -287,6 +297,8 @@ public class TutorialManager : MonoBehaviour
             case 6:
                 if (blockDoor2 != null)
                     Destroy(blockDoor2);
+
+                RemoveLockedDoor(lockedDoorCollider2);
 
                 if (tutorialDoor2 != null)
                     tutorialDoor2.enabled = true;
@@ -548,6 +560,11 @@ public class TutorialManager : MonoBehaviour
             leftClicking.SetActive(false);
     }
 
+    private void RemoveLockedDoor(LockedDoorCollider lockedDoor)
+    {
+        if (lockedDoor != null)
+            Destroy(lockedDoor.gameObject);
+    }
     private void ShowThirdTutorial(int index)
     {
         HideAllThirdTutorials();
@@ -579,6 +596,8 @@ public class TutorialManager : MonoBehaviour
             case 4:
                 if (blockDoor3 != null)
                     Destroy(blockDoor3);
+
+                RemoveLockedDoor(lockedDoorCollider3);
 
                 if (tutorialDoor3 != null)
                     tutorialDoor3.enabled = true;

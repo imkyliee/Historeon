@@ -47,6 +47,10 @@ public class Inventory : MonoBehaviour
     private Item lookedAtItem = null;
     private Outline currentOutline;
 
+    [Header("Tutorial Pickup Requirements")]
+    [SerializeField] private TutorialObjectPrerequisite tutorialLogbookPrerequisite;
+    [SerializeField] private TutorialObjectPrerequisite hatchetLogbookPrerequisite;
+
     [Header("Hotbar Settings")]
     private int equippedHotbarIndex = 0;
     public float equipOpacity = 0.9f;
@@ -677,6 +681,50 @@ public class Inventory : MonoBehaviour
             }
         }
     }
+    private bool CanPickUpTutorialItem(Item worldItem)
+    {
+        if (worldItem == null)
+            return false;
+
+        if (worldItem.item == flashlightitem || worldItem.item == bagitem)
+            return IsTutorialRequirementObtained(
+                tutorialLogbookPrerequisite,
+                "tutorialLogBook"
+            );
+
+        if (worldItem.item == hatchetitem)
+            return IsTutorialRequirementObtained(
+                hatchetLogbookPrerequisite,
+                "hatchetLogBook"
+            );
+
+        return true;
+    }
+
+    private bool IsTutorialRequirementObtained(
+        TutorialObjectPrerequisite tutorialPrerequisite,
+        string requiredName)
+    {
+        // An unassigned tutorial prerequisite means this item is not gated in this scene.
+        if (tutorialPrerequisite == null)
+            return true;
+
+        if (tutorialPrerequisite.requirements == null)
+            return false;
+
+        foreach (TutorialObjectPrerequisite.Requirement requirement
+                 in tutorialPrerequisite.requirements)
+        {
+            if (requirement != null &&
+                requirement.requirementName == requiredName)
+            {
+                return requirement.isObtained;
+            }
+        }
+
+        return false;
+    }
+
     private void DetectLookedAtItem()
     {
         if (Camera.main == null)
@@ -698,6 +746,9 @@ public class Inventory : MonoBehaviour
             newItem =
                 hit.collider.GetComponentInParent<Item>();
         }
+
+        if (newItem != null && !CanPickUpTutorialItem(newItem))
+            newItem = null;
 
         if (newItem == lookedAtItem)
             return;

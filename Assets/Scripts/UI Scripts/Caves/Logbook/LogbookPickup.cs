@@ -19,6 +19,7 @@ public class LogbookPickup : MonoBehaviour
     [Header("Prerequisite")]
     [SerializeField] private ObjectPrerequisite prerequisite;
     [SerializeField] private string requirementName;
+    [SerializeField] private TutorialObjectPrerequisite tutorialPrerequisite;
 
     private Camera playerCamera;
     private static LogbookPickup currentLogbook;
@@ -155,13 +156,17 @@ public class LogbookPickup : MonoBehaviour
     
     private void UpdatePrerequisite()
     {
-        // If no requirement name is provided, skip prerequisite processing.
+        if (tutorialPrerequisite != null &&
+            !string.IsNullOrEmpty(requirementName))
+        {
+            tutorialPrerequisite.ObtainRequirement(requirementName);
+        }
+
         if (string.IsNullOrEmpty(requirementName))
             return;
 
         ObjectPrerequisite targetPrerequisite = prerequisite;
 
-        // Search for CallaoCavePrerequisite only if one isn't assigned.
         if (targetPrerequisite == null)
         {
             ObjectPrerequisite[] allPrerequisites =
@@ -179,14 +184,8 @@ public class LogbookPickup : MonoBehaviour
             }
         }
 
-        // No prerequisite is okay; skip without a warning.
         if (targetPrerequisite == null)
             return;
-
-        Debug.Log(
-            "Updating prerequisite: " +
-            targetPrerequisite.gameObject.name
-        );
 
         targetPrerequisite.ObtainRequirement(requirementName);
     }

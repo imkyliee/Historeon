@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class RagdollController : MonoBehaviour
@@ -15,6 +16,12 @@ public class RagdollController : MonoBehaviour
     public Inventory inventory;
     public PauseManager pauseManager;
     public DeathTransition deathScreen;
+
+    [Header("Death Audio")]
+    public AudioSource audioToFadeOut;
+    public float deathAudioFadeDuration = 2f;
+
+    private Coroutine audioFadeCoroutine;
 
     Collider[] RagdollCollider;
     Rigidbody[] RagdollRigid;
@@ -54,6 +61,8 @@ public class RagdollController : MonoBehaviour
 
     public void RagdollOn()
     {
+        FadeOutDeathAudio();
+
         // Drop equipped item
         if (inventory != null)
         {
@@ -76,6 +85,9 @@ public class RagdollController : MonoBehaviour
         {
             foreach (Collider col in RagdollCollider)
             {
+                if (col == null)
+                    continue;
+
                 if (col != playerCollider && col != groundChecker)
                     col.enabled = true;
             }
@@ -115,12 +127,59 @@ public class RagdollController : MonoBehaviour
         }
     }
 
+    private void FadeOutDeathAudio()
+    {
+        if (audioToFadeOut == null || !audioToFadeOut.isPlaying)
+            return;
+
+        if (audioFadeCoroutine != null)
+            StopCoroutine(audioFadeCoroutine);
+
+        audioFadeCoroutine = StartCoroutine(FadeOutAudioRoutine());
+    }
+
+    private IEnumerator FadeOutAudioRoutine()
+    {
+        float startVolume = audioToFadeOut.volume;
+        float elapsed = 0f;
+
+        if (deathAudioFadeDuration <= 0f)
+        {
+            audioToFadeOut.Stop();
+            audioToFadeOut.volume = startVolume;
+            audioFadeCoroutine = null;
+            yield break;
+        }
+
+        while (elapsed < deathAudioFadeDuration)
+        {
+            elapsed += Time.deltaTime;
+
+            audioToFadeOut.volume = Mathf.Lerp(
+                startVolume,
+                0f,
+                elapsed / deathAudioFadeDuration
+            );
+
+            yield return null;
+        }
+
+        audioToFadeOut.volume = 0f;
+        audioToFadeOut.Stop();
+        audioToFadeOut.volume = startVolume;
+
+        audioFadeCoroutine = null;
+    }
+
     void RagdollOff()
     {
         if (RagdollCollider != null)
         {
             foreach (Collider col in RagdollCollider)
             {
+                if (col == null)
+                    continue;
+
                 if (col != playerCollider && col != groundChecker)
                     col.enabled = false;
             }

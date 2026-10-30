@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Text;
 
 public class MainMenu : MonoBehaviour
 {
@@ -13,8 +12,8 @@ public class MainMenu : MonoBehaviour
     public GameObject MainMenuButtons;
     public GameObject tutorialWindow;
     public GameObject leaderboardWindow;
-    [Tooltip("TextMeshPro text area used to display the global top 10 leaderboard.")]
-    public TextMeshProUGUI leaderboardText;
+    [Tooltip("Row-based leaderboard UI component on the leaderboard panel.")]
+    public LeaderboardUI leaderboardUI;
     public GameObject controlWindow;
 
     [Header("Save Menu")]
@@ -55,6 +54,7 @@ public class MainMenu : MonoBehaviour
     private SoundManager soundManager;
 
     private bool isVolumeMenuOpen = false;
+    private bool leaderboardOpenedFromOptions;
 
     private const string TutorialCompletedKey = "TutorialCompleted";
 
@@ -99,6 +99,8 @@ public class MainMenu : MonoBehaviour
                     if (this == null)
                         return;
 
+                    // When PlayFab is available, use the current account's saved state.
+                    // Do not let another account's local PlayerPrefs hide the tutorial.
                     ApplyTutorialState(completed);
                 }
             );
@@ -394,6 +396,14 @@ public class MainMenu : MonoBehaviour
 
     public void TutorialSkip()
     {
+        // Remember the choice locally so the tutorial prompt stays dismissed.
+        PlayerPrefs.SetInt(TutorialCompletedKey, 1);
+        PlayerPrefs.Save();
+
+        // Also save the choice to the player's PlayFab account when available.
+        if (PlayFabSaveManager.Instance != null)
+            PlayFabSaveManager.Instance.SaveTutorialCompleted();
+
         StartCoroutine(TutorialSkipRoutine());
     }
 
@@ -584,19 +594,41 @@ public class MainMenu : MonoBehaviour
 
     public void OpenLeaderboard()
     {
+        leaderboardOpenedFromOptions =
+            optionMenu != null && optionMenu.activeSelf;
+
         StartCoroutine(OpenLeaderboardRoutine());
     }
 
     private IEnumerator OpenLeaderboardRoutine()
     {
-        if (optionMenuAnimator != null)
+        if (leaderboardOpenedFromOptions)
         {
-            optionMenuAnimator.Play("OptionMenu Close");
-            yield return new WaitForSeconds(transitionDuration);
-        }
+            if (optionMenuAnimator != null)
+            {
+                optionMenuAnimator.Play("OptionMenu Close");
+                yield return new WaitForSeconds(transitionDuration);
+            }
 
-        if (optionMenu != null)
-            optionMenu.SetActive(false);
+            if (optionMenu != null)
+                optionMenu.SetActive(false);
+        }
+        else
+        {
+            if (TitleScreenAnimator != null)
+                TitleScreenAnimator.Play("TitleScreen Close");
+
+            if (MainMenuButtonsAnimator != null)
+                MainMenuButtonsAnimator.Play("MainMenu Close");
+
+            yield return new WaitForSeconds(transitionDuration);
+
+            if (TitleScreen != null)
+                TitleScreen.SetActive(false);
+
+            if (MainMenuButtons != null)
+                MainMenuButtons.SetActive(false);
+        }
 
         if (leaderboardWindow != null)
             leaderboardWindow.SetActive(true);
@@ -604,63 +636,16 @@ public class MainMenu : MonoBehaviour
         if (leaderboardWindowAnimator != null)
             leaderboardWindowAnimator.Play("Leaderboard Open");
 
-        RefreshLeaderboardDisplay();
+        if (leaderboardUI == null && leaderboardWindow != null)
+            leaderboardUI = leaderboardWindow.GetComponentInChildren<LeaderboardUI>(true);
+
+        if (leaderboardUI != null)
+            leaderboardUI.RefreshLeaderboard();
+        else
+            Debug.LogWarning("MainMenu: Assign LeaderboardUI or add it to LeaderboardWindow.");
 
         if (volumeSlider != null)
             volumeSlider.interactable = false;
-    }
-
-    private void RefreshLeaderboardDisplay()
-    {
-        if (leaderboardText == null)
-        {
-            Debug.LogWarning("MainMenu: Assign the Leaderboard Text field in the Inspector.");
-            return;
-        }
-
-        if (PlayFabSaveManager.Instance == null)
-        {
-            leaderboardText.text = "Leaderboard unavailable.";
-            return;
-        }
-
-        leaderboardText.text = "Loading leaderboard...";
-        PlayFabSaveManager.Instance.GetTopLeaderboard(entries =>
-        {
-            if (leaderboardText == null)
-                return;
-
-            if (entries == null)
-            {
-                leaderboardText.text = "Could not load leaderboard. Please try again.";
-                return;
-            }
-
-            if (entries.Count == 0)
-            {
-                leaderboardText.text = "No scores yet. Complete a quiz to appear here!";
-                return;
-            }
-
-            StringBuilder builder = new StringBuilder();
-            builder.AppendLine("GLOBAL TOP 10");
-            builder.AppendLine();
-
-            for (int i = 0; i < entries.Count; i++)
-            {
-                string playerName = string.IsNullOrWhiteSpace(entries[i].DisplayName)
-                    ? "Player " + entries[i].PlayFabId.Substring(0, Mathf.Min(6, entries[i].PlayFabId.Length))
-                    : entries[i].DisplayName;
-
-                builder.Append(i + 1).Append(". ")
-                    .Append(playerName)
-                    .Append("  -  ")
-                    .Append(entries[i].StatValue)
-                    .AppendLine(" points");
-            }
-
-            leaderboardText.text = builder.ToString();
-        });
     }
 
     // CONTROL
@@ -725,7 +710,7 @@ public class MainMenu : MonoBehaviour
             yield break;
         }
 
-        if (leaderboardWindow != null && leaderboardWindow.activeSelf)
+       if (leaderboardWindow != null && leaderboardWindow.activeSelf)
         {
             if (leaderboardWindowAnimator != null)
             {
@@ -735,11 +720,28 @@ public class MainMenu : MonoBehaviour
 
             leaderboardWindow.SetActive(false);
 
-            if (optionMenu != null)
-                optionMenu.SetActive(true);
+            if (leaderboardOpenedFromOptions)
+            {
+                if (optionMenu != null)
+                    optionMenu.SetActive(true);
 
-            if (optionMenuAnimator != null)
-                optionMenuAnimator.Play("OptionMenu Open");
+                if (optionMenuAnimator != null)
+                    optionMenuAnimator.Play("OptionMenu Open");
+            }
+            else
+            {
+                if (TitleScreen != null)
+                    TitleScreen.SetActive(true);
+
+                if (MainMenuButtons != null)
+                    MainMenuButtons.SetActive(true);
+
+                if (TitleScreenAnimator != null)
+                    TitleScreenAnimator.Play("TitleScreen Open");
+
+                if (MainMenuButtonsAnimator != null)
+                    MainMenuButtonsAnimator.Play("MainMenu Open");
+            }
 
             if (volumeSlider != null)
                 volumeSlider.interactable = false;
