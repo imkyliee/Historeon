@@ -1,20 +1,28 @@
-﻿using System.Collections;
+﻿
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PauseManager : MonoBehaviour
-{// Singleton
+{
     public static PauseManager Instance { get; private set; }
 
-    // Properties
     public bool IsPaused => isPaused;
+
+    public bool IsLogbookOpen =>
+        tabMenuManager != null && tabMenuManager.IsMenuOpen;
 
     [Header("References")]
     public Inventory inventory;
+    public TabMenuManager tabMenuManager;
     public SceneTransition transition;
     public Animator playerAnimator;
 
-   [Header("UI")]
+    [Header("In-Game Music")]
+    public AudioSource[] musicSources;
+    private bool[] musicWasPlaying;
+
+    [Header("UI")]
     public GameObject pauseMenuUI;
     public GameObject optionsMenuUI;
     public GameObject[] HUD;
@@ -22,7 +30,6 @@ public class PauseManager : MonoBehaviour
     [Header("Scripts")]
     public MonoBehaviour[] disableOnPause;
 
-    // State
     private bool isPaused;
 
     private void Awake()
@@ -32,7 +39,9 @@ public class PauseManager : MonoBehaviour
 
     private void Start()
     {
-        pauseMenuUI.SetActive(false);
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
+
         isPaused = false;
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -41,31 +50,38 @@ public class PauseManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (!Input.GetKeyDown(KeyCode.Escape))
+            return;
+
+        if (inventory != null && inventory.IsOpen)
         {
-            if (inventory != null && inventory.IsOpen)
-            {
-                inventory.CloseInventory();
-                return;
-            }
-
-            if (isPaused)
-            {
-                // If inside Options, go back to Pause Menu.
-                if (optionsMenuUI.activeSelf)
-                {
-                    CloseOptions();
-                }
-                else
-                {
-                    Resume();
-                }
-
-                return;
-            }
-
-            Pause();
+            inventory.CloseInventory();
+            return;
         }
+
+        if (tabMenuManager != null &&
+            tabMenuManager.IsMenuOpen)
+        {
+            tabMenuManager.CloseMenu();
+            return;
+        }
+
+        if (isPaused)
+        {
+            if (optionsMenuUI != null &&
+                optionsMenuUI.activeSelf)
+            {
+                CloseOptions();
+            }
+            else
+            {
+                Resume();
+            }
+
+            return;
+        }
+
+        Pause();
     }
 
     public void Pause()
@@ -76,43 +92,65 @@ public class PauseManager : MonoBehaviour
         if (inventory != null)
             inventory.CloseInventory();
 
-        pauseMenuUI.SetActive(true);
-        isPaused = true;
-
-        foreach (var ui in HUD)
+        if (tabMenuManager != null &&
+            tabMenuManager.IsMenuOpen)
         {
-            if (ui != null)
-                ui.SetActive(false);
+            tabMenuManager.CloseMenu();
         }
 
-        // Disable Animator
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(true);
+
+        isPaused = true;
+
+        if (HUD != null)
+        {
+            foreach (GameObject ui in HUD)
+            {
+                if (ui != null)
+                    ui.SetActive(false);
+            }
+        }
+
         if (playerAnimator != null)
             playerAnimator.enabled = false;
 
         Time.timeScale = 0f;
+        PauseGameMusic();
+        PauseEnemyAudio();
 
-        foreach (var script in disableOnPause)
+        if (disableOnPause != null)
         {
-            if (script is Movement m)
+            foreach (MonoBehaviour script in disableOnPause)
             {
-                m.FreezeLookState();
-                m.SetPaused(true);
+                if (script is Movement movement)
+                {
+                    movement.FreezeLookState();
+                    movement.SetPaused(true);
+                }
             }
         }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
+
     public void OpenOptions()
     {
-        pauseMenuUI.SetActive(false);
-        optionsMenuUI.SetActive(true);
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
+
+        if (optionsMenuUI != null)
+            optionsMenuUI.SetActive(true);
     }
 
     public void CloseOptions()
     {
-        optionsMenuUI.SetActive(false);
-        pauseMenuUI.SetActive(true);
+        if (optionsMenuUI != null)
+            optionsMenuUI.SetActive(false);
+
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(true);
     }
 
     public void Resume()
@@ -120,28 +158,62 @@ public class PauseManager : MonoBehaviour
         if (!isPaused)
             return;
 
-        pauseMenuUI.SetActive(false);
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
+
         isPaused = false;
 
-        // Enable Animator
         if (playerAnimator != null)
             playerAnimator.enabled = true;
 
-        foreach (var ui in HUD)
+        if (HUD != null)
         {
-            if (ui != null)
-                ui.SetActive(true);
+            foreach (GameObject ui in HUD)
+            {
+                if (ui != null)
+                    ui.SetActive(true);
+            }
         }
 
         Time.timeScale = 1f;
+        ResumeGameMusic();
+        ResumeEnemyAudio();
 
-        foreach (var script in disableOnPause)
+        if (disableOnPause != null)
         {
-            if (script is Movement m)
-                m.SetPaused(false);
+            foreach (MonoBehaviour script in disableOnPause)
+            {
+                if (script is Movement movement)
+                    movement.SetPaused(false);
+            }
         }
 
+        StartCoroutine(RefreshHUDAfterResume());
         StartCoroutine(ForceCursorLock());
+    }
+
+    private IEnumerator RefreshHUDAfterResume()
+    {
+        RefreshFlashlightUI();
+
+        yield return null;
+
+        if (!isPaused)
+            RefreshFlashlightUI();
+    }
+
+    private void RefreshFlashlightUI()
+    {
+        FlashlightScript[] flashlights =
+            FindObjectsByType<FlashlightScript>(
+                FindObjectsSortMode.None
+            );
+
+        foreach (FlashlightScript flashlight in flashlights)
+        {
+            if (flashlight != null && flashlight.isActiveAndEnabled)
+                flashlight.RefreshControlUI();
+        }
     }
 
     private IEnumerator ForceCursorLock()
@@ -155,10 +227,13 @@ public class PauseManager : MonoBehaviour
 
     public void QuitToMainMenu()
     {
-        pauseMenuUI.SetActive(false);
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
+
         isPaused = false;
 
         Time.timeScale = 1f;
+        ResumeEnemyAudio();
 
         if (playerAnimator != null)
             playerAnimator.speed = 1f;
@@ -168,5 +243,105 @@ public class PauseManager : MonoBehaviour
 
         if (transition != null)
             transition.OnButtonPressed("Dynamic Main Menu");
+    }
+
+    public void HideUIForLogbook()
+    {
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
+
+        if (optionsMenuUI != null)
+            optionsMenuUI.SetActive(false);
+
+        if (HUD != null)
+        {
+            foreach (GameObject ui in HUD)
+            {
+                if (ui != null)
+                    ui.SetActive(false);
+            }
+        }
+    }
+
+    public void RestoreUIAfterLogbook()
+    {
+        if (isPaused)
+            return;
+
+        if (HUD != null)
+        {
+            foreach (GameObject ui in HUD)
+            {
+                if (ui != null)
+                    ui.SetActive(true);
+            }
+        }
+
+        RefreshFlashlightUI();
+    }
+    private void PauseEnemyAudio()
+    {
+        Enemy[] enemies = FindObjectsByType<Enemy>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy != null)
+                enemy.PauseEnemyAudio();
+        }
+    }
+
+    private void ResumeEnemyAudio()
+    {
+        Enemy[] enemies = FindObjectsByType<Enemy>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy != null)
+                enemy.ResumeEnemyAudio();
+        }
+    }
+
+    private void PauseGameMusic()
+{
+    if (musicSources == null)
+        return;
+
+    musicWasPlaying = new bool[musicSources.Length];
+
+    for (int i = 0; i < musicSources.Length; i++)
+    {
+        AudioSource source = musicSources[i];
+
+        if (source == null)
+            continue;
+
+        musicWasPlaying[i] = source.isPlaying;
+
+        if (source.isPlaying)
+            source.Pause();
+    }
+}
+
+    private void ResumeGameMusic()
+    {
+        if (musicSources == null || musicWasPlaying == null)
+            return;
+
+        for (int i = 0; i < musicSources.Length; i++)
+        {
+            AudioSource source = musicSources[i];
+
+            if (source == null)
+                continue;
+
+            if (i < musicWasPlaying.Length && musicWasPlaying[i])
+                source.UnPause();
+        }
+
+        musicWasPlaying = null;
     }
 }

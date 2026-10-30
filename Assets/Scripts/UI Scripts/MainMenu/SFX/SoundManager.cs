@@ -134,4 +134,14 @@ public class SoundManager : MonoBehaviour
         Instance = null;
         Destroy(gameObject);
     }
+    private void OnDestroy()
+    {
+
+        //Debug.Log("SoundManager was destroyed.", this);
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
 }

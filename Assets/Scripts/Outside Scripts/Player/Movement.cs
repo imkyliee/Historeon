@@ -12,6 +12,19 @@ public class Movement : MonoBehaviour
     public float jumpForce = 3f;
     public float airControl = 1f;
 
+    [Header("Crouch Collider")]
+    [SerializeField] private CapsuleCollider capsuleCollider;
+    [SerializeField] private float crouchHeight = 1f;
+
+    private float standingHeight;
+    private Vector3 standingCenter;
+
+    [Header("Footstep Audio")]
+    [SerializeField] private float walkFootstepInterval = 0.5f;
+    [SerializeField] private float runFootstepInterval = 0.32f;
+
+    private float footstepTimer;
+
     [Header("Look Settings")]
     public float sensitivity = 100f;
     public Vector2 move, look;
@@ -23,6 +36,9 @@ public class Movement : MonoBehaviour
     private bool wasGrounded;
     public PlayerAnimation playerAnimation;
 
+    [Header("Attack")]
+    private bool attackEnabled = true;
+
     [Header("Particles")]
     public ParticleSystem walkrunParticles;
     public ParticleSystem JumpParticles;
@@ -33,31 +49,55 @@ public class Movement : MonoBehaviour
     public float staminaDrainRate = 10f;
     public float JumpDrain = 7f;
     public float staminaRegenRate = 15f;
-
     private float currentStamina;
 
     // Input state
     private bool isRunning;
+    private bool isCrouching;
+    private bool crouchEnabled = true;
+    private bool jumpEnabled = true;
+
+    // Checks if the player is currently sprinting.
+    public bool IsRunning
+    {
+        get
+        {
+            return isRunning &&
+                   !isCrouching &&
+                   grounded &&
+                   currentStamina > 0f &&
+                   move.y > 0f;
+        }
+    }
+
+    // Checks if the player is currently crouching.
+    public bool IsCrouching
+    {
+        get
+        {
+            return isCrouching;
+        }
+    }
 
     [Header("Pause")]
     public bool isPaused;
     public bool lookPaused;
     public bool updatingRotation = true;
-    
-    // Checks if the player is currently sprinting.
-    public bool IsRunning
-        {
-            get
-            {
-                return isRunning && grounded && currentStamina > 0f && move.y > 0f;
-            }
-        }
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        if (isPaused) return;
+        if (isPaused)
+            return;
+
         move = context.ReadValue<Vector2>();
-       // Debug.Log(move.y);
+
+        if (context.performed && move != Vector2.zero)
+        {
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteWASD();
+            }
+        }
     }
 
     public void OnLook(InputAction.CallbackContext context)
@@ -70,20 +110,94 @@ public class Movement : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (isPaused) return;
+        if (isPaused)
+            return;
+
+        if (!jumpEnabled)
+            return;
+
+        // Don't allow jumping while crouching
+        if (isCrouching)
+            return;
 
         if (context.performed && grounded)
         {
             Jump();
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteSpace();
+            }
         }
     }
 
     public void OnRun(InputAction.CallbackContext context)
     {
+        if (isPaused)
+            return;
+
         if (context.performed)
+        {
             isRunning = true;
+        }
         else if (context.canceled)
+        {
             isRunning = false;
+        }
+    }
+    // Attack input
+    public void OnAttack(InputAction.CallbackContext context)
+    {
+        if (isPaused)
+            return;
+
+        // Don't allow attacking while quiz is open
+        if (!attackEnabled)
+            return;
+
+        if (context.performed)
+        {
+            if (playerAnimation != null)
+            {
+                playerAnimation.Attack();
+            }
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteThirdLeftClick();
+            }
+        }
+    }
+
+    // Crouch input
+    public void OnCrouch(InputAction.CallbackContext context)
+    {
+        if (isPaused)
+        {
+            isCrouching = false;
+            return;
+        }
+
+        // Don't allow crouching when disabled
+        if (!crouchEnabled)
+        {
+            isCrouching = false;
+            return;
+        }
+
+        if (context.performed)
+        {
+            isCrouching = true;
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteCrouch();
+            }
+        }
+        else if (context.canceled)
+        {
+            isCrouching = false;
+        }
     }
 
     public void Awake()
@@ -95,8 +209,14 @@ public class Movement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
-        /*Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;*/
+        if (capsuleCollider == null)
+            capsuleCollider = GetComponent<CapsuleCollider>();
+
+        if (capsuleCollider != null)
+        {
+            standingHeight = capsuleCollider.height;
+            standingCenter = capsuleCollider.center;
+        }
 
         currentStamina = maxStamina;
 
@@ -107,11 +227,21 @@ public class Movement : MonoBehaviour
     void Update()
     {
         if (!updatingRotation)
-        return;
+            return;
 
         HandleStamina();
         JumpParticlesPlay();
-        WalkRunParticles();  
+        WalkRunParticles();
+        UpdateCrouchCollider();
+        HandleFootsteps();
+
+        if (isRunning && move.y > 0f && grounded && !isCrouching && currentStamina > 0f)
+        {
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.CompleteLShift();
+            }
+        }
     }
 
     void FixedUpdate()
@@ -130,14 +260,22 @@ public class Movement : MonoBehaviour
 
         if (isPaused)
         {
-            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+            rb.linearVelocity = new Vector3(
+                0f,
+                rb.linearVelocity.y,
+                0f
+            );
+
             rb.angularVelocity = Vector3.zero;
             return;
         }
 
-        Vector3 currentVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-
-        bool sprinting = isRunning && grounded && currentStamina > 0f && move.y > 0f;
+        bool sprinting =
+            isRunning &&
+            !isCrouching &&
+            grounded &&
+            currentStamina > 0f &&
+            move.y > 0f;
 
         if (sprinting)
         {
@@ -148,6 +286,12 @@ public class Movement : MonoBehaviour
             currentSpeed = speed;
         }
 
+        Vector3 currentVelocity = new Vector3(
+            rb.linearVelocity.x,
+            0f,
+            rb.linearVelocity.z
+        );
+
         Vector3 forward = transform.forward;
         Vector3 right = transform.right;
 
@@ -157,9 +301,11 @@ public class Movement : MonoBehaviour
         forward.Normalize();
         right.Normalize();
 
-        Vector3 targetVelocity = (forward * move.y + right * move.x) * currentSpeed;
+        Vector3 targetVelocity =
+            (forward * move.y + right * move.x) * currentSpeed;
 
-        Vector3 velocityChange = targetVelocity - currentVelocity;
+        Vector3 velocityChange =
+            targetVelocity - currentVelocity;
 
         if (!grounded)
         {
@@ -167,13 +313,48 @@ public class Movement : MonoBehaviour
             velocityChange.z *= airControl;
         }
 
-        velocityChange = Vector3.ClampMagnitude(velocityChange, maxForce);
+        velocityChange =
+            Vector3.ClampMagnitude(velocityChange, maxForce);
 
-        rb.AddForce(velocityChange, ForceMode.VelocityChange);
+        rb.AddForce(
+            velocityChange,
+            ForceMode.VelocityChange
+        );
+    }
+    void HandleFootsteps()
+    {
+        bool isMoving =
+            grounded &&
+            !isPaused &&
+            move.sqrMagnitude > 0.01f &&
+            !isCrouching;
+
+        if (!isMoving || !updatingRotation)
+        {
+            footstepTimer = 0f;
+            return;
+        }
+
+        float interval = IsRunning
+            ? runFootstepInterval
+            : walkFootstepInterval;
+
+        footstepTimer -= Time.deltaTime;
+
+        if (footstepTimer <= 0f)
+        {
+            if (PlayerSound.instance != null)
+                PlayerSound.instance.PlayFootstep();
+
+            footstepTimer = interval;
+        }
     }
 
     void Jump()
     {
+        if (isCrouching)
+            return;
+
         if (currentStamina < JumpDrain)
             return;
 
@@ -181,45 +362,70 @@ public class Movement : MonoBehaviour
 
         Vector3 vel = rb.linearVelocity;
         vel.y = 0f;
+
         rb.linearVelocity = vel;
 
-        rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
-
+        rb.AddForce(
+            Vector3.up * jumpForce,
+            ForceMode.VelocityChange
+        );
     }
 
     void Look()
     {
-        if (isPaused) return;
+        if (isPaused)
+            return;
 
-        float mouseX = look.x * sensitivity * Time.deltaTime;
-        float mouseY = look.y * sensitivity * Time.deltaTime;
+        float mouseX =
+            look.x * sensitivity * Time.deltaTime;
+
+        float mouseY =
+            look.y * sensitivity * Time.deltaTime;
 
         lookRotation -= mouseY;
-        lookRotation = Mathf.Clamp(lookRotation, -80f, 70f);
+        lookRotation =
+            Mathf.Clamp(lookRotation, -80f, 70f);
 
         transform.Rotate(Vector3.up * mouseX);
 
-        head.localRotation = Quaternion.Euler(lookRotation, 0f, 0f);
+        head.localRotation =
+            Quaternion.Euler(
+                lookRotation,
+                0f,
+                0f
+            );
     }
 
     void HandleStamina()
     {
-        bool sprinting = isRunning && grounded && move.y > 0f;
+        bool sprinting =
+            isRunning &&
+            !isCrouching &&
+            grounded &&
+            move.y > 0f;
 
         if (sprinting)
         {
-            currentStamina -= staminaDrainRate * Time.deltaTime;
+            currentStamina -=
+                staminaDrainRate * Time.deltaTime;
         }
         else if (isRunning && !grounded)
         {
-            currentStamina -= staminaDrainRate * 0.3f * Time.deltaTime;
+            currentStamina -=
+                staminaDrainRate * 0.3f * Time.deltaTime;
         }
         else
         {
-            currentStamina += staminaRegenRate * Time.deltaTime;
+            currentStamina +=
+                staminaRegenRate * Time.deltaTime;
         }
 
-        currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+        currentStamina =
+            Mathf.Clamp(
+                currentStamina,
+                0f,
+                maxStamina
+            );
 
         if (staminaBar != null)
             staminaBar.SetStamina(currentStamina);
@@ -233,27 +439,57 @@ public class Movement : MonoBehaviour
             {
                 JumpParticles.Play();
             }
-            
         }
 
         wasGrounded = grounded;
     }
-   void WalkRunParticles()
-{
-    bool shouldPlay = grounded && move.y > 0.1f && Mathf.Abs(move.x) < 0.1f;
 
-    if (shouldPlay)
+    void WalkRunParticles()
     {
-        if (!walkrunParticles.isPlaying)
-            walkrunParticles.Play();
+        bool shouldPlay =
+            grounded &&
+            move.y > 0.1f &&
+            Mathf.Abs(move.x) < 0.1f;
+
+        if (shouldPlay)
+        {
+            if (!walkrunParticles.isPlaying)
+                walkrunParticles.Play();
+        }
+        else
+        {
+            if (walkrunParticles.isPlaying)
+                walkrunParticles.Stop();
+        }
     }
-    else
+
+    private void UpdateCrouchCollider()
     {
-        if (walkrunParticles.isPlaying)
-            walkrunParticles.Stop();
+        if (capsuleCollider == null)
+            return;
+
+        float targetHeight = isCrouching
+            ? Mathf.Min(crouchHeight, standingHeight)
+            : standingHeight;
+
+        float targetCenterY = standingCenter.y -
+            (standingHeight - targetHeight) / 2f;
+
+        capsuleCollider.height = Mathf.Lerp(
+            capsuleCollider.height,
+            targetHeight,
+            Time.deltaTime * 10f
+        );
+
+        Vector3 targetCenter = standingCenter;
+        targetCenter.y = targetCenterY;
+
+        capsuleCollider.center = Vector3.Lerp(
+            capsuleCollider.center,
+            targetCenter,
+            Time.deltaTime * 10f
+        );
     }
-    //Debug.Log($"Grounded: {grounded}, MoveY: {move.y}");
-}
 
     public void SetGrounded(bool state)
     {
@@ -273,7 +509,6 @@ public class Movement : MonoBehaviour
     public void SetPaused(bool paused)
     {
         isPaused = paused;
-
     }
 
     public float GetCurrentStamina()
@@ -285,11 +520,31 @@ public class Movement : MonoBehaviour
     {
         return currentStamina / maxStamina;
     }
+
     public void SetLookEnabled(bool state)
     {
         updatingRotation = state;
 
         if (!state)
             look = Vector2.zero;
+    }
+
+    // Enable or disable player attack input
+    public void SetAttackEnabled(bool state)
+    {
+        attackEnabled = state;
+    }
+    public void SetCrouchEnabled(bool state)
+    {
+        crouchEnabled = state;
+
+        if (!state)
+        {
+            isCrouching = false;
+        }
+    }
+    public void SetJumpEnabled(bool state)
+    {
+        jumpEnabled = state;
     }
 }

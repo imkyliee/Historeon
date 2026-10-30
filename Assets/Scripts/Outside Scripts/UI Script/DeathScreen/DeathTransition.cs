@@ -1,5 +1,5 @@
+
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class DeathTransition : MonoBehaviour
 {
@@ -24,8 +24,16 @@ public class DeathTransition : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Reload the current scene
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.RespawnFromDeath();
+        }
+        else
+        {
+            Debug.LogError(
+                "DeathTransition: PlayFabSaveManager was not found."
+            );
+        }
     }
 
     public void QuitToMainMenu()

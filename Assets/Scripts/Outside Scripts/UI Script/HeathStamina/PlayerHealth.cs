@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 
@@ -21,9 +22,7 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = maxHealth;
 
         if (healthBar != null)
-        {
             healthBar.SetMaxHealth(maxHealth);
-        }
 
         if (DamageEffect != null)
         {
@@ -38,16 +37,13 @@ public class PlayerHealth : MonoBehaviour
             return;
 
         currentHealth -= damage;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
         if (healthBar != null)
-        {
             healthBar.SetHealth(currentHealth);
-        }
 
-        // Show damage effect
         if (DamageEffect != null)
         {
-            // Enable if not already active
             if (!DamageEffect.activeSelf)
             {
                 DamageEffect.SetActive(true);
@@ -55,10 +51,10 @@ public class PlayerHealth : MonoBehaviour
                 if (damageAnimator == null)
                     damageAnimator = DamageEffect.GetComponent<Animator>();
 
-                damageAnimator.Play("Damage");
+                if (damageAnimator != null)
+                    damageAnimator.Play("Damage");
             }
 
-            // Refresh the hide timer
             if (damageCoroutine != null)
                 StopCoroutine(damageCoroutine);
 
@@ -66,10 +62,29 @@ public class PlayerHealth : MonoBehaviour
         }
 
         if (currentHealth <= 0)
-        {
-            currentHealth = 0;
             Die();
+    }
+
+    public void RestoreHealthToFull()
+    {
+        if (isDead)
+            return;
+
+        currentHealth = maxHealth;
+
+        if (healthBar != null)
+            healthBar.SetHealth(currentHealth);
+
+        if (DamageEffect != null)
+            DamageEffect.SetActive(false);
+
+        if (damageCoroutine != null)
+        {
+            StopCoroutine(damageCoroutine);
+            damageCoroutine = null;
         }
+
+        Debug.Log("Player health restored to " + currentHealth + ".");
     }
 
     private IEnumerator HideDamageEffect()
@@ -77,9 +92,7 @@ public class PlayerHealth : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
 
         if (DamageEffect != null)
-        {
             DamageEffect.SetActive(false);
-        }
 
         damageCoroutine = null;
     }
@@ -89,8 +102,15 @@ public class PlayerHealth : MonoBehaviour
         isDead = true;
 
         if (ragdollController != null)
-        {
             ragdollController.RagdollOn();
+    }
+    
+    private void OnDestroy()
+    {
+        if (HealthTransferManager.Instance != null && !isDead)
+        {
+            HealthTransferManager.SaveHealth(currentHealth);
         }
     }
+
 }
