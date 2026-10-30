@@ -1,4 +1,4 @@
-using System.Collections;
+
 using UnityEngine;
 
 public class RagdollController : MonoBehaviour
@@ -17,22 +17,23 @@ public class RagdollController : MonoBehaviour
     public PauseManager pauseManager;
     public DeathTransition deathScreen;
 
-    [Header("Death Audio")]
-    public AudioSource audioToFadeOut;
-    public float deathAudioFadeDuration = 2f;
+    private Collider[] RagdollCollider;
+    private Rigidbody[] RagdollRigid;
 
-    private Coroutine audioFadeCoroutine;
+    private class TransformSnapshot
+    {
+        public Transform target;
+        public Vector3 localPosition;
+        public Quaternion localRotation;
+        public Vector3 localScale;
+    }
 
-    Collider[] RagdollCollider;
-    Rigidbody[] RagdollRigid;
+    private TransformSnapshot[] originalRigPose;
 
     void Awake()
     {
-        // Automatically find the BoxCollider if it was not assigned
         if (boxCollider == null)
-        {
             boxCollider = GetComponent<BoxCollider>();
-        }
     }
 
     void Start()
@@ -45,25 +46,86 @@ public class RagdollController : MonoBehaviour
 
         if (deathCamera != null)
             deathCamera.gameObject.SetActive(false);
+
+        CaptureOriginalRigPose();
     }
 
     void GetRagdollState()
     {
         if (MainRig == null)
         {
-            Debug.LogWarning("RagdollController: MainRig is not assigned.");
+            Debug.LogWarning(
+                "RagdollController: MainRig is not assigned."
+            );
             return;
         }
 
-        RagdollCollider = MainRig.GetComponentsInChildren<Collider>();
-        RagdollRigid = MainRig.GetComponentsInChildren<Rigidbody>();
+        RagdollCollider =
+            MainRig.GetComponentsInChildren<Collider>();
+
+        RagdollRigid =
+            MainRig.GetComponentsInChildren<Rigidbody>();
+    }
+
+    void CaptureOriginalRigPose()
+    {
+        if (MainRig == null)
+            return;
+
+        Transform[] transforms =
+            MainRig.GetComponentsInChildren<Transform>(true);
+
+        originalRigPose =
+            new TransformSnapshot[transforms.Length];
+
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            originalRigPose[i] = new TransformSnapshot
+            {
+                target = transforms[i],
+                localPosition = transforms[i].localPosition,
+                localRotation = transforms[i].localRotation,
+                localScale = transforms[i].localScale
+            };
+        }
+
+        Debug.Log(
+            "RagdollController: Original character pose captured."
+        );
+    }
+
+    void RestoreOriginalRigPose()
+    {
+        if (originalRigPose == null)
+        {
+            Debug.LogWarning(
+                "RagdollController: No original rig pose was captured."
+            );
+            return;
+        }
+
+        foreach (TransformSnapshot snapshot in originalRigPose)
+        {
+            if (snapshot == null || snapshot.target == null)
+                continue;
+
+            snapshot.target.localPosition =
+                snapshot.localPosition;
+
+            snapshot.target.localRotation =
+                snapshot.localRotation;
+
+            snapshot.target.localScale =
+                snapshot.localScale;
+        }
+
+        Debug.Log(
+            "RagdollController: Original character pose restored."
+        );
     }
 
     public void RagdollOn()
     {
-        FadeOutDeathAudio();
-
-        // Drop equipped item
         if (inventory != null)
         {
             inventory.RagdollDropHeldItem();
@@ -72,11 +134,8 @@ public class RagdollController : MonoBehaviour
             inventory.enabled = false;
         }
 
-        // Disable PauseManager script
         if (pauseManager != null)
-        {
             pauseManager.enabled = false;
-        }
 
         if (animator != null)
             animator.enabled = false;
@@ -85,20 +144,18 @@ public class RagdollController : MonoBehaviour
         {
             foreach (Collider col in RagdollCollider)
             {
-                if (col == null)
-                    continue;
-
-                if (col != playerCollider && col != groundChecker)
+                if (col != playerCollider &&
+                    col != groundChecker)
+                {
                     col.enabled = true;
+                }
             }
         }
 
         if (RagdollRigid != null)
         {
             foreach (Rigidbody rb in RagdollRigid)
-            {
                 rb.isKinematic = false;
-            }
         }
 
         if (playerCollider != null)
@@ -117,58 +174,10 @@ public class RagdollController : MonoBehaviour
             deathCamera.gameObject.SetActive(true);
 
         if (movement != null)
-        {
             movement.enabled = false;
-        }
 
         if (deathScreen != null)
-        {
             deathScreen.PlayDeath();
-        }
-    }
-
-    private void FadeOutDeathAudio()
-    {
-        if (audioToFadeOut == null || !audioToFadeOut.isPlaying)
-            return;
-
-        if (audioFadeCoroutine != null)
-            StopCoroutine(audioFadeCoroutine);
-
-        audioFadeCoroutine = StartCoroutine(FadeOutAudioRoutine());
-    }
-
-    private IEnumerator FadeOutAudioRoutine()
-    {
-        float startVolume = audioToFadeOut.volume;
-        float elapsed = 0f;
-
-        if (deathAudioFadeDuration <= 0f)
-        {
-            audioToFadeOut.Stop();
-            audioToFadeOut.volume = startVolume;
-            audioFadeCoroutine = null;
-            yield break;
-        }
-
-        while (elapsed < deathAudioFadeDuration)
-        {
-            elapsed += Time.deltaTime;
-
-            audioToFadeOut.volume = Mathf.Lerp(
-                startVolume,
-                0f,
-                elapsed / deathAudioFadeDuration
-            );
-
-            yield return null;
-        }
-
-        audioToFadeOut.volume = 0f;
-        audioToFadeOut.Stop();
-        audioToFadeOut.volume = startVolume;
-
-        audioFadeCoroutine = null;
     }
 
     void RagdollOff()
@@ -177,20 +186,18 @@ public class RagdollController : MonoBehaviour
         {
             foreach (Collider col in RagdollCollider)
             {
-                if (col == null)
-                    continue;
-
-                if (col != playerCollider && col != groundChecker)
+                if (col != playerCollider &&
+                    col != groundChecker)
+                {
                     col.enabled = false;
+                }
             }
         }
 
         if (RagdollRigid != null)
         {
             foreach (Rigidbody rb in RagdollRigid)
-            {
                 rb.isKinematic = true;
-            }
         }
 
         if (animator != null)
@@ -206,15 +213,70 @@ public class RagdollController : MonoBehaviour
             boxCollider.enabled = false;
 
         if (movement != null)
-        {
             movement.enabled = true;
-        }
 
-        // Re-enable if the player revives
         if (inventory != null)
             inventory.enabled = true;
 
         if (pauseManager != null)
             pauseManager.enabled = true;
+    }
+
+    public void RecoverFromRespawn()
+    {
+        // Stop ragdoll physics.
+        if (RagdollRigid != null)
+        {
+            foreach (Rigidbody rb in RagdollRigid)
+            {
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                    rb.isKinematic = true;
+                }
+            }
+        }
+
+        // Restore normal player components.
+        RagdollOff();
+
+        if (mainRb != null)
+        {
+            mainRb.linearVelocity = Vector3.zero;
+            mainRb.angularVelocity = Vector3.zero;
+            mainRb.isKinematic = false;
+        }
+
+        // Restore cameras.
+        if (deathCamera != null)
+            deathCamera.gameObject.SetActive(false);
+
+        if (playerCamera != null)
+            playerCamera.gameObject.SetActive(true);
+
+        // Reset Animator.
+        if (animator != null)
+        {
+            animator.enabled = true;
+            animator.Rebind();
+            animator.Update(0f);
+
+            // Prevent animation from overwriting the restored pose.
+            animator.enabled = false;
+        }
+
+        // Restore original rig transforms.
+        RestoreOriginalRigPose();
+
+        // Resume animation.
+        if (animator != null)
+            animator.enabled = true;
+
+        Physics.SyncTransforms();
+
+        Debug.Log(
+            "RagdollController: Player recovered from respawn."
+        );
     }
 }

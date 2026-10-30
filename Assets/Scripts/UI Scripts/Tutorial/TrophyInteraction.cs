@@ -1,3 +1,4 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -407,6 +408,39 @@ public class TrophyInteraction : MonoBehaviour
     {
         if (interactUI != null)
             interactUI.SetActive(false);
+    }
+
+    // Resets the Tutorial encounter when the player dies.
+    public void ResetEncounterAfterDeath()
+    {
+        foreach (GameObject enemy in spawnedEnemies)
+        {
+            if (enemy != null)
+                Destroy(enemy);
+        }
+
+        spawnedEnemies.Clear();
+
+        encounterStarted = false;
+        enemiesDefeated = false;
+        isLookingAtTrophy = false;
+
+        if (interactUI != null)
+            interactUI.SetActive(false);
+
+        if (getTrophyUI != null)
+            getTrophyUI.SetActive(false);
+
+        if (killEnemiesUI != null)
+            killEnemiesUI.SetActive(false);
+
+        if (blocker != null)
+            blocker.SetActive(false);
+
+        if (currentTrophy == this)
+            currentTrophy = null;
+
+        Debug.Log("Tutorial encounter reset after death.");
     }
 
     private void OnDestroy()

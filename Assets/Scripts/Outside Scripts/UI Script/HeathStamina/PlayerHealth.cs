@@ -87,6 +87,65 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("Player health restored to " + currentHealth + ".");
     }
 
+    // Used when the player respawns in the Tutorial scene.
+    public void ResetAfterRespawn()
+    {
+        isDead = false;
+
+        currentHealth = maxHealth;
+
+        if (healthBar != null)
+        {
+            healthBar.SetMaxHealth(maxHealth);
+            healthBar.SetHealth(currentHealth);
+        }
+
+        if (damageCoroutine != null)
+        {
+            StopCoroutine(damageCoroutine);
+            damageCoroutine = null;
+        }
+
+        if (DamageEffect != null)
+            DamageEffect.SetActive(false);
+
+        Debug.Log("PlayerHealth: Player recovered with full health.");
+    }
+
+    // TUTORIAL CHECKPOINT HEALTH RESTORATION
+  
+
+    public void RestoreTutorialHealth(int savedHealth)
+    {
+        isDead = false;
+
+        currentHealth = Mathf.Clamp(
+            savedHealth,
+            1,
+            maxHealth
+        );
+
+        if (healthBar != null)
+        {
+            healthBar.SetMaxHealth(maxHealth);
+            healthBar.SetHealth(currentHealth);
+        }
+
+        if (damageCoroutine != null)
+        {
+            StopCoroutine(damageCoroutine);
+            damageCoroutine = null;
+        }
+
+        if (DamageEffect != null)
+            DamageEffect.SetActive(false);
+
+        Debug.Log(
+            "Tutorial checkpoint health restored: " +
+            currentHealth
+        );
+    }
+
     private IEnumerator HideDamageEffect()
     {
         yield return new WaitForSeconds(0.3f);
@@ -104,7 +163,7 @@ public class PlayerHealth : MonoBehaviour
         if (ragdollController != null)
             ragdollController.RagdollOn();
     }
-    
+
     private void OnDestroy()
     {
         if (HealthTransferManager.Instance != null && !isDead)
@@ -112,5 +171,4 @@ public class PlayerHealth : MonoBehaviour
             HealthTransferManager.SaveHealth(currentHealth);
         }
     }
-
 }
