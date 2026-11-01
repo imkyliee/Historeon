@@ -181,9 +181,10 @@ public class PlayFabAccountManager : MonoBehaviour
             return;
         }
 
-        if (password.Length < 6)
+        // 1. Length check (8 characters minimum)
+        if (password.Length < 8)
         {
-            ShowRegisterError("Password must be at least 6 characters.");
+            ShowRegisterError("Password must be at least 8 characters.");
             return;
         }
 
@@ -193,6 +194,28 @@ public class PlayFabAccountManager : MonoBehaviour
             return;
         }
 
+        // 2. Uppercase check
+        if (!System.Text.RegularExpressions.Regex.IsMatch(password, "[A-Z]"))
+        {
+            ShowRegisterError("Password must contain (uppercase letter, Number, Special Character.)");
+            return;
+        }
+
+        // 3. Number check
+        if (!System.Text.RegularExpressions.Regex.IsMatch(password, "[0-9]"))
+        {
+            ShowRegisterError("\"Password must contain (uppercase letter, Number, Special Character.)");
+            return;
+        }
+
+        // 4. Special character check
+        if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"[!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]"))
+        {
+            ShowRegisterError("\"Password must contain (uppercase letter, Number, Special Character.)");
+            return;
+        }
+
+        // 5. Confirm password check
         if (password != confirmPassword)
         {
             ShowRegisterError("Passwords do not match.");
