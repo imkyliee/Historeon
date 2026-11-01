@@ -48,8 +48,13 @@ public class Inventory : MonoBehaviour
     private Outline currentOutline;
 
     [Header("Tutorial Pickup Requirements")]
-    [SerializeField] private TutorialObjectPrerequisite tutorialLogbookPrerequisite;
-    [SerializeField] private TutorialObjectPrerequisite hatchetLogbookPrerequisite;
+    [SerializeField] private TutorialPrerequisite tutorialLogbookPrerequisite;
+    [SerializeField] private TutorialPrerequisite hatchetLogbookPrerequisite;
+    [SerializeField] private TutorialPrerequisite bagPrerequisite;
+
+    [Header("Tutorial Pickup UI")]
+    [SerializeField] private GameObject flashlightPickupBG;
+    [SerializeField] private GameObject bagPickupBG;
 
     [Header("Hotbar Settings")]
     private int equippedHotbarIndex = 0;
@@ -154,6 +159,12 @@ public class Inventory : MonoBehaviour
             if (tabPrompt != null)
                 tabPrompt.SetActive(false);
 
+            if (flashlightPickupBG != null)
+                flashlightPickupBG.SetActive(false);
+
+            if (bagPickupBG != null)
+                bagPickupBG.SetActive(false);
+
             return;
         }
 
@@ -177,6 +188,24 @@ public class Inventory : MonoBehaviour
         {
             tabPrompt.SetActive(
                 IsHoldingItem(bagitem) &&
+                !IsOpen
+            );
+        }
+
+        if (flashlightPickupBG != null)
+        {
+            flashlightPickupBG.SetActive(
+                lookedAtItem != null &&
+                lookedAtItem.item == flashlightitem &&
+                !IsOpen
+            );
+        }
+
+        if (bagPickupBG != null)
+        {
+            bagPickupBG.SetActive(
+                lookedAtItem != null &&
+                lookedAtItem.item == bagitem &&
                 !IsOpen
             );
         }
@@ -605,6 +634,9 @@ public class Inventory : MonoBehaviour
 
             ItemSO pickedUpItem = lookedAtItem.item;
 
+            if (!CanPickUpTutorialItem(lookedAtItem))
+                return;
+
             AddItem(
                 pickedUpItem,
                 lookedAtItem.amount
@@ -622,6 +654,11 @@ public class Inventory : MonoBehaviour
 
                 if (pickedUpItem == bagitem)
                     prerequisite.ObtainRequirement("Bag");
+            }
+
+            if (pickedUpItem == flashlightitem && bagPrerequisite != null)
+            {
+                bagPrerequisite.ObtainRequirement("Flashlight");
             }
 
             if (TutorialManager.Instance != null)
@@ -661,6 +698,12 @@ public class Inventory : MonoBehaviour
             Destroy(lookedAtItem.gameObject);
             lookedAtItem = null;
 
+            if (flashlightPickupBG != null)
+                flashlightPickupBG.SetActive(false);
+
+            if (bagPickupBG != null)
+                bagPickupBG.SetActive(false);
+
             int foundSlot = -1;
 
             for (int i = 0; i < hotbarSlots.Count; i++)
@@ -686,11 +729,21 @@ public class Inventory : MonoBehaviour
         if (worldItem == null)
             return false;
 
-        if (worldItem.item == flashlightitem || worldItem.item == bagitem)
+        if (worldItem.item == flashlightitem)
+        {
             return IsTutorialRequirementObtained(
                 tutorialLogbookPrerequisite,
                 "tutorialLogBook"
             );
+        }
+
+        if (worldItem.item == bagitem)
+        {
+            return IsTutorialRequirementObtained(
+                bagPrerequisite,
+                "Flashlight"
+            );
+        }
 
         if (worldItem.item == hatchetitem)
             return IsTutorialRequirementObtained(
@@ -702,7 +755,7 @@ public class Inventory : MonoBehaviour
     }
 
     private bool IsTutorialRequirementObtained(
-        TutorialObjectPrerequisite tutorialPrerequisite,
+        TutorialPrerequisite tutorialPrerequisite,
         string requiredName)
     {
         // An unassigned tutorial prerequisite means this item is not gated in this scene.
@@ -712,7 +765,7 @@ public class Inventory : MonoBehaviour
         if (tutorialPrerequisite.requirements == null)
             return false;
 
-        foreach (TutorialObjectPrerequisite.Requirement requirement
+        foreach (TutorialPrerequisite.Requirement requirement
                  in tutorialPrerequisite.requirements)
         {
             if (requirement != null &&
