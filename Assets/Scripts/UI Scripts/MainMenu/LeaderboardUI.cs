@@ -84,6 +84,12 @@ public class LeaderboardUI : MonoBehaviour
                     : "Player " + entry.PlayFabId.Substring(
                         0, Mathf.Min(6, entry.PlayFabId.Length));
 
+                Debug.Log(
+                    "Leaderboard Entry: " + playerName +
+                    " | Position: " + entry.Position +
+                    " | Points: " + entry.StatValue
+                );
+
                 CreateScoreRow(
                     rowParent,
                     (entry.Position + 1) + ". " + playerName
@@ -122,9 +128,14 @@ public class LeaderboardUI : MonoBehaviour
                     ? player.DisplayName
                     : PlayerPrefs.GetString("Username", "Player");
 
+                Debug.Log(
+                    "Your Leaderboard Position: " + player.Position +
+                    " | Points: " + player.StatValue
+                );
+
                 SetYourScore(
-                        "#" + (player.Position + 1) + " - " + username
-                        + " - " + player.StatValue + " points");
+                    "#" + (player.Position + 1) + " - " + username
+                    + " - " + player.StatValue + " points");
             },
             error =>
             {
@@ -158,10 +169,25 @@ public class LeaderboardUI : MonoBehaviour
 
     private void ClearRows()
     {
-        foreach (GameObject row in createdRows)
+        Transform rowParent = GetRowParent();
+
+        if (rowParent != null)
         {
-            if (row != null)
-                Destroy(row);
+            for (int i = rowParent.childCount - 1; i >= 0; i--)
+            {
+                Transform child = rowParent.GetChild(i);
+
+                if (scoreRowPrefab != null &&
+                    child.gameObject == scoreRowPrefab)
+                {
+                    continue;
+                }
+
+                if (child.name == "LeaderboardScoreRow")
+                {
+                    Destroy(child.gameObject);
+                }
+            }
         }
 
         createdRows.Clear();

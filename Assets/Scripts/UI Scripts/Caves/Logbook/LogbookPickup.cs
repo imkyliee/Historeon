@@ -19,7 +19,10 @@ public class LogbookPickup : MonoBehaviour
     [Header("Prerequisite")]
     [SerializeField] private ObjectPrerequisite prerequisite;
     [SerializeField] private string requirementName;
-    [SerializeField] private TutorialObjectPrerequisite tutorialPrerequisite;
+
+    [Header("Tutorial Prerequisite")]
+    [SerializeField] private TutorialPrerequisite tutorialPrerequisite;
+    [SerializeField] private string tutorialRequirementName = "tutorialLogBook";
 
     private Camera playerCamera;
     private static LogbookPickup currentLogbook;
@@ -157,9 +160,9 @@ public class LogbookPickup : MonoBehaviour
     private void UpdatePrerequisite()
     {
         if (tutorialPrerequisite != null &&
-            !string.IsNullOrEmpty(requirementName))
+            !string.IsNullOrEmpty(tutorialRequirementName))
         {
-            tutorialPrerequisite.ObtainRequirement(requirementName);
+            tutorialPrerequisite.ObtainRequirement(tutorialRequirementName);
         }
 
         if (string.IsNullOrEmpty(requirementName))

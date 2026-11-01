@@ -176,6 +176,6 @@ public class DeathTransition : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        transition?.OnButtonPressed("Main Menu");
+        transition?.OnButtonPressed("Dynamic Main Menu");
     }
 }

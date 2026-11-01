@@ -14,10 +14,10 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 0
+  m_Fog: 1
   m_FogColor: {r: 0.14117648, g: 0.09019608, b: 0.02745098, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.02
+  m_FogDensity: 0.04
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -218,7 +218,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 10
+  m_Intensity: 3
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -1492,7 +1492,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 10
+  m_Intensity: 3
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -8143,7 +8143,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 20
+  m_Intensity: 5
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -9487,7 +9487,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 20
+  m_Intensity: 5
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -20415,7 +20415,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 15
+  m_Intensity: 3
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -27336,8 +27336,6 @@ MonoBehaviour:
   inventory: {fileID: 572771074}
   pauseManager: {fileID: 100565315}
   deathScreen: {fileID: 1297941551}
-  audioToFadeOut: {fileID: 1076735777}
-  deathAudioFadeDuration: 2
 --- !u!1001 &610426614
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33448,15 +33446,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 94ce215047ef3564f988605f10700f6b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.669
+      value: -1.904
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 94ce215047ef3564f988605f10700f6b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.558
+      value: 0.698
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 94ce215047ef3564f988605f10700f6b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.427
+      value: -4.751
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 94ce215047ef3564f988605f10700f6b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -45231,7 +45229,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 10
+  m_Intensity: 3
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -46710,7 +46708,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 7488895774999618900, guid: f4a93401cfd7553498da003ded060708, type: 3}
+  - {fileID: 2100000, guid: 39eb3d21014add342b5f062dbad53bbc, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -50532,7 +50530,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 20
+  m_Intensity: 5
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -62142,7 +62140,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 20
+  m_Intensity: 10
   m_Range: 15
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -63490,7 +63488,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 10
+  m_Intensity: 3
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -75086,7 +75084,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 10
+  m_Intensity: 3
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
