@@ -11,6 +11,9 @@ public class CampfireTutorial : MonoBehaviour
     public float interactionRange = 3f;
     public GameObject interactUI;
 
+    [Header("Tutorial Prompt")]
+    [SerializeField] private CampfireTutorialPrompt campfireTutorialPrompt;
+
     [Header("Prerequisite")]
     public ObjectPrerequisite logbookPrerequisite;
     public string requiredRequirementName = "finalwillLogBook";
@@ -72,6 +75,10 @@ public class CampfireTutorial : MonoBehaviour
 #endif
 
         playerCamera = Camera.main;
+
+        if (campfireTutorialPrompt == null)
+            campfireTutorialPrompt = GetComponent<CampfireTutorialPrompt>();
+
         audioSource = GetComponent<AudioSource>();
 
         if (audioSource == null)
@@ -166,6 +173,9 @@ public class CampfireTutorial : MonoBehaviour
 
                 if (Input.GetKeyDown(KeyCode.E))
                 {
+                    if (campfireTutorialPrompt != null)
+                        campfireTutorialPrompt.HidePrompt();
+
                     if (!isLit)
                         LightCampfire();
                     else

@@ -48,6 +48,7 @@ public class Inventory : MonoBehaviour
     private Outline currentOutline;
 
     [Header("Tutorial Pickup Requirements")]
+    [SerializeField] private bool useTutorialPickupRequirements = false;
     [SerializeField] private TutorialPrerequisite tutorialLogbookPrerequisite;
     [SerializeField] private TutorialPrerequisite hatchetLogbookPrerequisite;
     [SerializeField] private TutorialPrerequisite bagPrerequisite;
@@ -195,6 +196,7 @@ public class Inventory : MonoBehaviour
         if (flashlightPickupBG != null)
         {
             flashlightPickupBG.SetActive(
+                useTutorialPickupRequirements &&
                 lookedAtItem != null &&
                 lookedAtItem.item == flashlightitem &&
                 !IsOpen
@@ -204,6 +206,7 @@ public class Inventory : MonoBehaviour
         if (bagPickupBG != null)
         {
             bagPickupBG.SetActive(
+                useTutorialPickupRequirements &&
                 lookedAtItem != null &&
                 lookedAtItem.item == bagitem &&
                 !IsOpen
@@ -656,7 +659,9 @@ public class Inventory : MonoBehaviour
                     prerequisite.ObtainRequirement("Bag");
             }
 
-            if (pickedUpItem == flashlightitem && bagPrerequisite != null)
+            if (useTutorialPickupRequirements &&
+                pickedUpItem == flashlightitem &&
+                bagPrerequisite != null)
             {
                 bagPrerequisite.ObtainRequirement("Flashlight");
             }
@@ -729,6 +734,11 @@ public class Inventory : MonoBehaviour
         if (worldItem == null)
             return false;
 
+        // Tutorial pickup restrictions only run when explicitly enabled
+        // in the tutorial scene. Normal gameplay remains unrestricted.
+        if (!useTutorialPickupRequirements)
+            return true;
+
         if (worldItem.item == flashlightitem)
         {
             return IsTutorialRequirementObtained(
@@ -758,9 +768,10 @@ public class Inventory : MonoBehaviour
         TutorialPrerequisite tutorialPrerequisite,
         string requiredName)
     {
-        // An unassigned tutorial prerequisite means this item is not gated in this scene.
+        // When tutorial restrictions are enabled, a missing prerequisite
+        // should keep the item locked rather than bypassing the requirement.
         if (tutorialPrerequisite == null)
-            return true;
+            return false;
 
         if (tutorialPrerequisite.requirements == null)
             return false;
@@ -1844,4 +1855,4 @@ public class Inventory : MonoBehaviour
         Debug.Log("Tutorial inventory snapshot restored.");
     }
 
-}
+}   
