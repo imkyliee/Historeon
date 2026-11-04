@@ -11,6 +11,9 @@ public class TrophyInteraction : MonoBehaviour
     public GameObject getTrophyUI;
     public GameObject killEnemiesUI;
 
+    [Header("Encounter Audio")]
+    public ArtifactAudioFade artifactAudioFade;
+
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
@@ -132,6 +135,9 @@ public class TrophyInteraction : MonoBehaviour
     private void StartEncounter()
     {
         encounterStarted = true;
+
+        if (artifactAudioFade != null)
+            artifactAudioFade.StartArtifactEncounter();
 
         HideInteractUI();
 
@@ -282,6 +288,9 @@ public class TrophyInteraction : MonoBehaviour
     private void EnemiesDefeated()
     {
         enemiesDefeated = true;
+
+        if (artifactAudioFade != null)
+            artifactAudioFade.FinishArtifactEncounter();
 
         if (blocker != null)
             blocker.SetActive(false);

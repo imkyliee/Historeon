@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class CinematicTrigger : MonoBehaviour
@@ -27,10 +26,19 @@ public class CinematicTrigger : MonoBehaviour
             if (particleEffect != null)
                 particleEffect.SetActive(false);
 
+            if (additionalObjectToEnable != null)
+            {
+                Animator wallAnimator = additionalObjectToEnable.GetComponentInChildren<Animator>(true);
+
+                if (wallAnimator != null)
+                    wallAnimator.enabled = false;
+
+                additionalObjectToEnable.SetActive(true);
+            }
+
             gameObject.SetActive(false);
         }
     }
-
     private void OnTriggerEnter(Collider other)
     {
         if (triggered || !other.CompareTag("Player"))

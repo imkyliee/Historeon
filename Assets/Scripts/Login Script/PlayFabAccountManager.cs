@@ -20,6 +20,7 @@ public class PlayFabAccountManager : MonoBehaviour
     public Animator registerAnimator;
     public Animator forgotPasswordAnimator;
     public Animator quitAnimator;
+    public Animator verificationAnimator;
 
     [Header("Animation Names")]
     public string loginOpen = "Login Open";
@@ -30,6 +31,8 @@ public class PlayFabAccountManager : MonoBehaviour
     public string forgotClose = "ForgotPassword Close";
     public string quitOpen = "Quit Open";
     public string quitClose = "Quit Close";
+    public string verificationOpen = "Verification Open";
+    public string verificationClose = "Verification Close";
 
     [Header("Login")]
     public TMP_InputField loginUsernameInput;
@@ -48,12 +51,29 @@ public class PlayFabAccountManager : MonoBehaviour
     public TMP_Text emailSentText;
     public TMP_Text forgotErrorText;
 
+    [Header("Email Verification")]
+    public GameObject verificationPanel;
+    public TMP_Text verificationEmailText;
+    public TMP_Text verificationSentText;
+    public TMP_Text verificationErrorText;
+
     [Header("Scene")]
     public string mainMenuSceneName = "Dynamic Main Menu";
 
     private GameObject currentPanel;
     private GameObject previousPanelBeforeQuit;
     private Coroutine panelTransition;
+
+    private string pendingRegistrationUsername;
+    private string pendingRegistrationEmail;
+    private string pendingRegistrationPassword;
+    private string verificationEmail;
+    private string currentPlayFabId;
+    private bool isRegistrationLogin;
+    private bool isCheckingVerification;
+    private bool isResendingVerification;
+    private float nextResendAllowedTime;
+    private const float ResendCooldownSeconds = 60f;
 
     private void Start()
     {
@@ -65,6 +85,9 @@ public class PlayFabAccountManager : MonoBehaviour
 
         if (forgotPasswordPanel != null)
             forgotPasswordPanel.SetActive(false);
+
+        if (verificationPanel != null)
+            verificationPanel.SetActive(false);
 
         if (quitPanel != null)
             quitPanel.SetActive(false);
@@ -91,6 +114,17 @@ public class PlayFabAccountManager : MonoBehaviour
     public void ShowForgotPasswordPanel()
     {
         SwitchPanel(forgotPasswordPanel, forgotPasswordAnimator, forgotOpen);
+    }
+
+    public void ShowVerificationPanel()
+    {
+        if (verificationPanel == null)
+        {
+            Debug.LogError("Verification Panel is not assigned.");
+            return;
+        }
+
+        SwitchPanel(verificationPanel, verificationAnimator, verificationOpen);
     }
 
     public void ShowQuitPanel()
@@ -146,6 +180,9 @@ public class PlayFabAccountManager : MonoBehaviour
 
         if (forgotPasswordPanel != null)
             forgotPasswordPanel.SetActive(false);
+
+        if (verificationPanel != null)
+            verificationPanel.SetActive(false);
 
         if (quitPanel != null)
             quitPanel.SetActive(false);
@@ -219,6 +256,10 @@ public class PlayFabAccountManager : MonoBehaviour
             forgotPasswordPanel != targetPanel)
             forgotPasswordPanel.SetActive(false);
 
+        if (verificationPanel != null &&
+            verificationPanel != targetPanel)
+            verificationPanel.SetActive(false);
+
         if (quitPanel != null && quitPanel != targetPanel)
             quitPanel.SetActive(false);
 
@@ -254,6 +295,9 @@ public class PlayFabAccountManager : MonoBehaviour
         if (panel == quitPanel)
             return quitAnimator;
 
+        if (panel == verificationPanel)
+            return verificationAnimator;
+
         return null;
     }
 
@@ -271,6 +315,9 @@ public class PlayFabAccountManager : MonoBehaviour
         if (panel == quitPanel)
             return quitClose;
 
+        if (panel == verificationPanel)
+            return verificationClose;
+
         return null;
     }
 
@@ -287,6 +334,9 @@ public class PlayFabAccountManager : MonoBehaviour
 
         if (panel == quitPanel)
             return quitOpen;
+
+        if (panel == verificationPanel)
+            return verificationOpen;
 
         return null;
     }
@@ -337,15 +387,259 @@ public class PlayFabAccountManager : MonoBehaviour
         Debug.Log("LOGIN SUCCESS TIME: " + System.DateTime.Now);
         Debug.Log("PLAYFAB LAST LOGIN: " + result.LastLoginTime);
 
-        PlayerPrefs.SetString("Username", loginUsernameInput.text.Trim());
-        PlayerPrefs.SetString("PlayFabId", result.PlayFabId);
+        currentPlayFabId = result.PlayFabId;
+
+        if (isRegistrationLogin)
+        {
+            isRegistrationLogin = false;
+            AddContactEmailToPlayer(pendingRegistrationEmail);
+            return;
+        }
+
+        CheckVerificationStatus();
+    }
+
+    private void CompleteLogin()
+    {
+        string username = loginUsernameInput != null
+            ? loginUsernameInput.text.Trim()
+            : pendingRegistrationUsername;
+
+        if (string.IsNullOrEmpty(username))
+            username = pendingRegistrationUsername;
+
+        PlayerPrefs.SetString("Username", username);
+        PlayerPrefs.SetString("PlayFabId", currentPlayFabId);
         PlayerPrefs.Save();
 
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
+    public void CheckVerificationStatus()
+    {
+        if (isCheckingVerification)
+            return;
+
+        if (string.IsNullOrEmpty(currentPlayFabId))
+        {
+            ShowVerificationPanel();
+            ShowVerificationError("Please log in again to check your email.");
+            return;
+        }
+
+        isCheckingVerification = true;
+
+        GetPlayerProfileRequest request = new GetPlayerProfileRequest
+        {
+            PlayFabId = currentPlayFabId,
+            ProfileConstraints = new PlayerProfileViewConstraints
+            {
+                ShowContactEmailAddresses = true
+            }
+        };
+
+        PlayFabClientAPI.GetPlayerProfile(
+            request,
+            OnVerificationProfileReceived,
+            OnVerificationProfileFailure
+        );
+    }
+
+    private void OnVerificationProfileReceived(GetPlayerProfileResult result)
+    {
+        isCheckingVerification = false;
+
+        if (result.PlayerProfile == null ||
+            result.PlayerProfile.ContactEmailAddresses == null ||
+            result.PlayerProfile.ContactEmailAddresses.Count == 0)
+        {
+            GetAccountInfoRequest accountRequest = new GetAccountInfoRequest();
+
+            PlayFabClientAPI.GetAccountInfo(
+                accountRequest,
+                OnAccountInfoForContactEmailReceived,
+                OnAccountInfoForContactEmailFailure
+            );
+            return;
+        }
+
+        var contactEmail = result.PlayerProfile.ContactEmailAddresses[0];
+        verificationEmail = contactEmail.EmailAddress;
+
+        if (verificationEmailText != null)
+            verificationEmailText.text = verificationEmail;
+
+        if (contactEmail.VerificationStatus.ToString() == "Confirmed")
+        {
+            CompleteLogin();
+        }
+        else
+        {
+            ShowVerificationPanel();
+            ShowVerificationError("Your email is not verified yet. Please check your inbox and click the verification link.");
+        }
+    }
+
+    private void OnAccountInfoForContactEmailReceived(GetAccountInfoResult result)
+    {
+        string accountEmail = result.AccountInfo != null &&
+                             result.AccountInfo.PrivateInfo != null
+            ? result.AccountInfo.PrivateInfo.Email
+            : null;
+
+        if (string.IsNullOrWhiteSpace(accountEmail))
+        {
+            ShowVerificationPanel();
+            ShowVerificationError("No email address is associated with this account. Please contact support.");
+            return;
+        }
+
+        AddContactEmailToPlayer(accountEmail);
+    }
+
+    private void OnAccountInfoForContactEmailFailure(PlayFabError error)
+    {
+        ShowVerificationPanel();
+        ShowVerificationError("Unable to retrieve your account email. Please try again.");
+        Debug.LogError(error.GenerateErrorReport());
+    }
+
+    private void OnVerificationProfileFailure(PlayFabError error)
+    {
+        isCheckingVerification = false;
+        ShowVerificationPanel();
+        ShowVerificationError("Unable to check verification status. Please try again.");
+        Debug.LogError(error.GenerateErrorReport());
+    }
+
+    private void AddContactEmailToPlayer(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            ShowVerificationPanel();
+            ShowVerificationError("Your email address is missing. Please contact support.");
+            return;
+        }
+
+        verificationEmail = email;
+
+        Debug.Log("Adding contact email to PlayFab: " + email);
+
+        AddOrUpdateContactEmailRequest request = new AddOrUpdateContactEmailRequest
+        {
+            EmailAddress = email
+        };
+
+        PlayFabClientAPI.AddOrUpdateContactEmail(
+            request,
+            OnContactEmailAdded,
+            OnContactEmailAddFailure
+        );
+    }
+
+    private void OnContactEmailAdded(AddOrUpdateContactEmailResult result)
+    {
+        Debug.Log("CONTACT EMAIL ADDED SUCCESSFULLY!");
+        Debug.Log("PlayFab accepted the contact email request. Check the email rule for delivery.");
+
+        if (verificationEmailText != null)
+            verificationEmailText.text = verificationEmail;
+
+        ShowVerificationPanel();
+        ShowVerificationSentMessage("Please check your inbox and spam folder for the verification email.");
+    }
+
+    private void OnContactEmailAddFailure(PlayFabError error)
+    {
+        Debug.LogError("CONTACT EMAIL ERROR: " + error.GenerateErrorReport());
+
+        ShowVerificationPanel();
+        ShowVerificationError("Unable to send the verification email. Please try again.");
+    }
+
+    public void ResendVerificationEmail()
+    {
+        if (isResendingVerification)
+            return;
+
+        if (Time.unscaledTime < nextResendAllowedTime)
+        {
+            int secondsLeft = Mathf.CeilToInt(nextResendAllowedTime - Time.unscaledTime);
+            ShowVerificationError("Please wait " + secondsLeft + " seconds before requesting another email.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(verificationEmail))
+        {
+            ShowVerificationError("Email address not found. Please log in again.");
+            return;
+        }
+
+        isResendingVerification = true;
+
+        AddOrUpdateContactEmailRequest request = new AddOrUpdateContactEmailRequest
+        {
+            EmailAddress = verificationEmail
+        };
+
+        PlayFabClientAPI.AddOrUpdateContactEmail(
+            request,
+            OnVerificationResent,
+            OnVerificationResendFailure
+        );
+    }
+
+    private void OnVerificationResent(AddOrUpdateContactEmailResult result)
+    {
+        isResendingVerification = false;
+        nextResendAllowedTime = Time.unscaledTime + ResendCooldownSeconds;
+        ShowVerificationSentMessage("Verification email resent! Please check your inbox and spam folder.");
+    }
+
+    private void OnVerificationResendFailure(PlayFabError error)
+    {
+        isResendingVerification = false;
+        ShowVerificationError("Unable to resend the verification email. Please try again later.");
+        Debug.LogError(error.GenerateErrorReport());
+    }
+
+    private void ShowVerificationSentMessage(string message)
+    {
+        if (verificationSentText != null)
+        {
+            verificationSentText.text = message;
+            verificationSentText.gameObject.SetActive(true);
+        }
+
+        if (verificationErrorText != null)
+            verificationErrorText.gameObject.SetActive(false);
+    }
+
+    private void ShowVerificationError(string message)
+    {
+        if (verificationSentText != null)
+            verificationSentText.gameObject.SetActive(false);
+
+        if (verificationErrorText == null)
+        {
+            Debug.LogWarning(message);
+            return;
+        }
+
+        verificationErrorText.text = message;
+        verificationErrorText.gameObject.SetActive(true);
+    }
+
     private void OnLoginFailure(PlayFabError error)
     {
+        if (isRegistrationLogin)
+        {
+            isRegistrationLogin = false;
+            ShowRegisterError("Your account was created, but automatic sign-in failed. Please log in manually.");
+            Debug.LogError(error.GenerateErrorReport());
+            return;
+        }
+
         switch (error.Error)
         {
             case PlayFabErrorCode.InvalidUsernameOrPassword:
@@ -439,6 +733,10 @@ public class PlayFabAccountManager : MonoBehaviour
 
         HideMessages();
 
+        pendingRegistrationUsername = username;
+        pendingRegistrationEmail = email;
+        pendingRegistrationPassword = password;
+
         RegisterPlayFabUserRequest request = new RegisterPlayFabUserRequest
         {
             Username = username,
@@ -460,14 +758,25 @@ public class PlayFabAccountManager : MonoBehaviour
         Debug.Log("PlayFab Registration Successful!");
         Debug.Log("PlayFab ID: " + result.PlayFabId);
 
-        loginUsernameInput.text =
-            registerUsernameInput.text.Trim().Replace(" ", "");
+        if (loginUsernameInput != null)
+            loginUsernameInput.text = pendingRegistrationUsername;
 
-        loginPasswordInput.text = "";
+        if (loginPasswordInput != null)
+            loginPasswordInput.text = "";
 
-        ShowLoginPanel();
+        isRegistrationLogin = true;
 
-        ShowLoginError("Registration successful! Please log in.");
+        LoginWithPlayFabRequest loginRequest = new LoginWithPlayFabRequest
+        {
+            Username = pendingRegistrationUsername,
+            Password = pendingRegistrationPassword
+        };
+
+        PlayFabClientAPI.LoginWithPlayFab(
+            loginRequest,
+            OnLoginSuccess,
+            OnLoginFailure
+        );
     }
 
     private void OnRegisterFailure(PlayFabError error)
@@ -596,5 +905,11 @@ public class PlayFabAccountManager : MonoBehaviour
 
         if (forgotErrorText != null)
             forgotErrorText.gameObject.SetActive(false);
+
+        if (verificationSentText != null)
+            verificationSentText.gameObject.SetActive(false);
+
+        if (verificationErrorText != null)
+            verificationErrorText.gameObject.SetActive(false);
     }
 }

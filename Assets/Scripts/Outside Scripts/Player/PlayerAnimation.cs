@@ -36,30 +36,6 @@ public class PlayerAnimation : MonoBehaviour
         animator.CrossFade(animation, crossfade);
     }
 
-    /*private void HandleAttackInput()
-    {
-        if (PauseManager.Instance != null &&
-            PauseManager.Instance.IsPaused)
-            return;
-
-        if (inventory != null &&
-            inventory.IsOpen)
-            return;
-
-        // Don't attack while quiz is open
-        if (!attackEnabled)
-            return;
-
-        if (inventory == null ||
-            !inventory.IsHoldingItem(inventory.hatchetitem))
-            return;
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            Attack();
-        }
-    }*/
-
     // Attack
     public void Attack()
     {
