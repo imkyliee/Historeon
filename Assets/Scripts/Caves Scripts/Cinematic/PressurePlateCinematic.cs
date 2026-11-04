@@ -20,11 +20,45 @@ public class PressurePlateCinematic : MonoBehaviour
     public GameObject objectToEnable;
     public float destroyDelay = 3f;
 
+    [Header("Save Settings")]
+    public string cinematicID = "PressurePlateCinematic01";
+
     [Header("Settings")]
     public bool triggerOnce = true;
 
     private bool triggered;
     private bool playerOnPlate;
+
+    private void Start()
+    {
+        if (PlayFabSaveManager.Instance != null &&
+            PlayFabSaveManager.Instance.HasCompletedCinematic(cinematicID))
+        {
+            triggered = true;
+
+            if (pressurePlateAnimator != null)
+            {
+                pressurePlateAnimator.Play(pressAnimation, 0, 1f);
+                pressurePlateAnimator.Update(0f);
+                pressurePlateAnimator.enabled = false;
+            }
+
+            if (wallAnimator != null)
+            {
+                wallAnimator.Play(wallAnimation, 0, 1f);
+                wallAnimator.Update(0f);
+                wallAnimator.enabled = false;
+            }
+
+            if (cinematicObject != null)
+                cinematicObject.SetActive(false);
+
+            if (objectToEnable != null)
+                objectToEnable.SetActive(false);
+
+            gameObject.SetActive(false);
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -37,8 +71,23 @@ public class PressurePlateCinematic : MonoBehaviour
         if (playerOnPlate)
             return;
 
+        if (PlayFabSaveManager.Instance == null)
+        {
+            Debug.LogError("PlayFabSaveManager was not found!", this);
+            return;
+        }
+
+        if (PlayFabSaveManager.Instance.HasCompletedCinematic(cinematicID))
+        {
+            triggered = true;
+            gameObject.SetActive(false);
+            return;
+        }
+
         playerOnPlate = true;
         triggered = true;
+
+        PlayFabSaveManager.Instance.MarkCinematicCompleted(cinematicID);
 
         if (pressurePlateAnimator != null)
             pressurePlateAnimator.Play(pressAnimation, 0, 0f);

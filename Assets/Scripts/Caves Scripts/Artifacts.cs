@@ -1,3 +1,4 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,12 +22,14 @@ public class Artifacts : MonoBehaviour
     public ObjectPrerequisite artifactPrerequisite;
     public ObjectPrerequisite nextCavePrerequisite;
     public string prerequisiteRequirementName = "ManunggulJar";
+
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
 
     [Header("Artifact")]
     public GameObject artifactObject;
     public GameObject barrierObject;
+    public GameObject triggerBoxObject;
     public string artifactWorldID = "TabonCaveArtifact";
 
     [Header("Enemy Prefabs")]
@@ -73,6 +76,41 @@ public class Artifacts : MonoBehaviour
 
         if (barrierObject != null)
             barrierObject.SetActive(false);
+    }
+
+    public void RestoreCollectedState()
+    {
+        if (PlayFabSaveManager.Instance == null)
+            return;
+
+        if (!PlayFabSaveManager.Instance.IsWorldObjectCollected(artifactWorldID))
+            return;
+
+        trophyObtained = true;
+        encounterStarted = true;
+        enemiesDefeated = true;
+
+        HideInteractUI();
+
+        if (getTrophyUI != null)
+            getTrophyUI.SetActive(false);
+
+        if (killEnemiesUI != null)
+            killEnemiesUI.SetActive(false);
+
+        if (blocker != null)
+            blocker.SetActive(false);
+
+        if (artifactObject != null)
+            Destroy(artifactObject);
+
+        if (barrierObject != null)
+            Destroy(barrierObject);
+
+        if (triggerBoxObject != null)
+            Destroy(triggerBoxObject);
+
+        Debug.Log("Restored collected artifact: " + artifactWorldID);
     }
 
     private void Update()
@@ -128,7 +166,7 @@ public class Artifacts : MonoBehaviour
 
     private void StartEncounter()
     {
-       encounterStarted = true;
+        encounterStarted = true;
 
         if (artifactAudioFade != null)
             artifactAudioFade.StartArtifactEncounter();
@@ -258,7 +296,6 @@ public class Artifacts : MonoBehaviour
         }
     }
 
-    
     private void CheckEnemies()
     {
         if (!encounterStarted || enemiesDefeated)
@@ -277,18 +314,13 @@ public class Artifacts : MonoBehaviour
             EnemyHealth enemyHealth = enemyObject.GetComponent<EnemyHealth>();
 
             if (enemyHealth != null && enemyHealth.IsDead())
-            {
                 spawnedEnemies.RemoveAt(i);
-            }
         }
 
         if (spawnedEnemies.Count == 0)
-        {
             EnemiesDefeated();
-        }
     }
 
-    
     private void EnemiesDefeated()
     {
         enemiesDefeated = true;
@@ -298,6 +330,9 @@ public class Artifacts : MonoBehaviour
 
         if (blocker != null)
             blocker.SetActive(false);
+
+        if (barrierObject != null)
+            Destroy(barrierObject);
 
         if (killEnemiesUI != null)
             killEnemiesUI.SetActive(false);
@@ -314,11 +349,10 @@ public class Artifacts : MonoBehaviour
         trophyObtained = true;
 
         ObjectPrerequisite.RegisterGlobalRequirement(
-        "NextCave3",
-        "Skull"
-    );
+            "NextCave3",
+            "Skull"
+        );
 
-        // Complete the artifact objective.
         if (ObjectiveManager.Instance != null)
         {
             ObjectiveManager.Instance.CompleteObjective("Get the Artifact.");
@@ -328,7 +362,6 @@ public class Artifacts : MonoBehaviour
             Debug.LogWarning("Artifacts: ObjectiveManager not found!");
         }
 
-        // Notify the prerequisite that the artifact was obtained.
         if (artifactPrerequisite != null &&
             !string.IsNullOrEmpty(prerequisiteRequirementName))
         {
@@ -351,26 +384,14 @@ public class Artifacts : MonoBehaviour
             getTrophyUI.SetActive(false);
 
         if (logbookEntry != null)
-        {
             logbookEntry.AddToLogbook();
-        }
         else
-        {
-            Debug.LogWarning(
-                "Artifacts: Logbook Entry is not assigned!"
-            );
-        }
+            Debug.LogWarning("Artifacts: Logbook Entry is not assigned!");
 
         if (logbookNotification != null)
-        {
             logbookNotification.ShowNotification();
-        }
         else
-        {
-            Debug.LogWarning(
-                "Artifacts: Logbook Notification is not assigned!"
-            );
-        }
+            Debug.LogWarning("Artifacts: Logbook Notification is not assigned!");
 
         if (PlayFabSaveManager.Instance != null)
         {
@@ -392,6 +413,9 @@ public class Artifacts : MonoBehaviour
 
         if (barrierObject != null)
             Destroy(barrierObject);
+
+        if (triggerBoxObject != null)
+            Destroy(triggerBoxObject);
     }
 
     private void ShowInteractUI()

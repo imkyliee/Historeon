@@ -17,6 +17,7 @@ public class TutorialManager : MonoBehaviour
     public GameObject logbookBG;
     public GameObject logbookNotif;
     public GameObject pickupBG;
+    public GameObject bagPickupBG;
     public GameObject inventoryBG;
     public GameObject dropBG;
     public GameObject rightClickBG;
@@ -46,6 +47,7 @@ public class TutorialManager : MonoBehaviour
     public CinematicCamera cinematicCamera;
     public Inventory inventory;
     public TabMenuManager tabMenuManager;
+    public CampfireTutorialPrompt campfireTutorialPrompt;
 
     [Header("Logbook Notification")]
     public Animator UIanimation;
@@ -214,18 +216,18 @@ public class TutorialManager : MonoBehaviour
 
         secondTutorialStarted = true;
 
-        // Destroy the first tutorial UIs
+        // Disable the first tutorial UIs
         if (tutorialUI1 != null)
-            Destroy(tutorialUI1);
+            tutorialUI1.SetActive(false);
 
         if (tutorialUI2 != null)
-            Destroy(tutorialUI2);
+            tutorialUI2.SetActive(false);
 
         if (tutorialUI3 != null)
-            Destroy(tutorialUI3);
+            tutorialUI3.SetActive(false);
 
         if (tutorialUI4 != null)
-            Destroy(tutorialUI4);
+            tutorialUI4.SetActive(false);
 
         if (tutorialTrigger != null)
             tutorialTrigger.enabled = false;
@@ -246,6 +248,9 @@ public class TutorialManager : MonoBehaviour
 
         if (pickupBG != null)
             pickupBG.SetActive(false);
+
+        if (bagPickupBG != null)
+            bagPickupBG.SetActive(false);
 
         if (inventoryBG != null)
             inventoryBG.SetActive(false);
@@ -275,8 +280,16 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case 2:
-                if (pickupBG != null)
-                    pickupBG.SetActive(true);
+                if (flashlightFirst && !bagPickedUp)
+                {
+                    if (bagPickupBG != null)
+                        bagPickupBG.SetActive(true);
+                }
+                else
+                {
+                    if (pickupBG != null)
+                        pickupBG.SetActive(true);
+                }
                 break;
 
             case 3:
@@ -612,24 +625,27 @@ public class TutorialManager : MonoBehaviour
 
         thirdTutorialStarted = true;
 
-        // Destroy second tutorial UIs
+        // Disable second tutorial UIs
         if (logbookBG != null)
-            Destroy(logbookBG);
+            logbookBG.SetActive(false);
 
         if (logbookNotif != null)
-            Destroy(logbookNotif);
+            logbookNotif.SetActive(false);
 
         if (pickupBG != null)
-            Destroy(pickupBG);
+            pickupBG.SetActive(false);
+
+        if (bagPickupBG != null)
+            bagPickupBG.SetActive(false);
 
         if (inventoryBG != null)
-            Destroy(inventoryBG);
+            inventoryBG.SetActive(false);
 
         if (dropBG != null)
-            Destroy(dropBG);
+            dropBG.SetActive(false);
 
         if (rightClickBG != null)
-            Destroy(rightClickBG);
+            rightClickBG.SetActive(false);
 
         secondTutorialIndex = 6;
 
@@ -665,11 +681,14 @@ public class TutorialManager : MonoBehaviour
         ShowThirdTutorial(3);
     }
 
-    public void CompleteThirdLeftClick()
+   public void CompleteThirdLeftClick()
     {
         if (thirdTutorialIndex != 3)
             return;
 
         ShowThirdTutorial(4);
+
+        if (campfireTutorialPrompt != null)
+            campfireTutorialPrompt.ShowPrompt();
     }
 }

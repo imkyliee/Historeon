@@ -221,6 +221,12 @@ public class PlayFabSaveManager : MonoBehaviour
         );
     }
 
+    public bool IsWorldObjectCollected(string worldID)
+    {
+        return !string.IsNullOrEmpty(worldID) &&
+            collectedWorldIDs.Contains(worldID);
+    }
+
     public bool IsQuizForfeited(string quizID)
     {
         return !string.IsNullOrWhiteSpace(quizID) && forfeitedQuizIDs.Contains(quizID);
@@ -1082,6 +1088,12 @@ public class PlayFabSaveManager : MonoBehaviour
 
     public void RegisterCollectedWorldObject(string worldID)
     {
+        if (SceneManager.GetActiveScene().name == "Tutorial")
+        {
+            Debug.Log("Tutorial scene: Skipping collected world object registration.");
+            return;
+        }
+
         if (string.IsNullOrEmpty(worldID))
         {
             Debug.LogWarning("Collected world object has no World ID.");
@@ -1105,15 +1117,30 @@ public class PlayFabSaveManager : MonoBehaviour
             }
         }
 
+        Artifacts[] artifacts = FindObjectsOfType<Artifacts>(true);
+
+        foreach (Artifacts artifact in artifacts)
+        {
+            if (artifact != null)
+                artifact.RestoreCollectedState();
+        }
+
         PersistentWorldItem[] worldItems =
             FindObjectsOfType<PersistentWorldItem>(true);
 
+        bool isTutorial =
+            SceneManager.GetActiveScene().name == "Tutorial";
+
         foreach (PersistentWorldItem worldItem in worldItems)
         {
-            if (worldItem != null &&
-                !worldItem.ignoreCollectedStateInTutorial &&
-                !string.IsNullOrEmpty(worldItem.worldID) &&
-                collectedWorldIDs.Contains(worldItem.worldID))
+            if (worldItem == null ||
+                string.IsNullOrEmpty(worldItem.worldID))
+                continue;
+
+            if (isTutorial && worldItem.ignoreCollectedStateInTutorial)
+                continue;
+
+            if (collectedWorldIDs.Contains(worldItem.worldID))
             {
                 Debug.Log(
                     "Removing collected world object: " + worldItem.worldID
@@ -1271,10 +1298,5 @@ public void SaveUnlockedDoor(string doorID)
                 callback?.Invoke(false);
             }
         );
-    }
-    public bool IsWorldObjectCollected(string worldID)
-    {
-        return !string.IsNullOrEmpty(worldID) &&
-            collectedWorldIDs.Contains(worldID);
     }
 }
