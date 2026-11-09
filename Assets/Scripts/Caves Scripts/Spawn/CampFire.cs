@@ -221,7 +221,7 @@ public class CampFire : MonoBehaviour
             if (fireLight != null)
                 fireLight.enabled = true;
 
-            Debug.Log("CampFire: Saved campfire restored.");
+            //Debug.Log("CampFire: Saved campfire restored.");
         }
     }
 

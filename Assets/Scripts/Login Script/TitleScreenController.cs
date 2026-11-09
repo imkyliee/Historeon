@@ -123,6 +123,10 @@ public class TitleScreenController : MonoBehaviour
         }
 
         warningFinished = true;
+
+        // Start background music after warning animations.
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.PlayMusic();
     }
 
     private IEnumerator StartGameSequence()
@@ -177,7 +181,17 @@ public class TitleScreenController : MonoBehaviour
 
     public void PlayStartAudio()
     {
-        if (startAudio != null)
-            AudioSource.PlayClipAtPoint(startAudio, transform.position);
+        if (startAudio == null)
+            return;
+
+        float volume = SFXManager.Instance != null
+            ? SFXManager.Instance.GetVolume()
+            : PlayerPrefs.GetFloat("SFXVolume", 1f);
+
+        AudioSource.PlayClipAtPoint(
+            startAudio,
+            transform.position,
+            volume
+        );
     }
 }

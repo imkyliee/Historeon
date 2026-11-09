@@ -20771,6 +20771,7 @@ GameObject:
   - component: {fileID: 241257565}
   - component: {fileID: 241257564}
   - component: {fileID: 241257563}
+  - component: {fileID: 241257566}
   m_Layer: 0
   m_Name: ArtifactAudioManager
   m_TagString: Untagged
@@ -20905,6 +20906,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &241257566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 241257562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e27ab8a37ad1f904d9e4c1c41ba97c5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &242268921
 GameObject:
   m_ObjectHideFlags: 0
@@ -28074,7 +28087,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be0ec6ac26fb54f4396784ff068c8b4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  volumeSlider: {fileID: 1934209592}
+  volumeSlider: {fileID: 220542836}
 --- !u!4 &347815773
 Transform:
   m_ObjectHideFlags: 0
@@ -29949,7 +29962,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4441486200052658455}
+      - m_Target: {fileID: 38446892}
         m_TargetAssemblyTypeName: PadlockInspector, Assembly-CSharp
         m_MethodName: CloseQuiz
         m_Mode: 1
@@ -33072,7 +33085,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 5
+  m_Intensity: 25
   m_Range: 50
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -62908,7 +62921,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ad877ea88cfe3b4abf8175ee4b7a30c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  worldID: world_regretLogbook
+  worldID: world_regretLogBook
   ignoreCollectedStateInTutorial: 0
 --- !u!114 &1119679616
 MonoBehaviour:
@@ -69962,7 +69975,7 @@ MonoBehaviour:
   prerequisite: {fileID: 1195264810}
   requirementName: infoLogBook
   tutorialPrerequisite: {fileID: 0}
-  tutorialRequirementName: tutorialLogBook
+  tutorialRequirementName: 
 --- !u!65 &1196187555
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -125126,7 +125139,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 5
+  m_Intensity: 25
   m_Range: 50
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -125921,6 +125934,7 @@ GameObject:
   - component: {fileID: 2028544300}
   - component: {fileID: 2028544302}
   - component: {fileID: 2028544301}
+  - component: {fileID: 2028544304}
   m_Layer: 8
   m_Name: DeathCamera
   m_TagString: Untagged
@@ -126057,6 +126071,14 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1868738171}
   m_LocalEulerAnglesHint: {x: 40, y: 0, z: 0}
+--- !u!81 &2028544304
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2028544299}
+  m_Enabled: 1
 --- !u!1 &2028821928
 GameObject:
   m_ObjectHideFlags: 0
@@ -129607,8 +129629,6 @@ MonoBehaviour:
   - {fileID: 2106675591}
   - {fileID: 1740183588}
   - {fileID: 667979111}
-  - {fileID: 368513792}
-  - {fileID: 2011262799}
   playerMovement: {fileID: 1868738170}
   playerAnimation: {fileID: 1868738169}
   playerAnimator: {fileID: 1868738163}

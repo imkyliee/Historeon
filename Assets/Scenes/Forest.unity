@@ -20,7 +20,7 @@ RenderSettings:
   m_FogDensity: 0.08
   m_LinearFogStart: 10
   m_LinearFogEnd: 40
-  m_AmbientSkyColor: {r: 0.084905684, g: 0.084905684, b: 0.084905684, a: 1}
+  m_AmbientSkyColor: {r: 0, g: 0, b: 0, a: 1}
   m_AmbientEquatorColor: {r: 0.30084783, g: 0.329877, b: 0.35098913, a: 1}
   m_AmbientGroundColor: {r: 7.9066997, g: 7.23379, b: 5.8879685, a: 1}
   m_AmbientIntensity: 8
@@ -1385,7 +1385,7 @@ GameObject:
   - component: {fileID: 166623115}
   - component: {fileID: 166623114}
   m_Layer: 0
-  m_Name: Point Light (1)
+  m_Name: 'Point Light '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2584,6 +2584,7 @@ GameObject:
   - component: {fileID: 245563768}
   - component: {fileID: 245563770}
   - component: {fileID: 245563769}
+  - component: {fileID: 245563772}
   m_Layer: 8
   m_Name: DeathCamera
   m_TagString: Untagged
@@ -2720,6 +2721,14 @@ Transform:
   m_Children: []
   m_Father: {fileID: 430449908}
   m_LocalEulerAnglesHint: {x: 40, y: 0, z: 0}
+--- !u!81 &245563772
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 245563767}
+  m_Enabled: 1
 --- !u!1 &253744209
 GameObject:
   m_ObjectHideFlags: 0
@@ -11193,7 +11202,7 @@ GameObject:
   - component: {fileID: 936594846}
   - component: {fileID: 936594845}
   m_Layer: 0
-  m_Name: Lamp (1)
+  m_Name: Lamp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

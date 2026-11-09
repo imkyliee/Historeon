@@ -41,11 +41,29 @@ public class InventoryTransferManager : MonoBehaviour
         Debug.Log("Inventory captured for scene transfer.");
     }
 
+    
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (!hasPendingInventory)
-            return;
+        Debug.Log("InventoryTransferManager: Scene loaded: " + scene.name);
+        Debug.Log("Has pending inventory: " + hasPendingInventory);
 
+        if (scene.name == "Dynamic Main Menu")
+        {
+            StopAllCoroutines();
+            pendingInventory = null;
+            hasPendingInventory = false;
+
+            Debug.Log("Pending inventory transfer cleared on Dynamic Main Menu.");
+            return;
+        }
+
+        if (!hasPendingInventory)
+        {
+            Debug.Log("No pending inventory transfer. Skipping restore.");
+            return;
+        }
+
+        Debug.Log("Starting inventory restoration.");
         StartCoroutine(RestoreWhenReady());
     }
 

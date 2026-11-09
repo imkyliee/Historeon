@@ -38,7 +38,7 @@ public class ObjectiveTransferManager : MonoBehaviour
                 objectiveBook.WriteQuests();
         }
 
-        Debug.Log("Objective UI refreshed after scene load.");
+        //Debug.Log("Objective UI refreshed after scene load.");
     }
 
     private void OnDestroy()

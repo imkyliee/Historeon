@@ -36,7 +36,7 @@ public class LogbookTransferManager : MonoBehaviour
         pendingLogbooks = logbookBook.GetSavedEntries();
         hasPendingLogbooks = true;
 
-        Debug.Log("Logbooks captured for scene transfer: " + pendingLogbooks.Count);
+        //Debug.Log("Logbooks captured for scene transfer: " + pendingLogbooks.Count);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -67,7 +67,7 @@ public class LogbookTransferManager : MonoBehaviour
         pendingLogbooks = null;
         hasPendingLogbooks = false;
 
-        Debug.Log("Logbooks transferred to the new scene.");
+        //Debug.Log("Logbooks transferred to the new scene.");
     }
 
     private void OnDestroy()

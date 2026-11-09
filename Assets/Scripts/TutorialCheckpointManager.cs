@@ -25,6 +25,7 @@ public class TutorialCheckpointManager : MonoBehaviour
     private Inventory inventory;
     private Movement movement;
     private PlayerHealth health;
+    private PlayerAnimation playerAnimation;
     private Camera playerCamera;
     private Transform head;
     private Rigidbody playerBody;
@@ -58,6 +59,7 @@ public class TutorialCheckpointManager : MonoBehaviour
         inventory = FindFirstObjectByType<Inventory>();
         movement = FindFirstObjectByType<Movement>();
         health = FindFirstObjectByType<PlayerHealth>();
+        playerAnimation = FindFirstObjectByType<PlayerAnimation>();
         playerCamera = Camera.main;
 
         if (movement != null)
@@ -118,6 +120,9 @@ public class TutorialCheckpointManager : MonoBehaviour
 
         if (health == null)
             health = FindFirstObjectByType<PlayerHealth>();
+
+        if (playerAnimation == null)
+            playerAnimation = FindFirstObjectByType<PlayerAnimation>();
 
         if (playerCamera == null)
             playerCamera = Camera.main;
@@ -260,6 +265,9 @@ public class TutorialCheckpointManager : MonoBehaviour
             playerBody.linearVelocity = Vector3.zero;
             playerBody.angularVelocity = Vector3.zero;
         }
+
+        if (playerAnimation != null)
+            playerAnimation.ResetActionAfterQuiz();
 
         Debug.Log(
             "Tutorial checkpoint snapshot restored."

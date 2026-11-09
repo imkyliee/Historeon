@@ -26875,7 +26875,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be0ec6ac26fb54f4396784ff068c8b4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  volumeSlider: {fileID: 1824893571}
+  volumeSlider: {fileID: 197362931}
 --- !u!4 &585973073
 Transform:
   m_ObjectHideFlags: 0
@@ -33720,8 +33720,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.2858093, y: 4.2453556, z: 1.1983387}
-  m_Center: {x: 0.12055649, y: 0.5706896, z: -0.29799697}
+  m_Size: {x: 2.2858105, y: 4.2453556, z: 0.45354754}
+  m_Center: {x: 0.12055557, y: 0.5706898, z: 0.07440277}
 --- !u!23 &674478189
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -39190,7 +39190,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 733939217}
-  - component: {fileID: 733939216}
+  - component: {fileID: 733939218}
   - component: {fileID: 733939215}
   - component: {fileID: 733939214}
   m_Layer: 0
@@ -39309,25 +39309,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &733939216
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 733939213}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e59f296fb9f7e24c9a56d4cf7bbca11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DoorUI: {fileID: 1352257219}
-  OpenUI: {fileID: 1972985277}
-  CloseUI: {fileID: 452362876}
-  interactionRange: 3
-  openSound: {fileID: 8300000, guid: 0795a94b3ce291b43abb0ad4a12e2d1c, type: 3}
-  closeSound: {fileID: 8300000, guid: dad0e4fddc0af6f4586eecad4e9326cd, type: 3}
-  soundVolume: 1
 --- !u!4 &733939217
 Transform:
   m_ObjectHideFlags: 0
@@ -39344,6 +39325,25 @@ Transform:
   - {fileID: 375435494}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &733939218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733939213}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2359b615302ada44e8f672c51b23c853, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DoorUI: {fileID: 1352257219}
+  OpenUI: {fileID: 1972985277}
+  CloseUI: {fileID: 452362876}
+  interactionRange: 3
+  openSound: {fileID: 8300000, guid: 0795a94b3ce291b43abb0ad4a12e2d1c, type: 3}
+  closeSound: {fileID: 8300000, guid: dad0e4fddc0af6f4586eecad4e9326cd, type: 3}
+  soundVolume: 1
 --- !u!1 &736950937
 GameObject:
   m_ObjectHideFlags: 0
@@ -41121,7 +41121,7 @@ MonoBehaviour:
   playerAnimator: {fileID: 607832651}
   inventory: {fileID: 572771074}
   pauseManager: {fileID: 100565315}
-  tabMenuManager: {fileID: 0}
+  tabMenuManager: {fileID: 425985353}
   mainCameraBob: {fileID: 1096983306}
   itemCameraBob: {fileID: 1281915331}
   playerHealth: {fileID: 607832655}
@@ -41171,7 +41171,7 @@ MonoBehaviour:
   objectsToDisable:
   - {fileID: 1672645919}
   scriptsToEnable:
-  - {fileID: 733939216}
+  - {fileID: 733939218}
 --- !u!1 &838961683
 GameObject:
   m_ObjectHideFlags: 0
@@ -41391,8 +41391,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.2858093, y: 4.2453556, z: 1.1983387}
-  m_Center: {x: 0.12055649, y: 0.5706896, z: -0.29799697}
+  m_Size: {x: 2.28581, y: 4.2453556, z: 0.45354733}
+  m_Center: {x: 0.12055617, y: 0.5706898, z: 0.07440083}
 --- !u!23 &854270659
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -43881,6 +43881,7 @@ GameObject:
   - component: {fileID: 989073416}
   - component: {fileID: 989073415}
   - component: {fileID: 989073414}
+  - component: {fileID: 989073417}
   m_Layer: 8
   m_Name: DeathCamera
   m_TagString: Untagged
@@ -44017,6 +44018,14 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!81 &989073417
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 989073412}
+  m_Enabled: 1
 --- !u!1 &996941810
 GameObject:
   m_ObjectHideFlags: 0
@@ -45698,7 +45707,7 @@ Transform:
   m_GameObject: {fileID: 1076735776}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 932.4022, y: 603.35913, z: -1.3807169}
+  m_LocalPosition: {x: 5.57, y: -0.42000008, z: 40.48}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -50627,7 +50636,7 @@ MonoBehaviour:
   mainCameraBob: {fileID: 1096983306}
   itemCameraBob: {fileID: 1281915331}
   pauseManager: {fileID: 100565315}
-  tabMenuManager: {fileID: 0}
+  tabMenuManager: {fileID: 425985353}
 --- !u!4 &1403135895
 Transform:
   m_ObjectHideFlags: 0
