@@ -14,6 +14,7 @@ public class TutorialManager : MonoBehaviour
 
     [Header("Second Tutorial")]
     public Collider secondTutorialTrigger;
+    public CampfireTutorial campfireTutorial;
     public GameObject logbookBG;
     public GameObject logbookNotif;
     public GameObject pickupBG;
@@ -551,6 +552,9 @@ public class TutorialManager : MonoBehaviour
 
         if (flashlightFirst && !bagPickedUp)
         {
+            if (inventory != null)
+                inventory.UnlockBagPickup();
+
             ShowSecondTutorial(2);
             return;
         }
@@ -681,14 +685,42 @@ public class TutorialManager : MonoBehaviour
         ShowThirdTutorial(3);
     }
 
-   public void CompleteThirdLeftClick()
+    public void CompleteThirdLeftClick()
     {
         if (thirdTutorialIndex != 3)
             return;
 
         ShowThirdTutorial(4);
 
+        if (campfireTutorial != null)
+            campfireTutorial.UnlockInteraction();
+
         if (campfireTutorialPrompt != null)
             campfireTutorialPrompt.ShowPrompt();
+    }
+    public bool CanPickUpTutorialItem(ItemSO item, ItemSO flashlightItem, ItemSO bagItem, ItemSO hatchetItem)
+    {
+        if (item == flashlightItem)
+        {
+            return secondTutorialStarted &&
+                (!flashlightPickedUp && secondTutorialIndex == 2 ||
+                    secondTutorialIndex >= 6);
+        }
+
+        if (item == bagItem)
+        {
+            return secondTutorialStarted &&
+                (!bagPickedUp && secondTutorialIndex == 2 ||
+                    secondTutorialIndex >= 6);
+        }
+
+        if (item == hatchetItem)
+        {
+            return thirdTutorialStarted &&
+                (thirdTutorialIndex == 2 ||
+                    thirdTutorialIndex >= 4);
+        }
+
+        return true;
     }
 }

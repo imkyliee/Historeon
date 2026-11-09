@@ -98,7 +98,7 @@ public class TutorialDoor : MonoBehaviour
             PlayDoorSound(openSound);
             isOpen = true;
 
-            Debug.Log("Door opened!");
+            //Debug.Log("Door opened!");
         }
         else
         {
@@ -106,7 +106,7 @@ public class TutorialDoor : MonoBehaviour
             PlayDoorSound(closeSound);
             isOpen = false;
 
-            Debug.Log("Door closed!");
+            //Debug.Log("Door closed!");
         }
 
         ShowDoorUI();

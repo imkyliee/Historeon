@@ -1,4 +1,5 @@
 
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using PlayFab;
@@ -11,6 +12,18 @@ public class LogoutButton : MonoBehaviour
 
     public void Logout()
     {
+        StartCoroutine(LogoutSequence());
+    }
+
+    private IEnumerator LogoutSequence()
+    {
+        // Fade out background music.
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.FadeOut();
+            yield return new WaitForSeconds(1.5f);
+        }
+
         // Clear the local PlayFab session.
         PlayFabClientAPI.ForgetAllCredentials();
 

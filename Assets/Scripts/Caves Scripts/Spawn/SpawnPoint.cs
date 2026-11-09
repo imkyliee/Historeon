@@ -66,10 +66,7 @@ public class SpawnPoint : MonoBehaviour
 
         hasSavedSpawnPoint = true;
 
-        Debug.Log(
-            "Spawn point updated to: " +
-            newSpawnPoint.name
-        );
+        //Debug.Log("Spawn point updated to: " + newSpawnPoint.name);
     }
     public static void ResetSavedSpawnPoint()
     {

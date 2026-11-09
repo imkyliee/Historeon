@@ -1,5 +1,4 @@
-﻿
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -31,6 +30,7 @@ public class PauseManager : MonoBehaviour
     public MonoBehaviour[] disableOnPause;
 
     private bool isPaused;
+    private static bool pauseInputLocked;
 
     private void Awake()
     {
@@ -50,6 +50,9 @@ public class PauseManager : MonoBehaviour
 
     private void Update()
     {
+        if (pauseInputLocked)
+            return;
+
         if (!Input.GetKeyDown(KeyCode.Escape))
             return;
 
@@ -84,9 +87,20 @@ public class PauseManager : MonoBehaviour
         Pause();
     }
 
+    public static void LockPauseInput()
+    {
+        pauseInputLocked = true;
+    }
+
+    public IEnumerator UnlockPauseInputAfterTransition(float duration)
+    {
+        yield return new WaitForSecondsRealtime(duration);
+        pauseInputLocked = false;
+    }
+
     public void Pause()
     {
-        if (isPaused)
+        if (isPaused || pauseInputLocked)
             return;
 
         if (inventory != null)
@@ -279,11 +293,13 @@ public class PauseManager : MonoBehaviour
 
         RefreshFlashlightUI();
     }
+
     private void PauseEnemyAudio()
     {
         Enemy[] enemies = FindObjectsByType<Enemy>(
             FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None);
+            FindObjectsSortMode.None
+        );
 
         foreach (Enemy enemy in enemies)
         {
@@ -296,7 +312,8 @@ public class PauseManager : MonoBehaviour
     {
         Enemy[] enemies = FindObjectsByType<Enemy>(
             FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None);
+            FindObjectsSortMode.None
+        );
 
         foreach (Enemy enemy in enemies)
         {
@@ -306,25 +323,25 @@ public class PauseManager : MonoBehaviour
     }
 
     private void PauseGameMusic()
-{
-    if (musicSources == null)
-        return;
-
-    musicWasPlaying = new bool[musicSources.Length];
-
-    for (int i = 0; i < musicSources.Length; i++)
     {
-        AudioSource source = musicSources[i];
+        if (musicSources == null)
+            return;
 
-        if (source == null)
-            continue;
+        musicWasPlaying = new bool[musicSources.Length];
 
-        musicWasPlaying[i] = source.isPlaying;
+        for (int i = 0; i < musicSources.Length; i++)
+        {
+            AudioSource source = musicSources[i];
 
-        if (source.isPlaying)
-            source.Pause();
+            if (source == null)
+                continue;
+
+            musicWasPlaying[i] = source.isPlaying;
+
+            if (source.isPlaying)
+                source.Pause();
+        }
     }
-}
 
     private void ResumeGameMusic()
     {

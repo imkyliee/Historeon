@@ -72,6 +72,6 @@ public class EnableOnInteract : MonoBehaviour
                 script.enabled = true;
         }
 
-        Debug.Log("Interaction state restored: " + interactionID);
+        //Debug.Log("Interaction state restored: " + interactionID);
     }
 }

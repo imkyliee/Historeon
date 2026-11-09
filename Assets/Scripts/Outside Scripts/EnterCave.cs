@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -53,6 +52,7 @@ public class EnterCave : MonoBehaviour
     private AudioSource audioSource;
 
     private static EnterCave currentDoor;
+    private static float transitionPauseDuration;
 
     private bool CanInteractWithDoor()
     {
@@ -190,9 +190,7 @@ public class EnterCave : MonoBehaviour
 
         isUnlocked = true;
 
-        Debug.Log(
-            name + ": Cave door unlocked after quiz completion."
-        );
+        //Debug.Log(name + ": Cave door unlocked after quiz completion.");
     }
 
     private void StopLookingAtDoor()
@@ -228,6 +226,21 @@ public class EnterCave : MonoBehaviour
         );
     }
 
+    private static void SetFlashlightInput(bool state)
+    {
+        FlashlightScript[] flashlights =
+            FindObjectsByType<FlashlightScript>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
+
+        foreach (FlashlightScript flashlight in flashlights)
+        {
+            if (flashlight != null)
+                flashlight.enabled = state;
+        }
+    }
+
     private void DisablePlayerControls()
     {
         if (playerMovement != null)
@@ -244,6 +257,8 @@ public class EnterCave : MonoBehaviour
 
         if (playerInventory != null)
             playerInventory.enabled = false;
+
+        SetFlashlightInput(false);
 
         if (playerAnimation != null)
             playerAnimation.enabled = false;
@@ -263,7 +278,7 @@ public class EnterCave : MonoBehaviour
         if (tabMenuManager != null)
             tabMenuManager.enabled = false;
 
-        Debug.Log("EnterCave: Player controls disabled.");
+        //Debug.Log("EnterCave: Player controls disabled.");
     }
 
     private void EnterDungeon()
@@ -295,19 +310,18 @@ public class EnterCave : MonoBehaviour
 
         if (InventoryTransferManager.Instance == null)
         {
-            Debug.LogError(
-                "EnterCave: InventoryTransferManager is missing!"
-            );
+            Debug.LogError("EnterCave: InventoryTransferManager is missing!");
             return;
         }
 
         isEntering = true;
 
-        Debug.Log("Entering dungeon: " + sceneToLoad);
+        transitionPauseDuration = transition.transitionTime;
+        PauseManager.LockPauseInput();
 
-        InventoryTransferManager.Instance.CaptureInventory(
-            playerInventory
-        );
+        //Debug.Log("Entering dungeon: " + sceneToLoad);
+
+        InventoryTransferManager.Instance.CaptureInventory(playerInventory);
 
         if (LogbookTransferManager.Instance != null)
         {
@@ -364,6 +378,24 @@ public class EnterCave : MonoBehaviour
         SceneManager.sceneLoaded -= OnDestinationSceneLoaded;
 
         EnablePlayerControlsAfterLoad();
+
+        PauseManager pause =
+            FindFirstObjectByType<PauseManager>();
+
+        if (pause != null)
+        {
+            pause.StartCoroutine(
+                pause.UnlockPauseInputAfterTransition(
+                    transitionPauseDuration
+                )
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "EnterCave: No PauseManager found in destination scene."
+            );
+        }
     }
 
     private static void EnablePlayerControlsAfterLoad()
@@ -394,6 +426,8 @@ public class EnterCave : MonoBehaviour
 
         if (inventory != null)
             inventory.enabled = true;
+
+        SetFlashlightInput(true);
 
         PauseManager pause =
             FindFirstObjectByType<PauseManager>();
@@ -442,10 +476,7 @@ public class EnterCave : MonoBehaviour
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
-        Debug.Log(
-            "EnterCave: Player controls enabled after scene load: "
-            + sceneNameForLog()
-        );
+        //Debug.Log("EnterCave: Player controls enabled after scene load: " + sceneNameForLog());
     }
 
     private static string sceneNameForLog()

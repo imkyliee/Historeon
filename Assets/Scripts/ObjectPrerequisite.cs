@@ -193,9 +193,7 @@ public class ObjectPrerequisite : MonoBehaviour
             nextPrerequisite.ObtainRequirement(requirementToNotify);
         }
 
-        Debug.Log(
-            "All prerequisites completed on " + gameObject.name
-        );
+        //Debug.Log("All prerequisites completed on " + gameObject.name);
     }
 
 

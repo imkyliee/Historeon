@@ -30511,7 +30511,7 @@ MonoBehaviour:
   mainCameraBob: {fileID: 1211917343}
   itemCameraBob: {fileID: 2102438497}
   pauseManager: {fileID: 238585511}
-  tabMenuManager: {fileID: 0}
+  tabMenuManager: {fileID: 1450703705}
 --- !u!4 &260825350
 Transform:
   m_ObjectHideFlags: 0
@@ -66857,6 +66857,7 @@ GameObject:
   - component: {fileID: 760706182}
   - component: {fileID: 760706181}
   - component: {fileID: 760706180}
+  - component: {fileID: 760706183}
   m_Layer: 8
   m_Name: DeathCamera
   m_TagString: Untagged
@@ -66993,6 +66994,14 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!81 &760706183
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760706178}
+  m_Enabled: 1
 --- !u!1 &762365895
 GameObject:
   m_ObjectHideFlags: 0
@@ -75550,7 +75559,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be0ec6ac26fb54f4396784ff068c8b4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  volumeSlider: {fileID: 1776361348}
+  volumeSlider: {fileID: 524331468}
 --- !u!4 &962398283
 Transform:
   m_ObjectHideFlags: 0
@@ -97546,7 +97555,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 5
+  m_Intensity: 30
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -102547,7 +102556,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 5
+  m_Intensity: 30
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -108933,7 +108942,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8039216, b: 0, a: 1}
-  m_Intensity: 5
+  m_Intensity: 30
   m_Range: 20
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208

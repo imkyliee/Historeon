@@ -14,6 +14,7 @@ public class PlayFabSaveManager : MonoBehaviour
     private const string TutorialCompletedKey = "TutorialCompleted";
     private const string NewGameResetKey = "HistoreonNewGameResetPending";
     public const string TotalPointsStatisticName = "TotalPoints";
+    private static bool suppressHealthSaving;
 
     [Serializable]
     public class SaveData
@@ -103,7 +104,8 @@ public class PlayFabSaveManager : MonoBehaviour
     }
 
     private SaveData pendingContinueSave;
-    private readonly HashSet<string> completedInteractions =
+    private bool isDeathRespawn;
+    private readonly HashSet<string> completedInteractions =    
     new HashSet<string>();
     private readonly HashSet<string> litCampfireIDs =
     new HashSet<string>();
@@ -358,6 +360,7 @@ public class PlayFabSaveManager : MonoBehaviour
         if (litCampfireIDs.Add(campfireID))
             SaveGame();
     }
+    
     private void OnWorldSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (pendingContinueSave != null)
@@ -369,6 +372,7 @@ public class PlayFabSaveManager : MonoBehaviour
 
         RestoreDestroyedPlatformTriggers();
         RestorePrerequisitesInLoadedScene();
+        RestoreSavedInteractionsInLoadedScene();
     }
     public bool HasCompletedCinematic(string cinematicID)
     {
@@ -723,6 +727,19 @@ public class PlayFabSaveManager : MonoBehaviour
             Destroy(temporaryObject);
         }
 
+        if (isDeathRespawn)
+        {
+            PlayerHealth playerHealth = FindObjectOfType<PlayerHealth>();
+
+            if (playerHealth != null)
+            {
+                playerHealth.ResetAfterRespawn();
+                HealthTransferManager.CompleteDeathRespawn();
+            }
+
+            isDeathRespawn = false;
+        }
+
         // Restore logbooks
         RestoreLogbooks(saveData.logbook);
 
@@ -731,11 +748,9 @@ public class PlayFabSaveManager : MonoBehaviour
 
         if (inventoryManager != null)
         {
-            Debug.Log("Inventory found: " + inventoryManager.gameObject.name);
-            Debug.Log("Saved inventory slots: " +
-                (saveData.inventory == null ? 0 : saveData.inventory.Count));
-            Debug.Log("Saved equipped hotbar index: " +
-                saveData.equippedHotbarIndex);
+            /*Debug.Log("Inventory found: " + inventoryManager.gameObject.name);
+            Debug.Log("Saved inventory slots: " + (saveData.inventory == null ? 0 : saveData.inventory.Count));
+            Debug.Log("Saved equipped hotbar index: " + saveData.equippedHotbarIndex);*/
 
             inventoryManager.RestoreInventory(
                 saveData.inventory,
@@ -764,10 +779,7 @@ public class PlayFabSaveManager : MonoBehaviour
 
         RestoreDestroyedPlatformTriggers();
 
-        Debug.Log(
-            "Collected world IDs loaded: " +
-            string.Join(", ", saveData.collectedWorldIDs)
-        );
+        //Debug.Log("Collected world IDs loaded: " + string.Join(", ", saveData.collectedWorldIDs));
 
         // Restore completed prerequisites
         completedPrerequisites.Clear();
@@ -781,10 +793,7 @@ public class PlayFabSaveManager : MonoBehaviour
             }
         }
 
-        Debug.Log(
-            "Completed prerequisites loaded: " +
-            string.Join(", ", completedPrerequisites)
-        );
+        //Debug.Log("Completed prerequisites loaded: " + string.Join(", ", completedPrerequisites));
 
         ObjectPrerequisite[] prerequisites =
             FindObjectsOfType<ObjectPrerequisite>(true);
@@ -907,7 +916,7 @@ public class PlayFabSaveManager : MonoBehaviour
                 if (saveData.forfeitedQuizIDs == null)
                     saveData.forfeitedQuizIDs = new List<string>();
 
-                Debug.Log("Historeon save loaded.");
+                //Debug.Log("Historeon save loaded.");
                 onLoaded?.Invoke(saveData);
             },
             error =>
@@ -944,8 +953,10 @@ public class PlayFabSaveManager : MonoBehaviour
             }
 
             SceneEntrySpawn.ClearPendingTransition();
+            HealthTransferManager.ClearForDeathRespawn();
 
             pendingContinueSave = saveData;
+            isDeathRespawn = true;
 
             SceneManager.sceneLoaded -= OnContinueSceneLoaded;
             SceneManager.sceneLoaded += OnContinueSceneLoaded;
@@ -1142,9 +1153,7 @@ public class PlayFabSaveManager : MonoBehaviour
 
             if (collectedWorldIDs.Contains(worldItem.worldID))
             {
-                Debug.Log(
-                    "Removing collected world object: " + worldItem.worldID
-                );
+                //Debug.Log("Removing collected world object: " + worldItem.worldID);
 
                 Destroy(worldItem.gameObject);
             }

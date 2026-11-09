@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ public class SoundManager : MonoBehaviour
 
     [Header("Music Settings")]
     [SerializeField] private AudioClip music;
+    [SerializeField] private bool playOnAwake = true;
 
     [Header("Fade Settings")]
     [SerializeField] private float fadeDuration = 1.5f;
@@ -19,11 +21,10 @@ public class SoundManager : MonoBehaviour
     private float targetVolume;
     private Coroutine fadeCoroutine;
 
-
     private void Awake()
     {
         // Prevent duplicates
-        if (Instance != null)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
@@ -32,29 +33,25 @@ public class SoundManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-
         // Get AudioSource
         audioSource = GetComponent<AudioSource>();
-
 
         // Setup audio
         audioSource.clip = music;
         audioSource.loop = true;
 
-
         // Load saved volume
         targetVolume = PlayerPrefs.GetFloat("MusicVolume", 1f);
 
-
         // Start music at 0 volume
         audioSource.volume = 0f;
-        audioSource.Play();
 
-
-        // Fade in
-        FadeIn();
+        if (playOnAwake)
+        {
+            audioSource.Play();
+            FadeIn();
+        }
     }
-
 
     public void SetVolume(float value)
     {
@@ -70,12 +67,10 @@ public class SoundManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-
     public float GetVolume()
     {
         return targetVolume;
     }
-
 
     public void FadeIn()
     {
@@ -85,7 +80,6 @@ public class SoundManager : MonoBehaviour
         fadeCoroutine = StartCoroutine(FadeVolume(audioSource.volume, targetVolume));
     }
 
-
     public void FadeOut()
     {
         if (fadeCoroutine != null)
@@ -94,11 +88,9 @@ public class SoundManager : MonoBehaviour
         fadeCoroutine = StartCoroutine(FadeVolume(audioSource.volume, 0f));
     }
 
-
     private IEnumerator FadeVolume(float startVolume, float endVolume)
     {
         float timer = 0f;
-
 
         while (timer < fadeDuration)
         {
@@ -113,17 +105,27 @@ public class SoundManager : MonoBehaviour
             yield return null;
         }
 
-
         audioSource.volume = endVolume;
         fadeCoroutine = null;
     }
 
+    public void PlayMusic()
+    {
+        if (audioSource == null)
+            return;
+
+        if (!audioSource.isPlaying)
+        {
+            audioSource.volume = 0f;
+            audioSource.Play();
+            FadeIn();
+        }
+    }
 
     public void DestroySound()
     {
         StartCoroutine(FadeOutAndDestroy());
     }
-
 
     private IEnumerator FadeOutAndDestroy()
     {
@@ -134,9 +136,9 @@ public class SoundManager : MonoBehaviour
         Instance = null;
         Destroy(gameObject);
     }
+
     private void OnDestroy()
     {
-
         //Debug.Log("SoundManager was destroyed.", this);
 
         if (Instance == this)

@@ -12,6 +12,7 @@ public class ArtifactAudioFade : MonoBehaviour
 
     private Coroutine fadeCoroutine;
     private bool encounterFinished;
+    private float fadeLevel;
 
     private void Awake()
     {
@@ -23,6 +24,18 @@ public class ArtifactAudioFade : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (encounterAudio == null || !encounterAudio.isPlaying)
+            return;
+
+        float musicVolume = SoundManager.Instance != null
+            ? SoundManager.Instance.GetVolume()
+            : PlayerPrefs.GetFloat("MusicVolume", 1f);
+
+        encounterAudio.volume = fadeLevel * musicVolume;
+    }
+
     public void StartArtifactEncounter()
     {
         if (encounterAudio == null || encounterFinished)
@@ -31,10 +44,23 @@ public class ArtifactAudioFade : MonoBehaviour
         if (fadeCoroutine != null)
             StopCoroutine(fadeCoroutine);
 
-        encounterAudio.volume = 0f;
+        fadeLevel = 0f;
         encounterAudio.Play();
 
         fadeCoroutine = StartCoroutine(FadeAudio(encounterVolume));
+    }
+
+    public void FadeOutForDeath()
+    {
+         Debug.Log("ArtifactAudioFade: FadeOutForDeath called.");
+
+        if (encounterAudio == null || !encounterAudio.isPlaying)
+            return;
+
+        if (fadeCoroutine != null)
+            StopCoroutine(fadeCoroutine);
+
+        fadeCoroutine = StartCoroutine(FadeAudio(0f));
     }
 
     public void FinishArtifactEncounter()
@@ -53,12 +79,12 @@ public class ArtifactAudioFade : MonoBehaviour
 
     private IEnumerator FadeAudio(float targetVolume)
     {
-        float startVolume = encounterAudio.volume;
+        float startVolume = fadeLevel;
         float elapsed = 0f;
 
         if (fadeDuration <= 0f)
         {
-            encounterAudio.volume = targetVolume;
+            fadeLevel = targetVolume;
 
             if (targetVolume == 0f)
                 encounterAudio.Stop();
@@ -69,17 +95,18 @@ public class ArtifactAudioFade : MonoBehaviour
 
         while (elapsed < fadeDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
 
-            encounterAudio.volume = Mathf.Lerp(
+            fadeLevel = Mathf.Lerp(
                 startVolume,
                 targetVolume,
-                Mathf.Clamp01(elapsed / fadeDuration));
+                Mathf.Clamp01(elapsed / fadeDuration)
+            );
 
             yield return null;
         }
 
-        encounterAudio.volume = targetVolume;
+        fadeLevel = targetVolume;
 
         if (targetVolume == 0f)
             encounterAudio.Stop();

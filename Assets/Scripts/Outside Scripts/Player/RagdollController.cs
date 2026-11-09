@@ -54,6 +54,9 @@ public class RagdollController : MonoBehaviour
     {
         if (MainRig == null)
         {
+            RagdollCollider = null;
+            RagdollRigid = null;
+
             Debug.LogWarning(
                 "RagdollController: MainRig is not assigned."
             );
@@ -89,9 +92,7 @@ public class RagdollController : MonoBehaviour
             };
         }
 
-        Debug.Log(
-            "RagdollController: Original character pose captured."
-        );
+        //Debug.Log("RagdollController: Original character pose captured.");
     }
 
     void RestoreOriginalRigPose()
@@ -126,6 +127,11 @@ public class RagdollController : MonoBehaviour
 
     public void RagdollOn()
     {
+        GetRagdollState();
+
+        Debug.Log("RagdollController: Player died. Resetting artifact encounter.");
+        Artifacts.ResetCurrentEncounterAfterDeath();
+
         if (inventory != null)
         {
             inventory.RagdollDropHeldItem();
@@ -144,7 +150,8 @@ public class RagdollController : MonoBehaviour
         {
             foreach (Collider col in RagdollCollider)
             {
-                if (col != playerCollider &&
+                if (col != null &&
+                    col != playerCollider &&
                     col != groundChecker)
                 {
                     col.enabled = true;
@@ -155,7 +162,10 @@ public class RagdollController : MonoBehaviour
         if (RagdollRigid != null)
         {
             foreach (Rigidbody rb in RagdollRigid)
-                rb.isKinematic = false;
+            {
+                if (rb != null)
+                    rb.isKinematic = false;
+            }
         }
 
         if (playerCollider != null)
@@ -182,11 +192,16 @@ public class RagdollController : MonoBehaviour
 
     void RagdollOff()
     {
+        GetRagdollState();
+
+        //Debug.Log("RagdollController: RagdollOff called.");
+
         if (RagdollCollider != null)
         {
             foreach (Collider col in RagdollCollider)
             {
-                if (col != playerCollider &&
+                if (col != null &&
+                    col != playerCollider &&
                     col != groundChecker)
                 {
                     col.enabled = false;
@@ -197,7 +212,10 @@ public class RagdollController : MonoBehaviour
         if (RagdollRigid != null)
         {
             foreach (Rigidbody rb in RagdollRigid)
-                rb.isKinematic = true;
+            {
+                if (rb != null)
+                    rb.isKinematic = true;
+            }
         }
 
         if (animator != null)
@@ -222,9 +240,10 @@ public class RagdollController : MonoBehaviour
             pauseManager.enabled = true;
     }
 
-    
     public void RecoverFromRespawn()
     {
+        GetRagdollState();
+
         // Stop ragdoll physics.
         if (RagdollRigid != null)
         {
@@ -238,9 +257,6 @@ public class RagdollController : MonoBehaviour
                 }
             }
         }
-
-        // Restore original rig transforms.
-        RestoreOriginalRigPose();
 
         // Restore normal player components.
         RagdollOff();
@@ -265,18 +281,22 @@ public class RagdollController : MonoBehaviour
             animator.enabled = true;
             animator.Rebind();
             animator.Update(0f);
+
+            // Prevent animation from overwriting the restored pose.
+            animator.enabled = false;
         }
 
-        // Reset player animation actions.
-        PlayerAnimation playerAnimation =
-            animator != null ? animator.GetComponent<PlayerAnimation>() : null;
+        // Restore original rig transforms.
+        RestoreOriginalRigPose();
 
-        if (playerAnimation != null)
-            playerAnimation.ResetActionAfterQuiz();
+        // Resume animation.
+        if (animator != null)
+            animator.enabled = true;
 
         Physics.SyncTransforms();
 
-        Debug.Log("RagdollController: Player recovered from respawn.");
+        Debug.Log(
+            "RagdollController: Player recovered from respawn."
+        );
     }
-
 }

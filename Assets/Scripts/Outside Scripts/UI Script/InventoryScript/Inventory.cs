@@ -659,12 +659,12 @@ public class Inventory : MonoBehaviour
                     prerequisite.ObtainRequirement("Bag");
             }
 
-            if (useTutorialPickupRequirements &&
+            /*if (useTutorialPickupRequirements &&
                 pickedUpItem == flashlightitem &&
                 bagPrerequisite != null)
             {
                 bagPrerequisite.ObtainRequirement("Flashlight");
-            }
+            }*/
 
             if (TutorialManager.Instance != null)
             {
@@ -734,10 +734,20 @@ public class Inventory : MonoBehaviour
         if (worldItem == null)
             return false;
 
-        // Tutorial pickup restrictions only run when explicitly enabled
-        // in the tutorial scene. Normal gameplay remains unrestricted.
         if (!useTutorialPickupRequirements)
             return true;
+
+        if (TutorialManager.Instance == null)
+            return false;
+
+        if (!TutorialManager.Instance.CanPickUpTutorialItem(
+            worldItem.item,
+            flashlightitem,
+            bagitem,
+            hatchetitem))
+        {
+            return false;
+        }
 
         if (worldItem.item == flashlightitem)
         {
@@ -756,10 +766,12 @@ public class Inventory : MonoBehaviour
         }
 
         if (worldItem.item == hatchetitem)
+        {
             return IsTutorialRequirementObtained(
                 hatchetLogbookPrerequisite,
                 "hatchetLogBook"
             );
+        }
 
         return true;
     }
@@ -1763,11 +1775,20 @@ public class Inventory : MonoBehaviour
         if (container != null && container.activeSelf)
             CloseInventory();
 
-        // Destroy the current held model and normal bag visual.
+       // Destroy the current held model and normal bag visual.
         if (currentHandItem != null)
         {
             Destroy(currentHandItem);
             currentHandItem = null;
+        }
+
+        // Remove any leftover BagHand objects after ragdoll respawn.
+        if (bagHand != null)
+        {
+            for (int i = bagHand.childCount - 1; i >= 0; i--)
+            {
+                Destroy(bagHand.GetChild(i).gameObject);
+            }
         }
 
         if (bagObject != null)
@@ -1779,7 +1800,7 @@ public class Inventory : MonoBehaviour
         // RagdollDropBag detaches its visual and clears bagObject.
         // Remove those detached bag visuals too, but leave actual world
         // pickups alone (they have PersistentWorldItem components).
-        Item[] sceneItems = FindObjectsByType<Item>(FindObjectsSortMode.None);
+        /*Item[] sceneItems = FindObjectsByType<Item>(FindObjectsSortMode.None);
         foreach (Item sceneItem in sceneItems)
         {
             if (sceneItem == null || sceneItem.item != bagitem)
@@ -1793,6 +1814,34 @@ public class Inventory : MonoBehaviour
                 continue;
 
             Destroy(sceneItem.gameObject);
+        }*/
+
+        // Remove leftover BagHand visuals in the Tutorial scene only.
+        if (gameObject.scene.name == "Tutorial" &&
+            bagitem != null &&
+            bagitem.handItemPrefab != null)
+        {
+            string bagHandName = bagitem.handItemPrefab.name + "(Clone)";
+
+            Transform[] sceneTransforms =
+                FindObjectsByType<Transform>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None
+                );
+
+            foreach (Transform sceneTransform in sceneTransforms)
+            {
+                if (sceneTransform == null)
+                    continue;
+
+                if (sceneTransform.gameObject.scene != gameObject.scene)
+                    continue;
+
+                if (sceneTransform.name == bagHandName)
+                {
+                    Destroy(sceneTransform.gameObject);
+                }
+            }
         }
 
         // Clear all slots without invoking any PlayFab operations.
@@ -1854,5 +1903,11 @@ public class Inventory : MonoBehaviour
 
         Debug.Log("Tutorial inventory snapshot restored.");
     }
+    public void UnlockBagPickup()
+    {
+        if (!useTutorialPickupRequirements || bagPrerequisite == null)
+            return;
 
+        bagPrerequisite.ObtainRequirement("Flashlight");
+    }
 }   

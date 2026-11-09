@@ -6,6 +6,8 @@ using UnityEngine.AI;
 
 public class Artifacts : MonoBehaviour
 {
+    private static Artifacts activeEncounter;
+
     [Header("Artifact UI")]
     public GameObject interactUI;
     public GameObject getTrophyUI;
@@ -110,7 +112,7 @@ public class Artifacts : MonoBehaviour
         if (triggerBoxObject != null)
             Destroy(triggerBoxObject);
 
-        Debug.Log("Restored collected artifact: " + artifactWorldID);
+        //Debug.Log("Restored collected artifact: " + artifactWorldID);
     }
 
     private void Update()
@@ -167,6 +169,7 @@ public class Artifacts : MonoBehaviour
     private void StartEncounter()
     {
         encounterStarted = true;
+        activeEncounter = this;
 
         if (artifactAudioFade != null)
             artifactAudioFade.StartArtifactEncounter();
@@ -339,6 +342,9 @@ public class Artifacts : MonoBehaviour
 
         if (getTrophyUI != null)
             getTrophyUI.SetActive(true);
+
+        if (activeEncounter == this)
+            activeEncounter = null;
     }
 
     private void ObtainArtifact()
@@ -347,6 +353,9 @@ public class Artifacts : MonoBehaviour
             return;
 
         trophyObtained = true;
+
+        if (activeEncounter == this)
+            activeEncounter = null;
 
         ObjectPrerequisite.RegisterGlobalRequirement(
             "NextCave3",
@@ -436,5 +445,56 @@ public class Artifacts : MonoBehaviour
             currentTrophy = null;
 
         HideInteractUI();
+    }
+    public static void ResetCurrentEncounterAfterDeath()
+    {
+        Debug.Log("Artifacts: ResetCurrentEncounterAfterDeath called.");
+
+        if (activeEncounter == null)
+        {
+            Debug.LogWarning("Artifacts: No active encounter found!");
+            return;
+        }
+
+        Debug.Log("Artifacts: Active encounter found. Resetting...");
+        activeEncounter.HandleDeathDuringEncounter();
+    }
+
+    private void HandleDeathDuringEncounter()
+    {
+        if (!encounterStarted || enemiesDefeated || trophyObtained)
+            return;
+
+        if (artifactAudioFade != null)
+            artifactAudioFade.FadeOutForDeath();
+
+        foreach (GameObject enemy in spawnedEnemies)
+        {
+            if (enemy != null)
+                Destroy(enemy);
+        }
+
+        spawnedEnemies.Clear();
+
+        encounterStarted = false;
+        enemiesDefeated = false;
+
+        if (blocker != null)
+            blocker.SetActive(false);
+
+        if (barrierObject != null)
+            barrierObject.SetActive(false);
+
+        if (killEnemiesUI != null)
+            killEnemiesUI.SetActive(false);
+
+        if (getTrophyUI != null)
+            getTrophyUI.SetActive(false);
+
+        HideInteractUI();
+
+        activeEncounter = null;
+
+        Debug.Log("Artifacts: Encounter reset after player death.");
     }
 }

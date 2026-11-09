@@ -57,6 +57,7 @@ public class CampfireTutorial : MonoBehaviour
     private bool isLit = false;
     private bool tutorialOpen = false;
     private bool isClosingTutorial = false;
+    private bool interactionUnlocked = false;
 
     private string TutorialShownKey =>
         "CampfireTutorialShown_" + tutorialID;
@@ -143,6 +144,12 @@ public class CampfireTutorial : MonoBehaviour
             if (!isClosingTutorial && Input.GetKeyDown(KeyCode.Space))
                 StartCoroutine(CloseTutorial());
 
+            return;
+        }
+        
+        if (!interactionUnlocked)
+        {
+            HideInteractionUI();
             return;
         }
 
@@ -499,5 +506,9 @@ public class CampfireTutorial : MonoBehaviour
     {
         if (interactUI != null && interactUI.activeSelf)
             interactUI.SetActive(false);
+    }
+    public void UnlockInteraction()
+    {
+        interactionUnlocked = true;
     }
 }

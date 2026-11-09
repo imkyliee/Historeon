@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +13,6 @@ public class MainMenu : MonoBehaviour
     public GameObject MainMenuButtons;
     public GameObject tutorialWindow;
     public GameObject leaderboardWindow;
-    [Tooltip("Row-based leaderboard UI component on the leaderboard panel.")]
     public LeaderboardUI leaderboardUI;
     public GameObject controlWindow;
 
@@ -41,7 +41,7 @@ public class MainMenu : MonoBehaviour
 
     [Header("Scene Transition")]
     public SceneTransition sceneTransition;
-    public string gameSceneName = "Outside";
+    public string gameSceneName = "Forest";
 
     [Header("Settings")]
     public Slider volumeSlider;
@@ -250,6 +250,7 @@ public class MainMenu : MonoBehaviour
     }
 
     // CONTINUE
+
     public void ContinueGame()
     {
         if (PlayFabSaveManager.Instance == null)
@@ -335,7 +336,7 @@ public class MainMenu : MonoBehaviour
         if (MainMenuButtons != null)
             MainMenuButtons.SetActive(false);
 
-       ObjectPrerequisite.ResetSavedRequirementsForNewGame();
+        ObjectPrerequisite.ResetSavedRequirementsForNewGame();
 
         HealthTransferManager.ResetSavedHealth();
 
@@ -387,6 +388,9 @@ public class MainMenu : MonoBehaviour
 
         if (tutorialWindow != null)
             Destroy(tutorialWindow);
+
+        // Reset the previous Tutorial checkpoint before starting again.
+        SpawnPoint.ResetSavedSpawnPoint();
 
         if (sceneTransition != null)
             sceneTransition.OnButtonPressed("Tutorial");
@@ -636,14 +640,6 @@ public class MainMenu : MonoBehaviour
         if (leaderboardWindowAnimator != null)
             leaderboardWindowAnimator.Play("Leaderboard Open");
 
-        if (leaderboardUI == null && leaderboardWindow != null)
-            leaderboardUI = leaderboardWindow.GetComponentInChildren<LeaderboardUI>(true);
-
-        if (leaderboardUI != null)
-            leaderboardUI.RefreshLeaderboard();
-        else
-            Debug.LogWarning("MainMenu: Assign LeaderboardUI or add it to LeaderboardWindow.");
-
         if (volumeSlider != null)
             volumeSlider.interactable = false;
     }
@@ -710,7 +706,7 @@ public class MainMenu : MonoBehaviour
             yield break;
         }
 
-       if (leaderboardWindow != null && leaderboardWindow.activeSelf)
+        if (leaderboardWindow != null && leaderboardWindow.activeSelf)
         {
             if (leaderboardWindowAnimator != null)
             {
