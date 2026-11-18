@@ -106,28 +106,29 @@ public class LogbookBook : MonoBehaviour
         return savedEntries;
     }
 
+    
     public void RestoreEntries(List<PlayFabSaveManager.LogbookSaveData> savedEntries)
     {
+        logbookEntries.Clear();
+
+        if (subjectContainer != null)
+        {
+            foreach (Transform child in subjectContainer)
+            {
+                if (child.gameObject != subjectButtonTemplate)
+                    Destroy(child.gameObject);
+            }
+        }
+
+        if (contextTextBox != null)
+            contextTextBox.text = "";
+
         if (savedEntries == null)
             return;
 
         foreach (PlayFabSaveManager.LogbookSaveData savedEntry in savedEntries)
         {
             if (savedEntry == null || string.IsNullOrEmpty(savedEntry.subject))
-                continue;
-
-            bool alreadyExists = false;
-
-            foreach (LogbookData existingEntry in logbookEntries)
-            {
-                if (existingEntry.subject == savedEntry.subject)
-                {
-                    alreadyExists = true;
-                    break;
-                }
-            }
-
-            if (alreadyExists)
                 continue;
 
             LogbookData newEntry =

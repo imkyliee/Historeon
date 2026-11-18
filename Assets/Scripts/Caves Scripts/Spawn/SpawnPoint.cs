@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,6 +14,7 @@ public class SpawnPoint : MonoBehaviour
     private static bool hasSavedSpawnPoint = false;
     private static string savedSpawnScene = "";
 
+    
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -23,12 +25,8 @@ public class SpawnPoint : MonoBehaviour
 
         Instance = this;
 
-        string currentScene = SceneManager.GetActiveScene().name;
-
-        if (!hasSavedSpawnPoint || savedSpawnScene != currentScene)
-        {
+        if (!hasSavedSpawnPoint)
             SetDefaultSpawnPoint();
-        }
     }
 
     private void SetDefaultSpawnPoint()
@@ -53,21 +51,21 @@ public class SpawnPoint : MonoBehaviour
     {
         if (newSpawnPoint == null)
         {
-            Debug.LogWarning(
-                "SpawnPoint: New spawn point is missing."
-            );
+            Debug.LogWarning("SpawnPoint: New spawn point is missing.");
             return;
         }
 
         savedSpawnPosition = newSpawnPoint.position;
         savedSpawnRotation = newSpawnPoint.rotation;
-
         savedSpawnScene = SceneManager.GetActiveScene().name;
-
         hasSavedSpawnPoint = true;
 
-        //Debug.Log("Spawn point updated to: " + newSpawnPoint.name);
+        /*Debug.Log(
+            "SpawnPoint updated: " + savedSpawnScene +
+            " | Position: " + savedSpawnPosition
+        );*/
     }
+
     public static void ResetSavedSpawnPoint()
     {
         hasSavedSpawnPoint = false;

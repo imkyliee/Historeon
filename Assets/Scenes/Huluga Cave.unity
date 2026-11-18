@@ -12330,6 +12330,7 @@ MonoBehaviour:
   artifactPrerequisite: {fileID: 1565822267}
   nextCavePrerequisite: {fileID: 0}
   prerequisiteRequirementName: Shell Ornament
+  nextObjectiveCatalyst: {fileID: 0}
   interactionRange: 3
   artifactObject: {fileID: 919132149424371612}
   barrierObject: {fileID: 1739041655}
@@ -13036,6 +13037,12 @@ MonoBehaviour:
   animator: {fileID: 1517214628}
   deathScreen: {fileID: 1517214626}
   transition: {fileID: 323960909}
+  uiToDisable:
+  - {fileID: 2028888107}
+  - {fileID: 1416692428}
+  - {fileID: 287562133}
+  - {fileID: 145303040}
+  - {fileID: 1307456566}
 --- !u!1 &307915785
 GameObject:
   m_ObjectHideFlags: 0
@@ -32190,6 +32197,7 @@ MonoBehaviour:
   wrongUIDuration: 1
   ExitButton: {fileID: 1041023698}
   requiredCorrectAnswers: 5
+  objectiveToComplete: 
   questionPool:
   - questionText: Where was the Manunggul Jar discovered?
     correctAnswer: Tabon Caves, Palawan
@@ -43293,6 +43301,7 @@ MonoBehaviour:
   wrongUIDuration: 1
   ExitButton: {fileID: 1041023698}
   requiredCorrectAnswers: 5
+  objectiveToComplete: Escape the Cave
   questionPool:
   - questionText: Where was the shell ornament discovered?
     correctAnswer: Huluga Cave, Cagayan de Oro
@@ -47288,7 +47297,6 @@ GameObject:
   m_Component:
   - component: {fileID: 837666212}
   - component: {fileID: 837666216}
-  - component: {fileID: 837666215}
   - component: {fileID: 837666214}
   - component: {fileID: 837666213}
   m_Layer: 5
@@ -47305,18 +47313,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 837666211}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1261389101}
-  m_Father: {fileID: 1739843861}
+  m_Father: {fileID: 1393220150}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 638.0588, y: 438.6163}
+  m_SizeDelta: {x: 638.0588, y: 46.91}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &837666213
 MonoBehaviour:
@@ -47361,36 +47369,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 1
---- !u!114 &837666215
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 837666211}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.69803923, g: 0.627451, b: 0.49019608, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!222 &837666216
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -75032,7 +75010,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4279771435
-  m_fontColor: {r: 0.16862746, g: 0.12941177, b: 0.09411765, a: 1}
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -81734,6 +81712,109 @@ MonoBehaviour:
   - {fileID: 91044055}
   disableOnPause:
   - {fileID: 1000160855}
+--- !u!1 &1393220149
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1393220150}
+  - component: {fileID: 1393220153}
+  - component: {fileID: 1393220152}
+  - component: {fileID: 1393220151}
+  m_Layer: 5
+  m_Name: ObjectiveContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1393220150
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1393220149}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 837666212}
+  m_Father: {fileID: 1739843861}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 638.0588, y: 46.91}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1393220151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1393220149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
+--- !u!114 &1393220152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1393220149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.69803923, g: 0.627451, b: 0.49019608, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1393220153
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1393220149}
+  m_CullTransparentMesh: 1
 --- !u!1001 &1393872734
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -100336,7 +100417,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f674f96c2f030274687ebc5351f959cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  quest: 
+  quest: Escape the Cave.
   logbookEntry: {fileID: 1728408745}
 --- !u!114 &1728408748
 MonoBehaviour:
@@ -100354,6 +100435,7 @@ MonoBehaviour:
   outline: {fileID: 1728408746}
   pickupRange: 4
   objectiveCatalyst: {fileID: 1728408747}
+  objectiveToComplete: 
   notification: {fileID: 355995498}
   prerequisite: {fileID: 1867069849}
   requirementName: finalLogBook
@@ -100605,7 +100687,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 837666212}
+  - {fileID: 1393220150}
   - {fileID: 1171270934}
   m_Father: {fileID: 1390235592}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

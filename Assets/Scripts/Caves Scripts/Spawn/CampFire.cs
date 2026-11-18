@@ -75,12 +75,6 @@ public class CampFire : MonoBehaviour
         if (interactUI != null)
             interactUI.SetActive(false);
 
-        if (fireObject != null)
-            fireObject.SetActive(false);
-
-        if (fireLight != null)
-            fireLight.enabled = false;
-
         if (tutorialUI != null)
         {
             if (tutorialAnimator == null)
@@ -113,7 +107,28 @@ public class CampFire : MonoBehaviour
         if (mainCameraBob == null)
             mainCameraBob = FindFirstObjectByType<CameraBob>();
 
-        CheckIfThisIsSavedCampfire();
+        // Restore the saved fire state instead of always turning it off.
+        bool savedAsLit =
+            PlayFabSaveManager.Instance != null &&
+            PlayFabSaveManager.Instance.IsCampfireLit(campfireID);
+
+        if (savedAsLit)
+        {
+            RestoreLitState();
+        }
+        else
+        {
+            CheckIfThisIsSavedCampfire();
+
+            if (!isLit)
+            {
+                if (fireObject != null)
+                    fireObject.SetActive(false);
+
+                if (fireLight != null)
+                    fireLight.enabled = false;
+            }
+        }
     }
 
     private void Update()
@@ -158,7 +173,10 @@ public class CampFire : MonoBehaviour
                     if (!isLit)
                         LightCampfire();
                     else
+                    {
+                        UpdateCheckpoint();
                         HealPlayer();
+                    }
                 }
 
                 return;
@@ -212,17 +230,7 @@ public class CampFire : MonoBehaviour
         );
 
         if (distance < 0.1f)
-        {
-            isLit = true;
-
-            if (fireObject != null)
-                fireObject.SetActive(true);
-
-            if (fireLight != null)
-                fireLight.enabled = true;
-
-            //Debug.Log("CampFire: Saved campfire restored.");
-        }
+            RestoreLitState();
     }
 
     private void LightCampfire()
@@ -230,11 +238,36 @@ public class CampFire : MonoBehaviour
         if (isLit)
             return;
 
+        if (string.IsNullOrWhiteSpace(campfireID))
+        {
+            Debug.LogWarning("CampFire: Campfire ID is missing.");
+            return;
+        }
+
+        if (campfireSpawnPoint == null)
+        {
+            Debug.LogWarning("CampFire: Campfire Spawn Point is not assigned.");
+            return;
+        }
+
+        if (SpawnPoint.Instance == null)
+        {
+            Debug.LogWarning("CampFire: No SpawnPoint exists in the scene.");
+            return;
+        }
+
         isLit = true;
+
+        // Update the checkpoint before saving the campfire.
+        SpawnPoint.Instance.SetSpawnPoint(campfireSpawnPoint);
 
         if (PlayFabSaveManager.Instance != null)
         {
             PlayFabSaveManager.Instance.RegisterLitCampfire(campfireID);
+        }
+        else
+        {
+            Debug.LogWarning("CampFire: PlayFabSaveManager was not found.");
         }
 
         // Play the sound only when the campfire is first lit.
@@ -245,7 +278,8 @@ public class CampFire : MonoBehaviour
                 : PlayerPrefs.GetFloat("SFXVolume", 1f);
 
             audioSource.clip = firstLightSound;
-            audioSource.volume = Mathf.Clamp01(soundVolume) * Mathf.Clamp01(sfxVolume);
+            audioSource.volume =
+                Mathf.Clamp01(soundVolume) * Mathf.Clamp01(sfxVolume);
             audioSource.loop = true;
 
             if (audioSource.volume > 0f)
@@ -260,35 +294,53 @@ public class CampFire : MonoBehaviour
         if (fireLight != null)
             fireLight.enabled = true;
 
-        if (SpawnPoint.Instance != null)
-        {
-            if (campfireSpawnPoint != null)
-                SpawnPoint.Instance.SetSpawnPoint(campfireSpawnPoint);
-            else
-                Debug.LogWarning(
-                    "CampFire: Campfire Spawn Point is not assigned."
-                );
-        }
-        else
-        {
-            Debug.LogWarning(
-                "CampFire: No SpawnPoint exists in the scene."
-            );
-        }
-
         HealPlayer();
-
-        if (PlayFabSaveManager.Instance != null)
-            PlayFabSaveManager.Instance.SaveGame();
-        else
-            Debug.LogWarning(
-                "CampFire: PlayFabSaveManager was not found."
-            );
 
         ShowTutorialIfFirstTime();
 
-        Debug.Log("Campfire lit and checkpoint saved!");
+        Debug.Log(
+            "Campfire lit and checkpoint updated: " + campfireID +
+            " | Scene: " + gameObject.scene.name
+        );
     }
+
+    private void UpdateCheckpoint()
+    {
+        if (string.IsNullOrWhiteSpace(campfireID))
+        {
+            Debug.LogWarning("CampFire: Campfire ID is missing.");
+            return;
+        }
+
+        if (campfireSpawnPoint == null)
+        {
+            Debug.LogWarning("CampFire: Campfire Spawn Point is not assigned.");
+            return;
+        }
+
+        if (SpawnPoint.Instance == null)
+        {
+            Debug.LogWarning("CampFire: No SpawnPoint exists in the scene.");
+            return;
+        }
+
+        SpawnPoint.Instance.SetSpawnPoint(campfireSpawnPoint);
+
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.RegisterLitCampfire(campfireID);
+        }
+        else
+        {
+            Debug.LogWarning("CampFire: PlayFabSaveManager was not found.");
+        }
+
+        Debug.Log(
+            "Existing campfire checkpoint updated: " +
+            campfireID + " | Scene: " + gameObject.scene.name
+        );
+    }
+
     public void RestoreLitState()
     {
         isLit = true;

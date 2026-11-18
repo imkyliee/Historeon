@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
 using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
@@ -129,14 +130,14 @@ public class Enemy : MonoBehaviour
             patrolWaiting = false;
             CancelInvoke(nameof(ResetAttack));
 
-            if (agent.isOnNavMesh)
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
                 agent.isStopped = false;
 
             Patroling();
             return;
         }
 
-        if (agent == null)
+        if (agent == null || !agent.enabled)
             return;
 
         if (!agent.isOnNavMesh)
@@ -621,6 +622,39 @@ public class Enemy : MonoBehaviour
         health.TakeDamage(damage);
     }
 
+    private void DisableDeadEnemyPhysics()
+    {
+        Collider[] colliders =
+            GetComponentsInChildren<Collider>(true);
+
+        foreach (Collider enemyCollider in colliders)
+        {
+            enemyCollider.enabled = false;
+        }
+
+        Rigidbody[] rigidbodies =
+            GetComponentsInChildren<Rigidbody>(true);
+
+        foreach (Rigidbody rb in rigidbodies)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+            rb.detectCollisions = false;
+        }
+
+        if (agent != null && agent.enabled)
+        {
+            if (agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+            }
+
+            agent.enabled = false;
+        }
+    }
+
     public void Die()
     {
         if (dead)
@@ -632,13 +666,9 @@ public class Enemy : MonoBehaviour
         if (audioSource != null && dieSound != null)
             audioSource.PlayOneShot(dieSound);
 
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
         CancelInvoke();
+
+        DisableDeadEnemyPhysics();
 
         if (enemyAnimation != null)
             enemyAnimation.PlayDeath();

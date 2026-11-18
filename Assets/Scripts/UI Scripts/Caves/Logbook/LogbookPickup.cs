@@ -12,6 +12,7 @@ public class LogbookPickup : MonoBehaviour
 
     [Header("Objective")]
     [SerializeField] private ObjectiveCatalyst objectiveCatalyst;
+    [SerializeField] private string objectiveToComplete;
 
     [Header("Notification")]
     [SerializeField] private Notification notification;
@@ -64,6 +65,7 @@ public class LogbookPickup : MonoBehaviour
 
             return;
         }
+
         if (playerCamera == null)
         {
             playerCamera = Camera.main;
@@ -127,6 +129,19 @@ public class LogbookPickup : MonoBehaviour
         if (TutorialManager.Instance != null)
             TutorialManager.Instance.CompleteLogbookBG();
 
+        if (!string.IsNullOrEmpty(objectiveToComplete))
+        {
+            if (ObjectiveManager.Instance != null)
+            {
+                ObjectiveManager.Instance.CompleteObjective(objectiveToComplete);
+                ObjectiveManager.Instance.RefreshObjectiveBook();
+            }
+            else
+            {
+                Debug.LogWarning("LogbookPickup: ObjectiveManager not found!");
+            }
+        }
+
         if (objectiveCatalyst != null)
             objectiveCatalyst.CreateQuest();
 
@@ -156,7 +171,6 @@ public class LogbookPickup : MonoBehaviour
         Destroy(gameObject);
     }
 
-    
     private void UpdatePrerequisite()
     {
         if (tutorialPrerequisite != null &&

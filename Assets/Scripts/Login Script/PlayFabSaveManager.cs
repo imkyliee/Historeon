@@ -351,16 +351,20 @@ public class PlayFabSaveManager : MonoBehaviour
         return !string.IsNullOrEmpty(campfireID) &&
             litCampfireIDs.Contains(campfireID);
     }
-
     public void RegisterLitCampfire(string campfireID)
     {
-        if (string.IsNullOrEmpty(campfireID))
+        if (string.IsNullOrWhiteSpace(campfireID))
+        {
+            Debug.LogWarning("Cannot save campfire: Campfire ID is empty.");
             return;
+        }
 
-        if (litCampfireIDs.Add(campfireID))
-            SaveGame();
-    }
-    
+        litCampfireIDs.Add(campfireID);
+
+        Debug.Log("Saving activated campfire: " + campfireID);
+
+        SaveGame();
+    } 
     private void OnWorldSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (pendingContinueSave != null)
@@ -502,11 +506,25 @@ public class PlayFabSaveManager : MonoBehaviour
 
         transition.OnButtonPressed(sceneName);
     }
-
-    
     private void OnNewGameSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= OnNewGameSceneLoaded;
+
+        // Reset objectives for a new game.
+        if (MainManager.mainManager != null)
+        {
+            MainManager.mainManager.questNames.Clear();
+            Debug.Log("New Game: All objectives cleared.");
+        }
+
+        if (ObjectiveManager.Instance != null)
+        {
+            ObjectiveManager.Instance.RefreshObjectiveBook();
+        }
+
+        // Reset logbook entries for a new game.
+        RestoreLogbooks(new List<LogbookSaveData>());
+        Debug.Log("New Game: All logbook entries cleared.");
 
         quizPoints = 0;
         forfeitedQuizIDs.Clear();
@@ -546,12 +564,11 @@ public class PlayFabSaveManager : MonoBehaviour
             OnSaveError
         );
 
-       RestorePrerequisitesInLoadedScene();
+        RestorePrerequisitesInLoadedScene();
         ResetPadlocksForNewGame();
 
         Debug.Log("New Game: Fresh save created. Previous gameplay progress cleared.");
     }
-
 
     private IEnumerator ClearNewGameResetFlag()
     {
@@ -613,6 +630,7 @@ public class PlayFabSaveManager : MonoBehaviour
         Debug.Log("New Historeon game started and saved.");
     }
 
+    
     public void ContinueGame(SceneTransition transition)
     {
         if (transition == null)
@@ -629,11 +647,20 @@ public class PlayFabSaveManager : MonoBehaviour
                 return;
             }
 
-            if (string.IsNullOrEmpty(saveData.currentScene))
+            string sceneToLoad =
+                !string.IsNullOrEmpty(saveData.checkpointScene) &&
+                saveData.checkpointPosition != null &&
+                saveData.checkpointRotation != null
+                    ? saveData.checkpointScene
+                    : saveData.currentScene;
+
+            if (string.IsNullOrEmpty(sceneToLoad))
             {
                 Debug.LogWarning("Save does not contain a scene.");
                 return;
             }
+
+            Debug.Log("Continue: Loading checkpoint scene: " + sceneToLoad);
 
             SceneEntrySpawn.ClearPendingTransition();
 
@@ -642,11 +669,9 @@ public class PlayFabSaveManager : MonoBehaviour
             SceneManager.sceneLoaded -= OnContinueSceneLoaded;
             SceneManager.sceneLoaded += OnContinueSceneLoaded;
 
-            transition.OnButtonPressed(saveData.currentScene);
+            transition.OnButtonPressed(sceneToLoad);
         });
-            RestorePrerequisitesInLoadedScene();
     }
-
     private void OnContinueSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= OnContinueSceneLoaded;

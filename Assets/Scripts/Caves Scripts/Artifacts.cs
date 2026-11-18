@@ -1,4 +1,3 @@
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -24,6 +23,9 @@ public class Artifacts : MonoBehaviour
     public ObjectPrerequisite artifactPrerequisite;
     public ObjectPrerequisite nextCavePrerequisite;
     public string prerequisiteRequirementName = "ManunggulJar";
+
+    [Header("Next Objective")]
+    public ObjectiveCatalyst nextObjectiveCatalyst;
 
     [Header("Raycast Settings")]
     public float interactionRange = 3f;
@@ -111,8 +113,6 @@ public class Artifacts : MonoBehaviour
 
         if (triggerBoxObject != null)
             Destroy(triggerBoxObject);
-
-        //Debug.Log("Restored collected artifact: " + artifactWorldID);
     }
 
     private void Update()
@@ -371,6 +371,21 @@ public class Artifacts : MonoBehaviour
             Debug.LogWarning("Artifacts: ObjectiveManager not found!");
         }
 
+        if (nextObjectiveCatalyst != null)
+        {
+            nextObjectiveCatalyst.CreateQuest();
+            Debug.Log("Artifacts: Next objective created.");
+        }
+        else
+        {
+            Debug.LogWarning("Artifacts: Next Objective Catalyst is not assigned!");
+        }
+
+        if (ObjectiveManager.Instance != null)
+        {
+            ObjectiveManager.Instance.RefreshObjectiveBook();
+        }
+        
         if (artifactPrerequisite != null &&
             !string.IsNullOrEmpty(prerequisiteRequirementName))
         {
@@ -446,6 +461,7 @@ public class Artifacts : MonoBehaviour
 
         HideInteractUI();
     }
+
     public static void ResetCurrentEncounterAfterDeath()
     {
         Debug.Log("Artifacts: ResetCurrentEncounterAfterDeath called.");

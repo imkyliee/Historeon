@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,9 +7,21 @@ public class DeathTransition : MonoBehaviour
     public GameObject deathScreen;
     public SceneTransition transition;
 
+    [Header("UI to Disable During Death")]
+    public GameObject[] uiToDisable;
+
     public void PlayDeath()
     {
         deathScreen.SetActive(true);
+
+        if (uiToDisable != null)
+        {
+            foreach (GameObject ui in uiToDisable)
+            {
+                if (ui != null)
+                    ui.SetActive(false);
+            }
+        }
 
         animator.Play("Transition");
 
@@ -25,7 +36,6 @@ public class DeathTransition : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Re-enable all UI elements hidden by DeathCameraFollow.
         RestoreDisabledUI();
 
         // Tutorial uses its temporary local checkpoint.
@@ -50,6 +60,16 @@ public class DeathTransition : MonoBehaviour
 
     private void RestoreDisabledUI()
     {
+        if (uiToDisable != null)
+        {
+            foreach (GameObject ui in uiToDisable)
+            {
+                if (ui != null)
+                    ui.SetActive(true);
+            }
+        }
+
+        // Re-enable all UI elements hidden by DeathCameraFollow.
         DeathCameraFollow deathCamera =
             FindFirstObjectByType<DeathCameraFollow>();
 
@@ -64,14 +84,10 @@ public class DeathTransition : MonoBehaviour
         foreach (GameObject ui in deathCamera.HUD)
         {
             if (ui != null)
-            {
                 ui.SetActive(true);
-            }
         }
 
-        Debug.Log(
-            "DeathTransition: Disabled UI has been re-enabled."
-        );
+        Debug.Log("DeathTransition: Disabled UI has been re-enabled.");
     }
 
     private void RespawnTutorial()

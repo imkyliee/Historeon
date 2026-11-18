@@ -12,34 +12,43 @@ public class ObjectiveCatalyst : MonoBehaviour
 
     public void CreateQuest()
     {
-        if (MainManager.mainManager == null)
-            return;
-
-        // Add objective
         if (!string.IsNullOrEmpty(quest) && !questAdded)
         {
             questAdded = true;
 
-            if (!MainManager.mainManager.questNames.Contains(quest))
+            if (ObjectiveManager.Instance != null)
             {
-                MainManager.mainManager.questNames.Add(quest);
+                ObjectiveManager.Instance.AddObjective(quest);
             }
+            else if (MainManager.mainManager != null)
+            {
+                if (!MainManager.mainManager.questNames.Contains(quest))
+                    MainManager.mainManager.questNames.Add(quest);
+
+                ObjectiveBook book =
+                    FindFirstObjectByType<ObjectiveBook>(FindObjectsInactive.Include);
+
+                if (book != null)
+                    book.WriteQuests();
+            }
+
+            Debug.Log("Objective created: " + quest);
         }
 
-        // Send logbook entry directly to LogbookBook
         if (logbookEntry != null)
-        {
             logbookEntry.AddToLogbook();
-        }
     }
 
     public void CompleteQuest()
     {
-        if (MainManager.mainManager == null)
+        if (string.IsNullOrEmpty(quest))
             return;
 
-        if (!string.IsNullOrEmpty(quest) &&
-            MainManager.mainManager.questNames.Contains(quest))
+        if (ObjectiveManager.Instance != null)
+        {
+            ObjectiveManager.Instance.CompleteObjective(quest);
+        }
+        else if (MainManager.mainManager != null)
         {
             MainManager.mainManager.questNames.Remove(quest);
         }

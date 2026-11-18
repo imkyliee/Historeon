@@ -67,7 +67,10 @@ public class ObjectiveBook : MonoBehaviour
                 newObjective.GetComponentInChildren<TMP_Text>(true);
 
             if (text != null)
+            {
+                text.gameObject.SetActive(true);
                 text.text = "• " + quest;
+            }
 
             objectiveObjects.Add(quest, newObjective);
         }

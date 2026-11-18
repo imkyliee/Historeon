@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 
@@ -15,6 +16,7 @@ public class PlayerAnimation : MonoBehaviour
 
     [Header("Attack")]
     private bool attackEnabled = true;
+    private bool attackBuffered;
 
     private void Start()
     {
@@ -23,49 +25,67 @@ public class PlayerAnimation : MonoBehaviour
 
     private void Update()
     {
-        //HandleAttackInput();
         CheckAnimation();
     }
 
     public void ChangeAnimation(string animation, float crossfade = 0.2f)
     {
+        if (animator == null)
+            return;
+
+        int animationHash = Animator.StringToHash(animation);
+
+        AnimatorStateInfo currentState =
+            animator.GetCurrentAnimatorStateInfo(0);
+
+        if (currentState.shortNameHash == animationHash ||
+            (animator.IsInTransition(0) &&
+            animator.GetNextAnimatorStateInfo(0).shortNameHash == animationHash))
+        {
+            currentAnimation = animation;
+            return;
+        }
+
         if (currentAnimation == animation)
             return;
 
         currentAnimation = animation;
-        animator.CrossFade(animation, crossfade);
+        animator.CrossFade(animationHash, crossfade);
+    }
+
+    private bool CanAttack()
+    {
+        if (!attackEnabled)
+            return false;
+
+        if (PauseManager.Instance != null &&
+            PauseManager.Instance.IsPaused)
+            return false;
+
+        if (inventory == null || inventory.IsOpen)
+            return false;
+
+        if (!inventory.IsHoldingItem(inventory.hatchetitem))
+            return false;
+
+        if (!movement.grounded &&
+            movement.rb.linearVelocity.y <= 0)
+            return false;
+
+        return true;
     }
 
     // Attack
     public void Attack()
     {
-        // Don't attack while quiz is open
-        if (!attackEnabled)
+        if (!CanAttack())
             return;
 
-        // Don't attack while paused
-        if (PauseManager.Instance != null &&
-            PauseManager.Instance.IsPaused)
-            return;
-
-        // Don't attack while inventory is open
-        if (inventory != null &&
-            inventory.IsOpen)
-            return;
-
-        // Don't attack if already attacking
         if (isPlayingAction)
+        {
+            attackBuffered = true;
             return;
-
-        // Make sure the hatchet is equipped
-        if (inventory == null ||
-            !inventory.IsHoldingItem(inventory.hatchetitem))
-            return;
-
-        // Don't attack while falling
-        if (!movement.grounded &&
-            movement.rb.linearVelocity.y <= 0)
-            return;
+        }
 
         StartCoroutine(AttackRoutine());
     }
@@ -75,87 +95,119 @@ public class PlayerAnimation : MonoBehaviour
     {
         isPlayingAction = true;
 
-        string attackAnimation;
-
-        // Crouching attack
-        if (movement.IsCrouching)
+        while (true)
         {
-            // Idle
-            if (movement.move.magnitude <= 0.1f)
-            {
-                attackAnimation = "CrouchAttack";
-            }
+            // Clear the previous buffer before starting the next attack
+            attackBuffered = false;
 
-            // Forward
-            else if (movement.move.y > 0)
-            {
-                attackAnimation = "CrouchWalkAttack";
-            }
+            string attackAnimation;
 
-            // Backward
-            else if (movement.move.y < 0)
+            // Crouching attack
+            if (movement.IsCrouching)
             {
-                attackAnimation = "CrouchBackAttack";
+                if (movement.move.magnitude <= 0.1f)
+                    attackAnimation = "CrouchAttack";
+                else if (movement.move.y > 0)
+                    attackAnimation = "CrouchWalkAttack";
+                else if (movement.move.y < 0)
+                    attackAnimation = "CrouchBackAttack";
+                else if (movement.move.x < 0)
+                    attackAnimation = "CrouchLeftAttack";
+                else if (movement.move.x > 0)
+                    attackAnimation = "CrouchRightAttack";
+                else
+                    attackAnimation = "CrouchAttack";
             }
-
-            // Left
-            else if (movement.move.x < 0)
+            // Jumping upward
+            else if (!movement.grounded &&
+                    movement.rb.linearVelocity.y > 0)
             {
-                attackAnimation = "CrouchLeftAttack";
+                attackAnimation = "AttackJump";
             }
-
-            // Right
-            else if (movement.move.x > 0)
+            // Running
+            else if (movement.IsRunning)
             {
-                attackAnimation = "CrouchRightAttack";
+                attackAnimation = "AttackRun";
             }
+            // Walking
+            else if (movement.move.magnitude > 0.1f)
+            {
+                attackAnimation = "AttackWalk";
+            }
+            // Standing
             else
             {
-                attackAnimation = "CrouchAttack";
+                attackAnimation = "AttackIdle";
             }
+
+            int attackHash = Animator.StringToHash(attackAnimation);
+
+            currentAnimation = attackAnimation;
+
+            // Immediately take over the current animation
+            animator.CrossFadeInFixedTime(
+                attackHash,
+                0.02f,
+                0,
+                0f
+            );
+
+            // Wait until the attack animation starts
+            while (true)
+            {
+                AnimatorStateInfo state =
+                    animator.GetCurrentAnimatorStateInfo(0);
+
+                if (state.shortNameHash == attackHash)
+                    break;
+
+                if (animator.IsInTransition(0))
+                {
+                    AnimatorStateInfo nextState =
+                        animator.GetNextAnimatorStateInfo(0);
+
+                    if (nextState.shortNameHash == attackHash)
+                        break;
+                }
+
+                yield return null;
+            }
+
+            // Wait until the attack animation finishes
+            while (true)
+            {
+                AnimatorStateInfo state =
+                    animator.GetCurrentAnimatorStateInfo(0);
+
+                if (state.shortNameHash == attackHash &&
+                    state.normalizedTime >= 1f)
+                {
+                    break;
+                }
+
+                // Also recognize the attack finishing as it transitions out
+                if (animator.IsInTransition(0) &&
+                    state.shortNameHash == attackHash &&
+                    state.normalizedTime >= 0.95f)
+                {
+                    AnimatorStateInfo nextState =
+                        animator.GetNextAnimatorStateInfo(0);
+
+                    if (nextState.shortNameHash != attackHash)
+                        break;
+                }
+
+                yield return null;
+            }
+
+            // Start the buffered attack immediately
+            if (attackBuffered && CanAttack())
+                continue;
+
+            break;
         }
 
-        // Jumping upward
-        else if (!movement.grounded &&
-                 movement.rb.linearVelocity.y > 0)
-        {
-            attackAnimation = "AttackJump";
-        }
-
-        // Running
-        else if (movement.IsRunning)
-        {
-            attackAnimation = "AttackRun";
-        }
-
-        // Walking
-        else if (movement.move.magnitude > 0.1f)
-        {
-            attackAnimation = "AttackWalk";
-        }
-
-        // Standing
-        else
-        {
-            attackAnimation = "AttackIdle";
-        }
-
-        ChangeAnimation(attackAnimation, 0.1f);
-
-        yield return null;
-
-        while (!animator.GetCurrentAnimatorStateInfo(0).IsName(attackAnimation))
-        {
-            yield return null;
-        }
-
-        while (
-            animator.GetCurrentAnimatorStateInfo(0).IsName(attackAnimation) &&
-            animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
-        {
-            yield return null;
-        }
-
+        attackBuffered = false;
         isPlayingAction = false;
         currentAnimation = "";
     }
@@ -167,6 +219,7 @@ public class PlayerAnimation : MonoBehaviour
 
     public void StopHoldingItem()
     {
+        attackBuffered = false;
         isPlayingAction = false;
         ChangeAnimation("Idle");
     }
@@ -212,13 +265,9 @@ public class PlayerAnimation : MonoBehaviour
         if (!movement.grounded)
         {
             if (movement.rb.linearVelocity.y > 0)
-            {
                 ChangeAnimation("JumpUp");
-            }
             else
-            {
                 ChangeAnimation("JumpDown");
-            }
 
             return;
         }
@@ -281,35 +330,30 @@ public class PlayerAnimation : MonoBehaviour
 
     private void CheckCrouchNormalAnimation()
     {
-        // Idle
         if (movement.move.magnitude <= 0.1f)
         {
             ChangeAnimation("CrouchIdle");
             return;
         }
 
-        // Forward
         if (movement.move.y > 0)
         {
             ChangeAnimation("CrouchWalk");
             return;
         }
 
-        // Backward
         if (movement.move.y < 0)
         {
             ChangeAnimation("CrouchBack");
             return;
         }
 
-        // Left
         if (movement.move.x < 0)
         {
             ChangeAnimation("CrouchLeft");
             return;
         }
 
-        // Right
         if (movement.move.x > 0)
         {
             ChangeAnimation("CrouchRight");
@@ -321,35 +365,30 @@ public class PlayerAnimation : MonoBehaviour
 
     private void CheckCrouchHoldingAnimation()
     {
-        // Idle
         if (movement.move.magnitude <= 0.1f)
         {
             ChangeAnimation("CrouchIdleHold");
             return;
         }
 
-        // Forward
         if (movement.move.y > 0)
         {
             ChangeAnimation("CrouchWalkHold");
             return;
         }
 
-        // Backward
         if (movement.move.y < 0)
         {
             ChangeAnimation("CrouchBackHold");
             return;
         }
 
-        // Left
         if (movement.move.x < 0)
         {
             ChangeAnimation("CrouchLeftHold");
             return;
         }
 
-        // Right
         if (movement.move.x > 0)
         {
             ChangeAnimation("CrouchRightHold");
@@ -361,35 +400,30 @@ public class PlayerAnimation : MonoBehaviour
 
     private void CheckCrouchTwoHandAnimation()
     {
-        // Idle
         if (movement.move.magnitude <= 0.1f)
         {
             ChangeAnimation("CrouchIdleTwoHand");
             return;
         }
 
-        // Forward
         if (movement.move.y > 0)
         {
             ChangeAnimation("CrouchWalkTwoHand");
             return;
         }
 
-        // Backward
         if (movement.move.y < 0)
         {
             ChangeAnimation("CrouchBackTwoHand");
             return;
         }
 
-        // Left
         if (movement.move.x < 0)
         {
             ChangeAnimation("CrouchLeftTwoHand");
             return;
         }
 
-        // Right
         if (movement.move.x > 0)
         {
             ChangeAnimation("CrouchRightTwoHand");
@@ -406,13 +440,9 @@ public class PlayerAnimation : MonoBehaviour
         if (!movement.grounded)
         {
             if (movement.rb.linearVelocity.y > 0)
-            {
                 ChangeAnimation("HoldingJumpUp");
-            }
             else
-            {
                 ChangeAnimation("HoldingJumpDown");
-            }
 
             return;
         }
@@ -455,10 +485,12 @@ public class PlayerAnimation : MonoBehaviour
         // Idle
         ChangeAnimation("HoldingIdle");
     }
+
     public void ResetActionAfterQuiz()
     {
         StopAllCoroutines();
 
+        attackBuffered = false;
         isPlayingAction = false;
         currentAnimation = "";
 
@@ -468,6 +500,7 @@ public class PlayerAnimation : MonoBehaviour
         if (animator != null)
             animator.enabled = true;
     }
+
     // Two handed item animations
     private void CheckTwoHandAnimation()
     {
@@ -475,13 +508,9 @@ public class PlayerAnimation : MonoBehaviour
         if (!movement.grounded)
         {
             if (movement.rb.linearVelocity.y > 0)
-            {
                 ChangeAnimation("TwoHandJumpUp");
-            }
             else
-            {
                 ChangeAnimation("TwoHandJumpDown");
-            }
 
             return;
         }
@@ -529,5 +558,8 @@ public class PlayerAnimation : MonoBehaviour
     public void SetAttackEnabled(bool state)
     {
         attackEnabled = state;
+
+        if (!state)
+            attackBuffered = false;
     }
 }

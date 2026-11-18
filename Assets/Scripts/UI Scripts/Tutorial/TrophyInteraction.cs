@@ -255,7 +255,6 @@ public class TrophyInteraction : MonoBehaviour
         }
     }
 
-    
     private void CheckEnemies()
     {
         if (!encounterStarted || enemiesDefeated)
@@ -422,6 +421,9 @@ public class TrophyInteraction : MonoBehaviour
     // Resets the Tutorial encounter when the player dies.
     public void ResetEncounterAfterDeath()
     {
+        if (artifactAudioFade != null)
+            artifactAudioFade.FadeOutForDeath();
+
         foreach (GameObject enemy in spawnedEnemies)
         {
             if (enemy != null)

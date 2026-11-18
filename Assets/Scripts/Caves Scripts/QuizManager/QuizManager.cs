@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using TMPro;
 using System.Collections;
@@ -57,6 +56,9 @@ public class QuizManager : MonoBehaviour
     [Header("Question Goal Settings")]
     public int requiredCorrectAnswers = 5;
 
+    [Header("Objective Settings")]
+    public string objectiveToComplete;
+
     [Header("Question Pool")]
     public List<QuestionData> questionPool;
 
@@ -79,7 +81,6 @@ public class QuizManager : MonoBehaviour
 
     public void StartQuiz()
     {
-        // Reset the attempt state whenever this quiz is opened.
         correctAnswersCount = 0;
         hasQuestion = false;
         isCheckingAnswer = false;
@@ -103,7 +104,6 @@ public class QuizManager : MonoBehaviour
 
         timeRemaining = hasForfeited ? 0f : Mathf.Max(0f, quizDuration);
 
-        // Re-enable the text objects that are hidden during the completion summary.
         if (QuestionTextDisplay != null) QuestionTextDisplay.gameObject.SetActive(true);
         if (CheckerText != null) CheckerText.gameObject.SetActive(true);
         if (ScoreText != null) ScoreText.gameObject.SetActive(true);
@@ -138,8 +138,6 @@ public class QuizManager : MonoBehaviour
             CompletionSummaryText.gameObject.SetActive(false);
         if (WrongUI != null)
             WrongUI.SetActive(false);
-
-        // Enabling the GameObject alone must not start the quiz or timer.
     }
 
     private void OnDisable()
@@ -168,7 +166,6 @@ public class QuizManager : MonoBehaviour
             hasQuestion = false;
             currentQuestion = null;
 
-            // Never unlock the padlock unless the required correct-answer goal was reached.
             if (correctAnswersCount >= requiredCorrectAnswers)
             {
                 StartCoroutine(UnlockAfterFeedback());
@@ -208,7 +205,6 @@ public class QuizManager : MonoBehaviour
         shuffledAnswers.Add(currentQuestion.wrongAnswer2);
         shuffledAnswers.Add(currentQuestion.wrongAnswer3);
 
-        // Shuffle answers
         for (int i = 0; i < shuffledAnswers.Count; i++)
         {
             string temp = shuffledAnswers[i];
@@ -222,7 +218,6 @@ public class QuizManager : MonoBehaviour
             shuffledAnswers[randIndex] = temp;
         }
 
-        // Update buttons
         if (AnswerButtons == null)
             return;
 
@@ -260,10 +255,8 @@ public class QuizManager : MonoBehaviour
 
         string selectedText = shuffledAnswers[buttonIndex];
 
-        // Remove the answered question so it cannot repeat
         runtimeQuestionPool.Remove(currentQuestion);
 
-        // Correct answer
         if (selectedText == currentQuestion.correctAnswer)
         {
             isCheckingAnswer = true;
@@ -288,17 +281,13 @@ public class QuizManager : MonoBehaviour
         }
         else
         {
-            // Apply the wrong-answer time penalty immediately.
             if (!hasForfeited && timeRemaining > 0f)
             {
                 timeRemaining = Mathf.Max(0f, timeRemaining - wrongAnswerTimePenalty);
                 UpdateTimerText();
 
-                // Reaching zero forfeits points, but the player can keep answering
-                // to progress and unlock the padlock.
-                
-            if (timeRemaining <= 0f)
-                RegisterForfeitFromPadlock();
+                if (timeRemaining <= 0f)
+                    RegisterForfeitFromPadlock();
             }
 
             StartCoroutine(WrongAnswerFeedback());
@@ -320,8 +309,6 @@ public class QuizManager : MonoBehaviour
         if (WrongUI != null)
             WrongUI.SetActive(false);
 
-        // Wrong answers can be retried; otherwise a 5-question / 5-correct quiz
-        // would become impossible after the first wrong answer.
         if (currentQuestion != null && !runtimeQuestionPool.Contains(currentQuestion))
             runtimeQuestionPool.Add(currentQuestion);
 
@@ -349,11 +336,9 @@ public class QuizManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
-        // Show the player's score before closing the quiz and unlocking the padlock.
         yield return StartCoroutine(ShowCompletionSummaryThenUnlock());
     }
 
-    
     private IEnumerator ShowCompletionSummaryThenUnlock()
     {
         isCheckingAnswer = true;
@@ -364,7 +349,6 @@ public class QuizManager : MonoBehaviour
             timerCoroutine = null;
         }
 
-        // Award the score first so the summary displays the saved total.
         int earnedThisQuiz = AwardQuizPoints();
         int overallTotal = PlayFabSaveManager.Instance != null
             ? PlayFabSaveManager.Instance.GetQuizPoints()
@@ -394,7 +378,6 @@ public class QuizManager : MonoBehaviour
         if (ScoreText != null)
             ScoreText.gameObject.SetActive(false);
 
-        // Hide Exit1 while the completion summary is displayed.
         if (ExitButton != null)
             ExitButton.SetActive(false);
 
@@ -437,8 +420,7 @@ public class QuizManager : MonoBehaviour
             ForfeitConfirmationUI.SetActive(true);
     }
 
-    // Wire this to the Forfeit Quiz button. The quiz continues without timer or points.
-   public void ForfeitQuiz()
+    public void ForfeitQuiz()
     {
         if (!IsQuizOpen || hasForfeited)
         {
@@ -504,7 +486,6 @@ public class QuizManager : MonoBehaviour
 
         scoreAwarded = true;
 
-        // A forfeited quiz still allows progression, but awards no points.
         if (hasForfeited)
             return 0;
 
@@ -521,6 +502,26 @@ public class QuizManager : MonoBehaviour
 
     private void UnlockAndDestroyLock()
     {
+        // Complete the assigned objective for this padlock.
+        if (ObjectiveManager.Instance != null &&
+            !string.IsNullOrWhiteSpace(objectiveToComplete))
+        {
+            ObjectiveManager.Instance.CompleteObjective(objectiveToComplete);
+        }
+        else if (string.IsNullOrWhiteSpace(objectiveToComplete))
+        {
+            Debug.LogWarning(
+                "QuizManager: Objective To Complete is empty for " + quizID,
+                this
+            );
+        }
+
+        // Save the updated objective list.
+        if (PlayFabSaveManager.Instance != null)
+        {
+            PlayFabSaveManager.Instance.SaveGame();
+        }
+
         // Save the padlock before unlocking the door.
         if (padlockInspector != null)
             padlockInspector.SavePadlockUnlocked();
@@ -543,6 +544,7 @@ public class QuizManager : MonoBehaviour
 
         FinishQuiz();
     }
+
     public void RestoreUnlockedDoorFromSave()
     {
         // Restore the door's unlocked state when returning to this scene.
@@ -562,7 +564,7 @@ public class QuizManager : MonoBehaviour
             padlockObject = null;
         }
     }
-    
+
     private void FinishQuiz()
     {
         IsQuizOpen = false;
@@ -593,21 +595,17 @@ public class QuizManager : MonoBehaviour
         if (WrongUI != null)
             WrongUI.SetActive(false);
 
-        // Re-enable player animation and reset the action
         if (playerAnimation != null)
         {
             playerAnimation.enabled = true;
             playerAnimation.ResetActionAfterQuiz();
         }
 
-        // Re-enable attacks
         if (Movement.Instance != null)
             Movement.Instance.SetAttackEnabled(true);
 
-        // Hide quiz UI
         gameObject.SetActive(false);
 
-        // Lock mouse back to gameplay
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }

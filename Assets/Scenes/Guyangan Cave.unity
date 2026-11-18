@@ -6986,7 +6986,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: asdasdasdadsdas
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 52d8a55c656734b4490511481beafe44, type: 2}
   m_sharedMaterial: {fileID: 7534751408194878964, guid: 52d8a55c656734b4490511481beafe44, type: 2}
@@ -7096,7 +7096,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 638.0272, y: -0.000015258789}
-  m_SizeDelta: {x: 638.05, y: 0}
+  m_SizeDelta: {x: 638.05, y: 46.91}
   m_Pivot: {x: 1, y: 1}
 --- !u!1 &157284198
 GameObject:
@@ -7341,6 +7341,109 @@ Transform:
   - {fileID: 451132148}
   m_Father: {fileID: 904271049}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &172312358
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 172312359}
+  - component: {fileID: 172312362}
+  - component: {fileID: 172312361}
+  - component: {fileID: 172312360}
+  m_Layer: 5
+  m_Name: ObjectiveContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &172312359
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172312358}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1687129464}
+  m_Father: {fileID: 1741766724}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 638.0588, y: 438.6163}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &172312360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172312358}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
+--- !u!114 &172312361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172312358}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.69803923, g: 0.627451, b: 0.49019608, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &172312362
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172312358}
+  m_CullTransparentMesh: 1
 --- !u!1 &197362929
 GameObject:
   m_ObjectHideFlags: 0
@@ -27763,7 +27866,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1020150046}
   m_HandleRect: {fileID: 1020150044}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -34092,6 +34195,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7506f0352a28402488c01bcee69bb319, type: 3}
       insertIndex: -1
       addedObject: {fileID: 692183383}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7506f0352a28402488c01bcee69bb319, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 692183384}
   m_SourcePrefab: {fileID: 100100000, guid: 7506f0352a28402488c01bcee69bb319, type: 3}
 --- !u!4 &692183378 stripped
 Transform:
@@ -34150,6 +34256,7 @@ MonoBehaviour:
   artifactPrerequisite: {fileID: 626243701}
   nextCavePrerequisite: {fileID: 0}
   prerequisiteRequirementName: WoodenCoffin
+  nextObjectiveCatalyst: {fileID: 0}
   interactionRange: 3
   artifactObject: {fileID: 692183379}
   barrierObject: {fileID: 924463172}
@@ -34201,6 +34308,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldID: WoodenCoffin
   ignoreCollectedStateInTutorial: 0
+--- !u!114 &692183384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692183379}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f674f96c2f030274687ebc5351f959cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  quest: Unlock the Padlock.
+  logbookEntry: {fileID: 692183380}
 --- !u!1 &697555065
 GameObject:
   m_ObjectHideFlags: 0
@@ -42479,6 +42600,7 @@ MonoBehaviour:
   wrongUIDuration: 1
   ExitButton: {fileID: 1834432667}
   requiredCorrectAnswers: 5
+  objectiveToComplete: Unlock the Padlock
   questionPool:
   - questionText: Where were the wooden coffins discovered?
     correctAnswer: Banton Island, Romblon
@@ -48720,6 +48842,12 @@ MonoBehaviour:
   animator: {fileID: 1827959036}
   deathScreen: {fileID: 1827959034}
   transition: {fileID: 1060960523}
+  uiToDisable:
+  - {fileID: 1872774297}
+  - {fileID: 120312496}
+  - {fileID: 558083193}
+  - {fileID: 1611207692}
+  - {fileID: 1384770074}
 --- !u!1 &1298514492
 GameObject:
   m_ObjectHideFlags: 0
@@ -49924,6 +50052,7 @@ MonoBehaviour:
   wrongUIDuration: 1
   ExitButton: {fileID: 0}
   requiredCorrectAnswers: 5
+  objectiveToComplete: 
   questionPool:
   - questionText: Where was the Manunggul Jar discovered?
     correctAnswer: Tabon Caves, Palawan
@@ -63271,7 +63400,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1383339958}
   m_HandleRect: {fileID: 1383339957}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -64800,7 +64929,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1687129464}
   - component: {fileID: 1687129468}
-  - component: {fileID: 1687129467}
   - component: {fileID: 1687129466}
   - component: {fileID: 1687129465}
   m_Layer: 5
@@ -64817,18 +64945,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1687129463}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 155334270}
-  m_Father: {fileID: 1741766724}
+  m_Father: {fileID: 172312359}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 638.0588, y: 438.6163}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 319.0294, y: -23.455}
+  m_SizeDelta: {x: 638.0588, y: 46.91}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1687129465
 MonoBehaviour:
@@ -64873,36 +65001,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 1
---- !u!114 &1687129467
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1687129463}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.69803923, g: 0.627451, b: 0.49019608, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!222 &1687129468
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -75273,7 +75371,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1687129464}
+  - {fileID: 172312359}
   - {fileID: 614940960}
   m_Father: {fileID: 1866493314}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

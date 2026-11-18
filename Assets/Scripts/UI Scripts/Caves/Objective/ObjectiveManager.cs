@@ -70,10 +70,21 @@ public class ObjectiveManager : MonoBehaviour
     public void RefreshObjectiveBook()
     {
         if (objectiveBook == null)
-            objectiveBook = FindObjectOfType<ObjectiveBook>();
+        {
+            objectiveBook = FindFirstObjectByType<ObjectiveBook>(
+                FindObjectsInactive.Include
+            );
+        }
 
         if (objectiveBook != null)
+        {
             objectiveBook.WriteQuests();
+            Debug.Log("ObjectiveManager: Objective UI refreshed.");
+        }
+        else
+        {
+            Debug.LogWarning("ObjectiveManager: ObjectiveBook not found!");
+        }
     }
 
     private void OnDestroy()
